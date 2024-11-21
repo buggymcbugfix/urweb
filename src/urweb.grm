@@ -1608,6 +1608,7 @@ rexp   : DOTDOTDOT                      ([], true)
 
 rpath  : path                           (CVar path, s (pathleft, pathright))
        | CSYMBOL                        (CName CSYMBOL, s (CSYMBOLleft, CSYMBOLright))
+       | INT                            (CName (Int64.toString INT), s (INTleft, INTright))
 
 xml    : xmlOne xml                     (let
                                              val pos = s (xmlOneleft, xmlright)
