@@ -6,12 +6,7 @@ stdenv.mkDerivation rec {
   pname = "urweb";
   version = "20200209";
 
-  src = fetchFromGitHub {
-    owner = "urweb";
-    repo = "urweb";
-    rev = "55a881f";
-    hash = "sha256-V39MLf8Y+o5PLaQXNkG0tDcMsxL/AiQmcbE40swUxaQ=";
-  };
+  src = ./.;
 
   buildInputs = [ openssl mlton mariadb-connector-c postgresql sqlite icu autoconf automake libtool];
 
