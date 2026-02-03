@@ -859,14 +859,23 @@ val title : unit -> tag [Data = data_attr] head [] [] []
 val link : unit -> tag [Data = data_attr, Id = id, Rel = string, Title = string, Typ = string, Href = url, Media = string, Integrity = string, Crossorigin = string, Sizes = string] head [] [] []
 val meta : unit -> tag [Nam = meta, Content = string, Id = id] head [] [] []
 
-datatype mouseButton = Left | Right | Middle
-
-type mouseEvent = { ScreenX : int, ScreenY : int, ClientX : int, ClientY : int, OffsetX : int, OffsetY : int,
-                    CtrlKey : bool, ShiftKey : bool, AltKey : bool, MetaKey : bool,
-                    Button : mouseButton }
+type mouseEvent =
+       {
+              ScreenX : int,
+              ScreenY : int,
+              ClientX : int,
+              ClientY : int,
+              OffsetX : int,
+              OffsetY : int,
+              CtrlKey : bool,
+              ShiftKey : bool,
+              AltKey : bool,
+              MetaKey : bool,
+              Buttons : { Left : bool, Right : bool, Middle : bool }
+       }
 
 con mouseEvents = map (fn _ :: Unit => mouseEvent -> transaction unit)
-                          [Onclick, Oncontextmenu, Ondblclick, Onmousedown, Onmouseenter, Onmouseleave, Onmousemove, Onmouseout, Onmouseover, Onmouseup]
+                          [Onclick, Oncontextmenu, Ondblclick, Onmousedown, Onmouseenter, Onmouseleave, Onmousemove, Onmouseout, Onmouseover, Onmouseup, Onpointerover, Onpointerenter, Onpointerdown, Onpointermove, Onpointerup, Onpointercancel, Onpointerout, Onpointerleave, Onpointerrawupdate, Ongotpointercapture, Onlostpointercapture]
 
 (* Key arguments are character codes. *)
 type keyEvent = { KeyCode : int,
