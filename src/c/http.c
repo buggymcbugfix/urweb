@@ -336,7 +336,14 @@ static void *worker(void *data) {
 }
 
 static void help(char *cmd) {
-  printf("Usage: %s [-p <port>] [-a <IPv4 address>] [-A <IPv6 address>] [-u <UNIX socket>] [-t <thread count>] [-m <bytes>] [-k] [-q] [-T SEC]\nThe '-k' option turns on HTTP keepalive.\nThe '-q' option turns off some chatter on stdout.\nThe '-T' option sets socket recv timeout (0 disables timeout, default is 5 sec).\nThe '-m' sets the maximum size (in bytes) for any buffer used to hold HTTP data sent by clients.  (The default is 1 MB.)\n", cmd);
+  printf(
+    "Usage: %s [-p <port>] [-P <upper-bound port>] [-a <IPv4 address>] [-A <IPv6 address>] [-u <UNIX socket>] [-t <thread count>] [-m <bytes>] [-k] [-q] [-T SEC]\n"
+      "The '-P' option picks the first free port in the range [p..P], where p is the value of '-p' (default 8080) and P is the value of '-P'.\n"
+      "The '-k' option turns on HTTP keepalive.\n"
+      "The '-q' option turns off some chatter on stdout.\n"
+      "The '-T' option sets socket recv timeout (0 disables timeout, default is 5 sec).\n"
+      "The '-m' sets the maximum size (in bytes) for any buffer used to hold HTTP data sent by clients.  (The default is 1 MB.)\n"
+    , cmd);
 }
 
 static void sigint(int signum) {
@@ -360,7 +367,8 @@ int main(int argc, char *argv[]) {
   socklen_t my_size = 0, sin_size;
   int yes = 1, uw_port = 8080, nthreads = 1, i, *names, opt;
   int recv_timeout_sec = 5;
- 
+  int port_upper = 0; // 0 => -P not given; otherwise inclusive upper bound for port allocation.
+
   signal(SIGINT, sigint);
   signal(SIGPIPE, SIG_IGN); 
 
@@ -369,7 +377,7 @@ int main(int argc, char *argv[]) {
   my_addr.sa.sa_family = AF_INET;
   my_addr.ipv4.sin_addr.s_addr = INADDR_ANY; // auto-fill with my IP
 
-  while ((opt = getopt(argc, argv, "hp:a:A:u:t:kqT:m:")) != -1) {
+  while ((opt = getopt(argc, argv, "hp:P:a:A:u:t:kqT:m:")) != -1) {
     switch (opt) {
     case '?':
       fprintf(stderr, "Unknown command-line option\n");
@@ -384,6 +392,15 @@ int main(int argc, char *argv[]) {
       uw_port = atoi(optarg);
       if (uw_port <= 0) {
         fprintf(stderr, "Invalid port number\n");
+        help(argv[0]);
+        return 1;
+      }
+      break;
+
+    case 'P':
+      port_upper = atoi(optarg);
+      if (port_upper <= 0) {
+        fprintf(stderr, "Invalid upper-bound port number\n");
         help(argv[0]);
         return 1;
       }
@@ -458,6 +475,17 @@ int main(int argc, char *argv[]) {
     }
   }
 
+  if (port_upper != 0) {
+    if (port_upper <= uw_port) {
+      fprintf(stderr, "-P upper bound must be strictly greater than -p lower bound\n");
+      return 1;
+    }
+    if (my_addr.sa.sa_family == AF_UNIX) {
+      fprintf(stderr, "-P is not applicable to UNIX-socket listeners\n");
+      return 1;
+    }
+  }
+
   uw_request_init(&uw_application, &ls);
 
   names = calloc(nthreads, sizeof(int));
@@ -492,9 +520,28 @@ int main(int argc, char *argv[]) {
     break;
   }
 
-  if (bind(sockfd, &my_addr.sa, my_size) < 0) {
-    fprintf(stderr, "Listener socket bind failed\n");
-    return 1;
+  if (port_upper == 0) {
+    if (bind(sockfd, &my_addr.sa, my_size) < 0) {
+      fprintf(stderr, "Listener socket bind failed\n");
+      return 1;
+    }
+  } else {
+    // -P was given; try each port in [uw_port..port_upper] until one binds.
+    // AF_UNIX was already ruled out above, so only the two IP families apply here.
+    int port;
+    for (port = uw_port; port <= port_upper; ++port) {
+      if (my_addr.sa.sa_family == AF_INET)
+        my_addr.ipv4.sin_port = htons(port);
+      else
+        my_addr.ipv6.sin6_port = htons(port);
+      if (bind(sockfd, &my_addr.sa, my_size) == 0)
+        break;
+    }
+    if (port > port_upper) {
+      fprintf(stderr, "No free port found in range [%d..%d]\n", uw_port, port_upper);
+      return 1;
+    }
+    uw_port = port; // so the existing "Listening on port %d" message reports the chosen one.
   }
 
   if (listen(sockfd, uw_backlog) < 0) {
