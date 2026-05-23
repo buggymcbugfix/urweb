@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <limits.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -337,12 +338,18 @@ static void *worker(void *data) {
 
 static void help(char *cmd) {
   printf(
-    "Usage: %s [-p <port>] [-P <upper-bound port>] [-a <IPv4 address>] [-A <IPv6 address>] [-u <UNIX socket>] [-t <thread count>] [-m <bytes>] [-k] [-q] [-T SEC]\n"
+    "Usage: %s [-p <port>] [-P <upper-bound port>] [-a <IPv4 address>] [-A <IPv6 address>] [-u <UNIX socket>] [-t <thread count>] [-m <bytes>] [-k] [-q] [-T SEC] [-d[fd]]\n"
       "The '-P' option picks the first free port in the range [p..P], where p is the value of '-p' (default 8080) and P is the value of '-P'.\n"
       "The '-k' option turns on HTTP keepalive.\n"
       "The '-q' option turns off some chatter on stdout.\n"
       "The '-T' option sets socket recv timeout (0 disables timeout, default is 5 sec).\n"
       "The '-m' sets the maximum size (in bytes) for any buffer used to hold HTTP data sent by clients.  (The default is 1 MB.)\n"
+      "The '-d' option daemonizes the server by forking once it is listening; when the optional <fd>\n"
+      "         arg is provided, the parent first writes shell assignments for 'pid' and either     \n"
+      "         'port' or 'socket' to file descriptor <fd>. Typical shell usage:                    \n"
+      "                                                                                             \n"
+      "             eval \"$(... -d3 3>&1 1>/dev/null)\"                                            \n"
+      "             [ \"$status\" = 'OK' ] || { echo failed; exit 1 }                               \n"
     , cmd);
 }
 
@@ -368,6 +375,8 @@ int main(int argc, char *argv[]) {
   int yes = 1, uw_port = 8080, nthreads = 1, i, *names, opt;
   int recv_timeout_sec = 5;
   int port_upper = 0; // 0 => -P not given; otherwise inclusive upper bound for port allocation.
+  int daemonize = 0; // -d: fork once we are listening, parent exits.
+  int meta_fd = -1; // -1 => no -d argument given; otherwise the file descriptor the parent should write structured metadata to before exiting.
 
   signal(SIGINT, sigint);
   signal(SIGPIPE, SIG_IGN); 
@@ -377,7 +386,7 @@ int main(int argc, char *argv[]) {
   my_addr.sa.sa_family = AF_INET;
   my_addr.ipv4.sin_addr.s_addr = INADDR_ANY; // auto-fill with my IP
 
-  while ((opt = getopt(argc, argv, "hp:P:a:A:u:t:kqT:m:")) != -1) {
+  while ((opt = getopt(argc, argv, "hp:P:a:A:u:t:kqT:m:d::")) != -1) {
     switch (opt) {
     case '?':
       fprintf(stderr, "Unknown command-line option\n");
@@ -469,6 +478,20 @@ int main(int argc, char *argv[]) {
       max_buf_size = opt;
       break;
 
+    case 'd':
+      daemonize = 1;
+      if (optarg) {
+        // strtol so we catch trailing junk that atoi would silently accept.
+        char *end;
+        long v = strtol(optarg, &end, 10);
+        if (*optarg == '\0' || *end != '\0' || v < 0 || v > INT_MAX) {
+          fprintf(stderr, "Invalid file descriptor for -d: '%s'\n", optarg);
+          return 1;
+        }
+        meta_fd = (int)v;
+      }
+      break;
+
     default:
       fprintf(stderr, "Unexpected getopt() behavior\n");
       return 1;
@@ -554,6 +577,61 @@ int main(int argc, char *argv[]) {
   qprintf("Starting the Ur/Web native HTTP server, which is intended for use\n"
           "ONLY DURING DEVELOPMENT.  You probably want to use one of the other backends,\n"
           "behind a production-quality HTTP server, for a real deployment.\n\n");
+
+  // -d: daemonize. The fork MUST happen before any pthread_create call: fork()
+  // only carries the calling thread, so any mutexes held by the others would
+  // remain locked forever in the child. Doing it here (after listen() succeeds)
+  // also means the parent's successful exit is a synchronous "ready to accept"
+  // signal for the caller.
+  //
+  // -d <fd>: in addition, the parent writes `eval`-friendly shell assignments
+  // for `pid` and either `port` or `socket` to file descriptor <fd> before
+  // exiting. The caller is expected to set up <fd> with shell redirection,
+  // e.g. `eval "$(... -d3 3>&1 1>/dev/null)"`.
+  if (daemonize) {
+    pid_t child = fork();
+    if (child < 0) {
+      fprintf(stderr, "fork failed: %m\n");
+      return 1;
+    }
+    if (child > 0) {
+      qprintf("Forking to PID %d....\n", child);
+      if (meta_fd >= 0) {
+        // Use fdopen+fprintf rather than write() so we can format integers
+        // without manual itoa. "w" is fine: fdopen does not truncate or
+        // re-open; it just wraps the existing fd. fclose flushes the buffer
+        // and closes the underlying fd, which is desirable: it releases our
+        // hold on the caller's pipe so their `eval $(...)` consumer unblocks.
+        FILE *mf = fdopen(meta_fd, "w");
+        int ok = mf != NULL;
+        if (ok) {
+          ok = fprintf(mf, "pid=%ld\n", (long)child) >= 0;
+          if (ok) {
+            if (my_addr.sa.sa_family == AF_UNIX) {
+              ok = fprintf(mf, "socket='%s'\n", my_addr.un.sun_path) >= 0; 
+            }
+            else {
+              ok = fprintf(mf, "port=%d\n", uw_port) >= 0;
+            }
+          }
+          if (ok) {
+            ok = fprintf(mf, "status='OK'\n") >= 0;
+          }
+          if (fclose(mf) != 0) {
+            ok = 0;
+          }
+        }
+        if (!ok) {
+          fprintf(stderr, "Failed to write metadata to fd %d: %m\n", meta_fd);
+          kill(child, SIGTERM);
+          return 1;
+        }
+      }
+      return 0;
+    }
+    if (meta_fd >= 0) close(meta_fd);
+    setvbuf(stdout, NULL, _IOLBF, 0);
+  }
 
   qprintf("Listening on port %d....\n", uw_port);
 

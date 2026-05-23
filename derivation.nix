@@ -90,7 +90,7 @@ stdenv.mkDerivation {
 
   checkPhase = ''
     runHook preCheck
-    make test
+    make check
     runHook postCheck
   '';
 
