@@ -24,7 +24,7 @@ mlton-tc: bin/urwebtc
 clean-local:
 	rm -f bin/urweb bin/urwebtc compiler.du src/urweb.mlton.* \
 		src/urweb.cm src/urweb.mlb xml/parse xml/entities.sml
-	rm -f demo/demo.exe demo/demo.sql
+	rm -f demo/demo.exe
 	rm -rf .cm src/.cm
 
 src/urweb.cm: src/prefix.cm src/sources
@@ -124,42 +124,35 @@ dist-hook:
 	cd demo; rm -f demo.ur*
 	cd demo/more; rm -f demo.ur*
 
-TESTDB = /tmp/urweb.db
-TESTPID = /tmp/urweb.pid
-
-# demo/demo.exe is produced by compiling the bundled demo with the
-# freshly built compiler. It genuinely depends on bin/urweb and, because
-# -boot makes the demo link against the in-tree C runtime, on the
-# src/c libraries. The original rule declared neither, so `make test`
-# from a clean tree failed and parallel builds were racy. bin/urweb is a
-# real target here; the src/c sub-make orders this after the SUBDIRS
-# libraries (a no-op when they are already current).
-demo/demo.exe: bin/urweb
-	cd src/c && $(MAKE) $(AM_MAKEFLAGS)
-	bin/urweb -boot -noEmacs -dbms sqlite -db $(TESTDB) -demo /Demo demo
-
-# Wire the custom test target into automake's standard `make check`.
-check-local: test
-
-test: demo/demo.exe
-	rm -f $(TESTDB)
-	sqlite3 $(TESTDB) < demo/demo.sql
-	demo/demo.exe -q -a 127.0.0.1 & echo $$! > $(TESTPID)
-	sleep 1
-	(curl -s 'http://localhost:8080/Demo/Hello/main' | diff tests/hello.html -) || (kill `cat $(TESTPID)`; echo "Test 'Hello' failed"; /bin/false)
-	(curl -s 'http://localhost:8080/Demo/Crud1/create?A=1&B=2&C=3&D=4' | diff tests/crud1.html -) || (kill `cat $(TESTPID)`; echo "Test 'Crud1' failed"; /bin/false)
-	kill `cat $(TESTPID)`
-	if (ifconfig lo | grep -q inet6); \
-	then \
-		echo "Running IPv6 tests."; \
-		rm -f $(TESTDB); \
-		sqlite3 $(TESTDB) < demo/demo.sql; \
-		demo/demo.exe -q -A ::1 & echo $$! > $(TESTPID); \
-		sleep 1; \
-		(curl -g -6 -s 'http://[::1]:8080/Demo/Hello/main' | diff tests/hello.html -) || (kill `cat $(TESTPID)`; echo "Test 'Hello' failed"; /bin/false); \
-		(curl -g -6 -s 'http://[::1]:8080/Demo/Crud1/create?A=1&B=2&C=3&D=4' | diff tests/crud1.html -) || (kill `cat $(TESTPID)`; echo "Test 'Crud1' failed"; /bin/false); \
-		kill `cat $(TESTPID)`; \
-	else \
-		echo "Skipped IPv6 tests."; \
-	fi
-	echo Tests succeeded.
+check-local: bin/urweb
+	@set -e; \
+	pid=""; \
+	dbfile=$$(mktemp); \
+	cleanup() { \
+		kill $$pid 2>/dev/null || true; \
+		pid=""; \
+		rm -f $$dbfile $$dbfile-shm $$dbfile-wal; \
+	}; \
+	setup() { \
+		sqlite3 $$dbfile < demo/demo.sql; \
+	}; \
+	trap cleanup EXIT INT TERM; \
+	\
+	echo "Compiling demo.exe."; \
+	bin/urweb -boot -noEmacs -dbms sqlite -db $$dbfile -demo /Demo demo; \
+	\
+	echo "Running IPv4 test."; \
+	setup; \
+	eval "$$(demo/demo.exe -a 127.0.0.1 -p 8000 -P 9000 -d3 3>&1 1>/dev/null)"; \
+	[ "$$status" = 'OK' ] || { echo "demo.exe failed to start" >&2; exit 1; }; \
+	curl -s "http://localhost:$$port/Demo/Hello/main" | diff tests/hello.html - || { echo "Test 'Hello' failed" >&2; exit 1; }; \
+	curl -s "http://localhost:$$port/Demo/Crud1/create?A=1&B=2&C=3&D=4" | diff tests/crud1.html - || { echo "Test 'Crud1' failed" >&2; exit 1; }; \
+	cleanup; \
+	\
+	echo "Running IPv6 test."; \
+	setup; \
+	eval "$$(demo/demo.exe -A ::1 -p 8000 -P 9000 -d3 3>&1 1>/dev/null)"; \
+	[ "$$status" = 'OK' ] || { echo "demo.exe failed to start" >&2; exit 1; }; \
+	curl -g -6 -s "http://[::1]:$$port/Demo/Hello/main" | diff tests/hello.html - || { echo "Test 'Hello' failed" >&2; exit 1; }; \
+	curl -g -6 -s "http://[::1]:$$port/Demo/Crud1/create?A=1&B=2&C=3&D=4" | diff tests/crud1.html - || { echo "Test 'Crud1' failed" >&2; exit 1; }; \
+	echo "Tests succeeded."

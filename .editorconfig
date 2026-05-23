@@ -29,3 +29,9 @@ indent_size = 4
 
 [talk.ur]
 indent_size = 3
+
+[*.c]
+indent_size = 2
+
+[*.am]
+indent_style = tab
