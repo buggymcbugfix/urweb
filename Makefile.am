@@ -24,7 +24,7 @@ mlton-tc: bin/urwebtc
 clean-local:
 	rm -f bin/urweb bin/urwebtc compiler.du src/urweb.mlton.* \
 		src/urweb.cm src/urweb.mlb xml/parse xml/entities.sml
-	rm -f demo/demo.exe demo/demo.sql
+	rm -f demo/demo.exe
 	rm -rf .cm src/.cm
 
 src/urweb.cm: src/prefix.cm src/sources
