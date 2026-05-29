@@ -126,7 +126,7 @@ stdenv.mkDerivation {
         meta.mainProgram = "urweb-with-libs";
       }
       ''
-        makeWrapper ${urweb}/bin/urweb $out/bin/urweb-with-libs \
+        makeWrapper ${urweb}/bin/urweb $out/bin/urweb \
           --add-flags "-path NIX_LIBS ${libPath}"
       '';
 
