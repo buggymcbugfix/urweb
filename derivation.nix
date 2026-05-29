@@ -123,10 +123,10 @@ stdenv.mkDerivation {
     runCommand "urweb-with-libs"
       {
         nativeBuildInputs = [ makeBinaryWrapper ];
-        meta.mainProgram = "urweb-with-libs";
+        meta.mainProgram = "urweb";
       }
       ''
-        makeWrapper ${urweb}/bin/urweb $out/bin/urweb-with-libs \
+        makeWrapper ${urweb}/bin/urweb $out/bin/urweb \
           --add-flags "-path NIX_LIBS ${libPath}"
       '';
 
