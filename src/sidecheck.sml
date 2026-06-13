@@ -72,7 +72,7 @@ fun check ds =
                                                        ()
                                                    else
                                                        (alreadyWarned := true;
-                                                        TextIO.output (TextIO.stdErr, "WARNING: " ^ ErrorMsg.spanToString loc ^ ": reading from an environment variable not determined at compile time, which can confuse CSRF protection")))
+                                                        TextIO.output (TextIO.stdErr, "WARNING: " ^ ErrorMsg.spanToString loc ^ ": reading from an environment variable not determined at compile time, which can confuse CSRF protection\n")))
                                        | EFfiApp (k1, k2, _) => error (k1, k2)
                                        | _ => ()
                                  end) ds;
