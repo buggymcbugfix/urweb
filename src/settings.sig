@@ -47,6 +47,9 @@ signature SETTINGS = sig
     val setDebug : bool -> unit
     val getDebug : unit -> bool
 
+    val setDev : bool -> unit
+    val getDev : unit -> bool
+
     val libFile : string -> string
     val clibFile : string -> string
 

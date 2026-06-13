@@ -41,6 +41,7 @@ type job = {
      sql : string option,
      endpoints : string option,
      debug : bool,
+     dev : bool,
      profile : bool,
      timeout : int,
      ffi : string list,
@@ -87,6 +88,7 @@ type ('src, 'dst) transform = {
 }
 
 val debug = ref false
+val dev = ref false
 val dumpSource = ref false
 val doIflow = ref false
 
@@ -371,6 +373,7 @@ fun capitalize "" = ""
 
 fun institutionalizeJob (job : job) =
     (Settings.setDebug (#debug job);
+     Settings.setDev (#dev job);
      Settings.setUrlPrefix (#prefix job);
      Settings.setTimeout (#timeout job);
      Settings.setHeaders (#headers job);
@@ -450,6 +453,7 @@ fun parseUrp' accLibs fname =
                         sql = NONE,
                         endpoints = Settings.getEndpoints (),
                         debug = Settings.getDebug (),
+                        dev = Settings.getDev (),
                         profile = false,
                         timeout = 120,
                         ffi = [],
@@ -589,6 +593,7 @@ fun parseUrp' accLibs fname =
                      val sql = ref (Settings.getSql ())
                      val endpoints = ref (Settings.getEndpoints ())
                      val debug = ref (Settings.getDebug ())
+                     val dev = ref (Settings.getDev ())
                      val profile = ref false
                      val timeout = ref NONE
                      val ffi = ref []
@@ -631,6 +636,7 @@ fun parseUrp' accLibs fname =
                                  sql = !sql,
                                  endpoints = !endpoints,
                                  debug = !debug,
+                                 dev = !dev,
                                  profile = !profile,
                                  timeout = Option.getOpt (!timeout, 60),
                                  ffi = rev (!ffi),
@@ -694,6 +700,7 @@ fun parseUrp' accLibs fname =
                                  sql = #sql old,
                                  endpoints = #endpoints old,
                                  debug = #debug old orelse #debug new,
+                                 dev = #dev old orelse #dev new,
                                  profile = #profile old orelse #profile new,
                                  timeout = #timeout old,
                                  ffi = #ffi old @ #ffi new,
@@ -824,6 +831,7 @@ fun parseUrp' accLibs fname =
                                           NONE => sql := SOME (relify arg)
                                         | SOME _ => ())
                                    | "debug" => debug := true
+                                   | "dev" => dev := true
                                    | "profile" => profile := true
                                    | "timeout" =>
                                      (case !timeout of
@@ -1605,7 +1613,7 @@ structure StringSet = BinarySetFn(struct
                                   val compare = String.compare
                                   end)
 
-fun compileC {cname, oname, ename, libs, profile, debug, linker, link = link'} =
+fun compileC {cname, oname, ename, libs, profile, debug, dev, linker, link = link'} =
     let
         val proto = Settings.currentProtocol ()
 
@@ -1620,8 +1628,8 @@ fun compileC {cname, oname, ename, libs, profile, debug, linker, link = link'} =
                   else
                       "-L" ^ !Settings.configLib ^ " " ^ #linkDynamic proto ^ " -lurweb"
 
-        val opt = if debug then
-                      ""
+        val opt = if debug orelse dev then
+                      " -O0"
                   else
                       " -O3"
 
@@ -1753,7 +1761,7 @@ fun compile job =
                          end;
 
                      compileC {cname = cname, oname = oname, ename = ename, libs = libs,
-                               profile = #profile job, debug = #debug job, linker = #linker job, link = #link job}
+                               profile = #profile job, debug = #debug job, dev = #dev job, linker = #linker job, link = #link job}
 
                      before cleanup ())
             end

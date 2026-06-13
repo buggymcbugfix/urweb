@@ -37,6 +37,7 @@ signature COMPILER = sig
          sql : string option,
          endpoints : string option,
          debug : bool,
+         dev : bool,
          profile : bool,
          timeout : int,
          ffi : string list,
@@ -71,7 +72,7 @@ signature COMPILER = sig
     val compile : string -> bool
     val compiler : string -> unit
     val compileC : {cname : string, oname : string, ename : string, libs : string,
-                    profile : bool, debug : bool, linker : string option, link : string list} -> bool
+                    profile : bool, debug : bool, dev : bool, linker : string option, link : string list} -> bool
 
     val beforeC : (unit -> unit) ref
     (* This function is called before beginning C compilation.
@@ -206,6 +207,7 @@ signature COMPILER = sig
     val toSqlify : (string, Cjr.file) transform
 
     val debug : bool ref
+    val dev : bool ref
     val dumpSource : bool ref
     val enableBoot : unit -> unit
 

@@ -103,6 +103,7 @@ fun make' {prefix, dirname, guided} =
                                                                file = "demo-endpoints.json"}
                                | SOME e => e),
             debug = Settings.getDebug (),
+            dev = Settings.getDev (),
             timeout = Int.max (#timeout combined, #timeout urp),
             profile = false,
             ffi = [],

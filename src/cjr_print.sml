@@ -1615,10 +1615,7 @@ and p_exp' par tail env (e, loc) =
              string "tmp;",
              newline,
              string "uw_error(ctx, FATAL, \"",
-             string (if Settings.getDebug () then
-                         ErrorMsg.spanToString loc ^ ": "
-                     else
-                         ""),
+             string (ErrorMsg.spanToString loc ^ ": "),
              string "%s\", ",
              p_exp' false false env e,
              string ");",

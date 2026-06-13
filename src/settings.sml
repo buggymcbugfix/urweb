@@ -571,6 +571,10 @@ val debug = ref false
 fun setDebug b = debug := b
 fun getDebug () = !debug
 
+val dev = ref false
+fun setDev b = dev := b
+fun getDev () = !dev
+
 datatype sql_type =
          Int
        | Float
@@ -1020,6 +1024,7 @@ fun reset () =
      env := [];
      meta := [];
      debug := false;
+     dev := false;
      dbstring := NONE;
      exe := NONE;
      sql := NONE;

@@ -125,7 +125,8 @@ fun oneRun args =
                   Compiler.dumpSource := false;
                   Compiler.doIflow := false;
                   Demo.noEmacs := false;
-                  Settings.setDebug false)
+                  Settings.setDebug false;
+                  Settings.setDev false)
 
         val () = Compiler.beforeC := MLton.GC.pack
 
@@ -189,6 +190,8 @@ fun oneRun args =
                     SOME "select database engine"),
               ("debug", call_true Settings.setDebug,
                     SOME "save some intermediate C files"),
+              ("dev", call_true Settings.setDev,
+                    SOME "development build (faster build times)"),
               ("verbose", ZERO (fn () =>
                                 (Compiler.debug := true;
                                  Elaborate.verbose := true)),
