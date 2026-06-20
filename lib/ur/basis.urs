@@ -883,10 +883,30 @@ con scrollEvents = [Onscroll = transaction unit]
 con boxEvents = focusEvents ++ mouseEvents ++ keyEvents ++ resizeEvents ++ scrollEvents
 con tableEvents = focusEvents ++ mouseEvents ++ keyEvents
 
-con boxAttrs = [Data = data_attr, Id = id, Title = string, Role = string, Align = string] ++ boxEvents
-con tableAttrs = [Data = data_attr, Id = id, Title = string, Align = string] ++ tableEvents
+con boxAttrs =
+    [
+        Data = data_attr, 
+        Id = id, 
+        Title = string, 
+        Role = string, 
+        Align = string, 
+        Lang = string, 
+        TabIndex = int,
+    ]
+    ++ boxEvents
 
-val body : unit -> tag ([Data = data_attr, Id = id, Title = string, Onload = transaction unit, Onunload = transaction unit, Onhashchange = transaction unit]
+con tableAttrs =
+    [
+        Data = data_attr, 
+        Id = id, 
+        Title = string, 
+        Align = string, 
+        Lang = string, 
+        TabIndex = int
+    ]
+    ++ tableEvents
+
+val body : unit -> tag ([Data = data_attr, Id = id, Title = string, Onload = transaction unit, Onunload = transaction unit, Onhashchange = transaction unit, Lang = string]
                             ++ boxEvents)
                        html body [] []
 
@@ -1000,12 +1020,18 @@ con formTag = fn (ty :: Type) (inner :: {Unit}) (attrs :: {Type}) =>
                         nm :: Name -> unit
                         -> tag attrs ([Form] ++ ctx) inner [] [nm = ty]
 
-con inputAttrs' = [Required = bool, Autofocus = bool,
-                   Onchange = transaction unit]
+con inputAttrs' =
+    [
+        Required = bool,
+        Autofocus = bool,
+        Onchange = transaction unit,
+        Disabled = bool,
+        Autocomplete = string
+    ]
 con inputAttrs = inputAttrs' ++ [Oninput = transaction unit]
 
 val hidden : formTag string [] [Data = data_attr, Id = string, Value = string]
-val textbox : formTag string [] ([Value = string, Size = int, Placeholder = string, Source = source string] ++ boxAttrs ++ inputAttrs)
+val textbox : formTag string [] ([Value = string, Size = int, Placeholder = string, Source = source string, Autocapitalize = string] ++ boxAttrs ++ inputAttrs)
 val password : formTag string [] ([Value = string, Size = int, Placeholder = string] ++ boxAttrs ++ inputAttrs)
 val textarea : formTag string [] ([Rows = int, Cols = int, Placeholder = string] ++ boxAttrs ++ inputAttrs)
 
@@ -1064,7 +1090,7 @@ val radioOption : unit -> tag ([Value = string, Checked = bool] ++ boxAttrs ++ i
 
 con select = [Select]
 val select : formTag string select (boxAttrs ++ inputAttrs' ++ [Multiple = bool])
-val option : unit -> tag [Data = data_attr, Value = string, Selected = bool] select [] [] []
+val option : unit -> tag [Data = data_attr, Value = string, Selected = bool, Disabled = bool] select [] [] []
 
 val submit : ctx ::: {Unit} -> use ::: {Type}
              -> [[Form] ~ ctx] =>
@@ -1091,15 +1117,16 @@ con cformTag = fn (attrs :: {Type}) (inner :: {Unit}) =>
                   -> [[Body] ~ ctx] => [[Body] ~ inner] =>
                         unit -> tag attrs ([Body] ++ ctx) ([Body] ++ inner) [] []
 
-type ctext = cformTag ([Value = string, Size = int, Source = source string, Placeholder = string] ++ boxAttrs ++ inputAttrs) []
+type ctextAttrs = [Value = string, Size = int, Source = source string, Placeholder = string] ++ boxAttrs ++ inputAttrs
+con ctext (more :: {Type}) = cformTag (ctextAttrs ++ more) []
 
-val ctextbox : ctext
-val cpassword : ctext
-val cemail : ctext
-val csearch : ctext
-val curl : ctext
-val ctel : ctext
-val ccolor : ctext
+val ctextbox : ctext [Autocapitalize = string]
+val cpassword : ctext []
+val cemail : ctext []
+val csearch : ctext []
+val curl : ctext []
+val ctel : ctext []
+val ccolor : ctext []
 
 val cnumber : cformTag ([Source = source (option float), Min = float, Max = float, Step = float, Size = int] ++ boxAttrs ++ inputAttrs) []
 val crange : cformTag ([Source = source (option float), Min = float, Max = float, Size = int, Step = float] ++ boxAttrs ++ inputAttrs) []
@@ -1117,7 +1144,7 @@ val ccheckbox : cformTag ([Size = int, Source = source bool] ++ boxAttrs ++ inpu
 val cradio : cformTag ([Source = source (option string), Value = string] ++ boxAttrs ++ inputAttrs') []
 
 val cselect : cformTag ([Source = source string, Multiple = bool] ++ boxAttrs ++ inputAttrs') [Cselect]
-val coption : unit -> tag [Value = string, Selected = bool] [Cselect, Body] [] [] []
+val coption : unit -> tag [Value = string, Selected = bool, Disabled = bool] [Cselect, Body] [] [] []
 
 val ctextarea : cformTag ([Rows = int, Cols = int, Placeholder = string, Source = source string,
                            Ontext = transaction unit] ++ boxAttrs ++ inputAttrs) []
