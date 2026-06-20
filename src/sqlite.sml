@@ -49,8 +49,7 @@ val ident = String.translate (fn #"'" => "PRIME"
 
 fun checkRel (table, checkNullable) (s, xts) =
     let
-        val q = "SELECT COUNT(*) FROM sqlite_master WHERE type = '" ^ table ^ "' AND name = '"
-                ^ s ^ "'"
+        val q = "SELECT COUNT(*) FROM sqlite_schema WHERE name LIKE '" ^ s ^ "'"
     in
         box [string "if (sqlite3_prepare_v2(conn->conn, \"",
              string q,
