@@ -270,7 +270,7 @@ fun init {dbstring, prepared = ss, tables, views, sequences} =
              string "if (sqlite3_open(\"",
              string (!db),
              string "\", &sqlite) != SQLITE_OK) uw_error(ctx, FATAL, ",
-             string "\"Can't open SQLite database.\");",
+             string ("\"Can't open SQLite database '" ^ (!db) ^ "'.\");"),
              newline,
              newline,
              string "if (sqlite3_exec(sqlite, \"PRAGMA foreign_keys = ON\", NULL, NULL, NULL) != SQLITE_OK)",
