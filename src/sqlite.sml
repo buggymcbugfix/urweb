@@ -49,8 +49,7 @@ val ident = String.translate (fn #"'" => "PRIME"
 
 fun checkRel (table, checkNullable) (s, xts) =
     let
-        val q = "SELECT COUNT(*) FROM sqlite_schema WHERE type = '" ^ table ^ "' AND name = '"
-                ^ s ^ "' COLLATE NOCASE"
+        val q = "SELECT COUNT(*) FROM sqlite_schema WHERE name = '" ^ s ^ "' COLLATE NOCASE"
     in
         box [string "if (sqlite3_prepare_v2(conn->conn, \"",
              string q,
