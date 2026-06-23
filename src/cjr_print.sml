@@ -3818,7 +3818,7 @@ fun p_sql env (ds, _) =
                     val elts =
                         map (fn (x, t) =>
                                 let
-                                    val xs = Settings.mangleSql (CharVector.map Char.toLower x)
+                                    val xs = Settings.mangleSql x
                                     val t = sql_type_in env t
 
                                     val ts = if #textKeysNeedLengths (Settings.currentDbms ()) andalso isText t
@@ -3869,6 +3869,7 @@ fun p_sql env (ds, _) =
                      string "(",
                      indent 4,
                      vbox (ListUtil.join [string ",", newline] elts),
+                     newline,
                      string ");",
                      newline,
                      newline]
@@ -3915,7 +3916,7 @@ fun p_sql env (ds, _) =
                  string "(",
                  p_list (fn (col, m) =>
                             let
-                                val col = Settings.mangleSql (CharVector.map Char.toLower col)
+                                val col = Settings.mangleSql col
                             in
                                 case m of
                                     Equality => string col
