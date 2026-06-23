@@ -231,7 +231,9 @@ signature SETTINGS = sig
          (* If supported, give the SQL code to
           * enable the feature in a particular
           * database and to compute a hash of a value. *)
-         supportsSimilar : {InitializeDb : string} option
+         supportsSimilar : {InitializeDb : string} option,
+         keywords : string list,
+         identifierQuote : string (* Delimiter for quoting an identifier that needs it *)
     }
 
     val addDbms : dbms -> unit
@@ -301,9 +303,23 @@ signature SETTINGS = sig
     val setCCompiler : string -> unit
 
     val setMangleSql : bool -> unit
+    val getMangleSql : unit -> bool
     val mangleSql : string -> string
     val mangleSqlCatalog : string -> string
     val mangleSqlTable : string -> string
+    (* Is this a reserved word of the current DBMS? *)
+    val isSqlKeyword : string -> bool
+
+    (* Render an unmangled name as an identifier, quoting it if the DBMS
+     * requires (a reserved word, or not a plain identifier) *)
+    val sqlIdentifier : string -> string
+
+    (* The bare name inside a possibly-quoted SQL identifier *)
+    val unquoteSql : string -> string
+
+    (* Render a name composed of other SQL identifiers (a constraint or index
+     * name), quoting it if the DBMS requires *)
+    val sqlDerivedName : string list -> string
 
     val setIsHtml5 : bool -> unit
     val getIsHtml5 : unit -> bool

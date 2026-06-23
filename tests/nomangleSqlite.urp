@@ -1,0 +1,10 @@
+noMangleSql
+sql nomangleSqlite.sql
+safeGet NomangleSqlite/main
+rewrite table NomangleSqlite/*
+rewrite sequence NomangleSqlite/*
+rewrite view NomangleSqlite/*
+database dbname=test
+dbms sqlite
+
+nomangleSqlite

@@ -161,8 +161,6 @@ fun lowercaseFirst "" = ""
   | lowercaseFirst s = String.str (Char.toLower (String.sub (s, 0)))
                        ^ String.extract (s, 1, NONE)
 
-fun monoNameLc env c = lowercaseFirst (monoName env c)
-
 fun readType' (t, loc) = (L'.TFun ((L'.TFfi ("Basis", "string"), loc),
                                    (L'.TOption t, loc)), loc)
 fun readErrType (t, loc) = (L'.TFun ((L'.TFfi ("Basis", "string"), loc),
@@ -1376,7 +1374,7 @@ fun monoExp (env, st, fm) (all as (e, loc)) =
                            (str
                                 (String.concatWith ", "
                                                    (map (fn (x, _) =>
-                                                            Settings.mangleSql (monoNameLc env x)
+                                                            Settings.mangleSql (monoName env x)
                                                             ^ (if #textKeysNeedLengths (Settings.currentDbms ())
                                                                   andalso isBlobby t then
                                                                    "(255)"
@@ -1420,7 +1418,7 @@ fun monoExp (env, st, fm) (all as (e, loc)) =
             in
                 (str ("UNIQUE ("
                       ^ String.concatWith ", "
-                                          (map (fn (x, t) => Settings.mangleSql (monoNameLc env x)
+                                          (map (fn (x, t) => Settings.mangleSql (monoName env x)
                                                              ^ (if #textKeysNeedLengths (Settings.currentDbms ())
                                                                    andalso isBlobby t then
                                                                     "(255)"
@@ -1466,18 +1464,18 @@ fun monoExp (env, st, fm) (all as (e, loc)) =
                            (L'.EAbs ("m", mat, mat,
                                      (L'.ECase ((L'.EField ((L'.ERel 0, loc), "1"), loc),
                                                 [((L'.PPrim (Prim.String (Prim.Normal, "")), loc),
-                                                  (L'.ERecord [("1", str (Settings.mangleSql (lowercaseFirst nm1)),
+                                                  (L'.ERecord [("1", str (Settings.mangleSql nm1),
                                                                 string),
-                                                               ("2", str (Settings.mangleSql (lowercaseFirst nm2)),
+                                                               ("2", str (Settings.mangleSql nm2),
                                                                 string)], loc)),
                                                  ((L'.PVar ("_", string), loc),
                                                   (L'.ERecord [("1", (L'.EStrcat (
-                                                                      str (Settings.mangleSql (lowercaseFirst nm1)
+                                                                      str (Settings.mangleSql nm1
                                                                             ^ ", "),
                                                                       (L'.EField ((L'.ERel 1, loc), "1"), loc)),
                                                                       loc), string),
                                                                ("2", (L'.EStrcat (
-                                                                      str (Settings.mangleSql (lowercaseFirst nm2)
+                                                                      str (Settings.mangleSql nm2
                                                                            ^ ", "),
                                                                       (L'.EField ((L'.ERel 1, loc), "2"), loc)),
                                                                       loc), string)],
@@ -2429,7 +2427,7 @@ fun monoExp (env, st, fm) (all as (e, loc)) =
                _), _),
               _), _),
              (L.CName tab, _)), _),
-            (L.CName field, _)) => (str ("T_" ^ tab ^ "." ^ Settings.mangleSql (lowercaseFirst field)), fm)
+            (L.CName field, _)) => (str ("T_" ^ tab ^ "." ^ Settings.mangleSql field), fm)
 
           | L.ECApp (
             (L.ECApp (
@@ -2441,7 +2439,7 @@ fun monoExp (env, st, fm) (all as (e, loc)) =
                _), _),
               _), _),
              _), _),
-            (L.CName nm, _)) => (str (Settings.mangleSql (lowercaseFirst nm)), fm)
+            (L.CName nm, _)) => (str (Settings.mangleSql nm), fm)
 
           | L.ECApp (
             (L.ECApp (
@@ -4557,7 +4555,7 @@ fun monoize env file =
                                           (L'.ESeq (
                                            (L'.EDml ((L'.EStrcat (
                                                       str ("UPDATE "
-                                                           ^ Settings.mangleSql tab
+                                                           ^ Settings.mangleSqlTable tab
                                                            ^ " SET "
                                                            ^ Settings.mangleSql x
                                                            ^ " = NULL WHERE "),
@@ -4571,7 +4569,7 @@ fun monoize env file =
                                   | eb :: ebs =>
                                     (L'.ESeq (
                                      (L'.EDml ((L'.EStrcat (str ("DELETE FROM "
-                                                                 ^ Settings.mangleSql tab
+                                                                 ^ Settings.mangleSqlTable tab
                                                                  ^ " WHERE "),
                                                             foldl (fn (eb, s) =>
                                                                       (L'.EStrcat (str "(",
@@ -4614,7 +4612,7 @@ fun monoize env file =
                                                    (foldl (fn ((x, _), s) =>
                                                               s ^ ", " ^ Settings.mangleSql x ^ " = NULL")
                                                           ("UPDATE "
-                                                           ^ Settings.mangleSql tab
+                                                           ^ Settings.mangleSqlTable tab
                                                            ^ " SET "
                                                            ^ Settings.mangleSql x
                                                                       ^ " = NULL")
@@ -4627,7 +4625,7 @@ fun monoize env file =
                                   | eb :: ebs =>
                                     (L'.ESeq (
                                      (L'.EDml (str ("DELETE FROM "
-                                                    ^ Settings.mangleSql tab), L'.Error), loc),
+                                                    ^ Settings.mangleSqlTable tab), L'.Error), loc),
                                      e), loc)
                         in
                             e

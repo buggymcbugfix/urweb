@@ -3797,7 +3797,7 @@ fun p_sql env (ds, _) =
                                       val cols = List.filter (fn (_, Skipped) => false
                                                              | _ => true) cols
                                       val idx = (tab, map (fn (col, m) =>
-                                                              (Settings.mangleSql (CharVector.map Char.toLower col), m)) cols)
+                                                              (Settings.mangleSql col, m)) cols)
                                   in
                                       if List.null cols orelse List.exists (fn x => x = idx) idxs then
                                           (* Duplicate index!  Forget about it. *)
@@ -3815,7 +3815,7 @@ fun p_sql env (ds, _) =
                     val elts =
                         map (fn (x, t) =>
                                 let
-                                    val xs = Settings.mangleSql (CharVector.map Char.toLower x)
+                                    val xs = Settings.mangleSql x
                                     val t = sql_type_in env t
 
                                     val ts = if #textKeysNeedLengths (Settings.currentDbms ()) andalso isText t
@@ -3840,32 +3840,20 @@ fun p_sql env (ds, _) =
                                 end) xts
                         @ (case pk of
                                "" => []
-                             | _ => [box [string "CONSTRAINT",
-                                          space,
-                                          string s,
-                                          string "_pkey",
-                                          space,
-                                          string "PRIMARY",
-                                          space,
-                                          string "KEY",
-                                          space,
-                                          string "(",
-                                          string pk,
-                                          string ")"]])
+                             | _ => [string ("CONSTRAINT " ^ Settings.sqlDerivedName [s, "pkey"]
+                                             ^ " PRIMARY KEY (" ^ pk ^ ")")])
                         @ map (fn (x, c) =>
-                                  box [string "CONSTRAINT",
-                                       space,
-                                       string s,
-                                       string "_",
-                                       string x,
-                                       space,
-                                       string c]) csts
+                                  (* A plain " " rather than [space], which is
+                                   * a line-break opportunity: keep each
+                                   * constraint on one line. *)
+                                  string ("CONSTRAINT " ^ Settings.sqlDerivedName [s, x] ^ " " ^ c)) csts
                 in
                     [string "CREATE TABLE ",
                      string s,
-                     string "(",
+                     string " (",
                      indent 4,
                      vbox (ListUtil.join [string ",", newline] elts),
+                     newline,
                      string ");",
                      newline,
                      newline]
@@ -3876,58 +3864,59 @@ fun p_sql env (ds, _) =
                  newline,
                  newline]
               | DView (s, xts, q) =>
-                [string "CREATE VIEW",
-                 space,
-                 string s,
-                 space,
-                 string "AS",
-                 space,
+                [string ("CREATE VIEW " ^ s ^ " AS"),
+                 newline,
                  string q,
                  string ";",
                  newline,
                  newline]
               | DIndex (tab, cols) =>
-                [string "CREATE INDEX",
-                 space,
-                 string (List.foldl (fn ((col, m), s) =>
-                                        s ^ "_"
-                                        ^ Settings.mangleSql (CharVector.map Char.toLower col)
-                                        ^ (case m of
-                                               Equality => ""
-                                             | Trigram => "_trigram"
-                                             | Skipped => raise Fail "Found Skipped")) tab cols),
-                 space,
-                 string "ON",
-                 space,
-                 string tab,
-                 if List.exists (fn (_, Trigram) => true
-                                  | _ => false) cols then
-                     box [space,
-                          string "USING",
-                          space,
-                          string "gist"]
-                 else
-                     box [],
-                 space,
-                 string "(",
-                 p_list (fn (col, m) =>
-                            let
-                                val col = Settings.mangleSql (CharVector.map Char.toLower col)
-                            in
-                                case m of
-                                    Equality => string col
-                                  | Trigram => if Option.isSome (#supportsSimilar (Settings.currentDbms ())) then
-                                                   box [string col,
-                                                        space,
-                                                        string "gist_trgm_ops"]
-                                               else
-                                                   (ErrorMsg.error "Index uses trigrams with database that doesn't support them";
-                                                    box [])
-                                  | Skipped => raise Fail "Found Skipped"
-                            end) cols,
-                 string ");",
-                 newline,
-                 newline]
+                let
+                    fun suffix m =
+                        case m of
+                            Equality => ""
+                          | Trigram => "_trigram"
+                          | Skipped => raise Fail "Found Skipped"
+
+                    val name =
+                        if Settings.getMangleSql () then
+                            (* The historical name, from the mangled, lower-cased
+                             * column names; kept so that existing databases
+                             * and schema files keep matching. *)
+                            List.foldl (fn ((col, m), s) =>
+                                           s ^ "_" ^ Settings.mangleSql (CharVector.map Char.toLower col) ^ suffix m)
+                                       tab cols
+                        else
+                            (* Built from the bare table and column names, so
+                             * that the DBMS's case policy and quoting (if any)
+                             * apply to the whole name. *)
+                            Settings.sqlDerivedName (tab :: map (fn (col, m) => col ^ suffix m) cols)
+
+                    val using = if List.exists (fn (_, Trigram) => true
+                                                 | _ => false) cols then
+                                    " USING gist"
+                                else
+                                    ""
+
+                    val cols = map (fn (col, m) =>
+                                       let
+                                           val col = Settings.mangleSql col
+                                       in
+                                           case m of
+                                               Equality => col
+                                             | Trigram => if Option.isSome (#supportsSimilar (Settings.currentDbms ())) then
+                                                              col ^ " gist_trgm_ops"
+                                                          else
+                                                              (ErrorMsg.error "Index uses trigrams with database that doesn't support them";
+                                                               col)
+                                             | Skipped => raise Fail "Found Skipped"
+                                       end) cols
+                in
+                    [string ("CREATE INDEX " ^ name ^ " ON " ^ tab ^ using
+                             ^ " (" ^ String.concatWith ", " cols ^ ");"),
+                     newline,
+                     newline]
+                end
               | DDatabase {usesSimilar = s, ...} =>
                 (usesSimilar := s;
                  [])
