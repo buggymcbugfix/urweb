@@ -10,7 +10,6 @@
   makeBinaryWrapper,
   mlton20210117,
   openssl,
-  postgresql,
   runCommand,
   sqlite,
   stdenv,
@@ -52,7 +51,6 @@ stdenv.mkDerivation {
   buildInputs = [
     icu
     openssl
-    postgresql
     sqlite
   ];
 
@@ -65,13 +63,11 @@ stdenv.mkDerivation {
 
   preConfigure = ''
     export SQHEADER="${sqlite.dev}/include/sqlite3.h"
-    export PGHEADER="${postgresql.dev}/include/libpq-fe.h"
     export ICU_INCLUDES="-I${icu.dev}/include"
     export CC="${gcc}/bin/gcc"
     export CCARGS="-I$out/include \
       -L${lib.getLib openssl}/lib \
       -L${sqlite.out}/lib \
-      -L${postgresql.lib}/lib \
       -Wno-error=int-conversion"
     ./autogen.sh
   '';
