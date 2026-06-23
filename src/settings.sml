@@ -664,7 +664,9 @@ type dbms = {
      requiresTimestampDefaults : bool,
      supportsIsDistinctFrom : bool,
      supportsSHA512 : {InitializeDb : string, GenerateHash : string -> string} option,
-     supportsSimilar : {InitializeDb : string} option
+     supportsSimilar : {InitializeDb : string} option,
+     keywords : string list,
+     identifierQuote : string
 }
 
 val dbmses = ref ([] : dbms list)
@@ -700,7 +702,9 @@ val curDb = ref ({name = "",
                   requiresTimestampDefaults = false,
                   supportsIsDistinctFrom = false,
                   supportsSHA512 = NONE,
-                  supportsSimilar = NONE} : dbms)
+                  supportsSimilar = NONE,
+                  keywords = [],
+                  identifierQuote = "\""} : dbms)
 
 fun addDbms v = dbmses := v :: !dbmses
 fun setDbms s =
@@ -825,41 +829,129 @@ val allLower = CharVector.map Char.toLower
 val mangle = ref true
 fun setMangleSql x = mangle := x
 
+(* Is [s] (in any letter case) a keyword of the current DBMS, i.e. a word it
+ * will not accept unquoted as an identifier?  Each backend lists its reserved
+ * words in the [keywords] field of its [dbms] record; the set is built once
+ * per DBMS. *)
+local
+    val cache = ref ("", SS.empty)
+in
+fun isSqlKeyword s =
+    let
+        val db = currentDbms ()
+        val (name, set) = !cache
+        val set =
+            if name = #name db then
+                set
+            else
+                let
+                    val set = foldl SS.add' SS.empty (#keywords db)
+                in
+                    cache := (#name db, set);
+                    set
+                end
+    in
+        SS.member (set, CharVector.map Char.toUpper s)
+    end
+end
+
+(* Can [s] be used unquoted as an SQL identifier?  A plain identifier starts
+ * with a letter or underscore and continues with letters, digits and
+ * underscores.  Ur produces names outside that form, e.g. "1" for an
+ * anonymous SELECT column, and Ur names may clash with keywords, e.g. a
+ * table called `order` or a field called `Select`. *)
+fun sqlNeedsQuoting s =
+    case String.explode s of
+        [] => true
+      | ch :: rest =>
+        not (Char.isAlpha ch orelse ch = #"_")
+        orelse not (List.all (fn ch => Char.isAlphaNum ch orelse ch = #"_") rest)
+        orelse isSqlKeyword s
+
+(* Render an unmangled name as an SQL identifier: as is, or quoted with the
+ * DBMS's delimiter when it could not stand on its own.  Quoting is applied
+ * consistently everywhere the identifier is rendered -- schema, queries,
+ * constraint text -- so the quoted and unquoted spellings never need to be
+ * reconciled. *)
+fun sqlIdentifier s =
+    if sqlNeedsQuoting s then
+        let
+            val q = #identifierQuote (currentDbms ())
+        in
+            q ^ s ^ q
+        end
+    else
+        s
+
+(* The bare name inside a possibly-quoted SQL identifier, for catalog lookups
+ * and for deriving further names from it. *)
+fun unquoteSql s =
+    let
+        val q = #identifierQuote (currentDbms ())
+    in
+        if size s >= 2 * size q andalso String.isPrefix q s andalso String.isSuffix q s then
+            String.substring (s, size q, size s - 2 * size q)
+        else
+            s
+    end
+
+fun getMangleSql () = !mangle
+
+(* How an unmangled name is spelled, before quoting: MySQL gets all-lowercase
+ * names (its table names are case-sensitive on some platforms), Postgres a
+ * lowercase first letter (unquoted identifiers fold to lower case anyway),
+ * and SQLite the Ur name exactly as written (it compares identifiers
+ * case-insensitively, so CamelCase costs nothing). *)
+fun unmangledCase s =
+    case #name (currentDbms ()) of
+        "mysql" => allLower s
+      | "sqlite" => s
+      | _ => lowercase s
+
+(* Names derived from others (constraint names like tab_pkey, index names like
+ * tab_col1_col2) are built from the bare names and then rendered like any
+ * other identifier.  Mangled names carry the uw_ prefix and so never need
+ * quoting. *)
+fun sqlDerivedName parts =
+    let
+        val s = String.concatWith "_" (map unquoteSql parts)
+    in
+        if !mangle then
+            s
+        else
+            sqlIdentifier (unmangledCase s)
+    end
+
+(* Table and view names.  Mangling prefixes uw_, which also keeps the names
+ * clear of SQL keywords; without it, the name is spelled per [unmangledCase]
+ * and quoted if the DBMS requires. *)
 fun mangleSqlTable s =
-    if #name (currentDbms ()) = "mysql" then
-        if !mangle then
-            "uw_" ^ allLower s
-        else
-            allLower s
+    if !mangle then
+        case #name (currentDbms ()) of
+            "mysql" => "uw_" ^ allLower s
+          | _ => "uw_" ^ capitalize s
     else
-        if !mangle then
-            "uw_" ^ capitalize s
-        else
-            lowercase s
+        sqlIdentifier (unmangledCase s)
 
+(* Column and sequence names, likewise.  Callers pass the Ur name unchanged;
+ * any case adjustment belongs here. *)
 fun mangleSql s =
-    if #name (currentDbms ()) = "mysql" then
-        if !mangle then
-            "uw_" ^ allLower s
-        else
-            allLower s
+    if !mangle then
+        case #name (currentDbms ()) of
+            "mysql" => "uw_" ^ allLower s
+          | _ => "uw_" ^ s
     else
-        if !mangle then
-            "uw_" ^ s
-        else
-            lowercase s
+        sqlIdentifier (unmangledCase s)
 
+(* The form of a column name to compare against the database catalog (never
+ * quoted). *)
 fun mangleSqlCatalog s =
-    if #name (currentDbms ()) = "mysql" then
-        if !mangle then
-            "uw_" ^ allLower s
-        else
-            allLower s
+    if !mangle then
+        case #name (currentDbms ()) of
+            "mysql" => "uw_" ^ allLower s
+          | _ => "uw_" ^ s
     else
-        if !mangle then
-            "uw_" ^ s
-        else
-            lowercase s
+        unmangledCase s
 
 val html5 = ref true
 fun setIsHtml5 b = html5 := b

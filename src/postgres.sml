@@ -62,11 +62,9 @@ fun p_sql_type_base t =
 
 fun checkRel (table, checkNullable) (s, xts) =
     let
-        val sl = CharVector.map Char.toLower s
-        val sl = if size sl > 1 andalso String.sub (sl, 0) = #"\"" then
-                     String.substring (sl, 1, size sl - 2)
-                 else
-                     sl
+        (* The catalog stores the bare name, without the quotes an identifier
+         * may carry in generated SQL. *)
+        val sl = CharVector.map Char.toLower (Settings.unquoteSql s)
 
         val q = "SELECT COUNT(*) FROM information_schema." ^ table ^ " WHERE table_name = '"
                 ^ sl ^ "'"
@@ -1124,6 +1122,26 @@ fun p_cast (s, t) = s ^ "::" ^ p_sql_type t
 
 fun p_blank (n, t) = p_cast ("$" ^ Int.toString n, t)
 
+(* The PostgreSQL keywords that cannot be used as table or column names
+ * without quoting: the "reserved" and "reserved (can be function or type)"
+ * categories of Appendix C of the manual, taken from the RESERVED_KEYWORD and
+ * TYPE_FUNC_NAME_KEYWORD entries of src/include/parser/kwlist.h. *)
+val keywords = [
+    "ALL", "ANALYSE", "ANALYZE", "AND", "ANY", "ARRAY", "AS", "ASC",
+    "ASYMMETRIC", "AUTHORIZATION", "BINARY", "BOTH", "CASE", "CAST", "CHECK", "COLLATE",
+    "COLLATION", "COLUMN", "CONCURRENTLY", "CONSTRAINT", "CREATE", "CROSS", "CURRENT_CATALOG", "CURRENT_DATE",
+    "CURRENT_ROLE", "CURRENT_SCHEMA", "CURRENT_TIME", "CURRENT_TIMESTAMP", "CURRENT_USER", "DEFAULT", "DEFERRABLE", "DESC",
+    "DISTINCT", "DO", "ELSE", "END", "EXCEPT", "FALSE", "FETCH", "FOR",
+    "FOREIGN", "FREEZE", "FROM", "FULL", "GRANT", "GROUP", "HAVING", "ILIKE",
+    "IN", "INITIALLY", "INNER", "INTERSECT", "INTO", "IS", "ISNULL", "JOIN",
+    "LATERAL", "LEADING", "LEFT", "LIKE", "LIMIT", "LOCALTIME", "LOCALTIMESTAMP", "NATURAL",
+    "NOT", "NOTNULL", "NULL", "OFFSET", "ON", "ONLY", "OR", "ORDER",
+    "OUTER", "OVERLAPS", "PLACING", "PRIMARY", "REFERENCES", "RETURNING", "RIGHT", "SELECT",
+    "SESSION_USER", "SIMILAR", "SOME", "SYMMETRIC", "SYSTEM_USER", "TABLE", "TABLESAMPLE", "THEN",
+    "TO", "TRAILING", "TRUE", "UNION", "UNIQUE", "USER", "USING", "VARIADIC",
+    "VERBOSE", "WHEN", "WHERE", "WINDOW", "WITH"
+   ]
+
 val () = addDbms {name = "postgres",
                   randomFunction = "RANDOM",
                   header = Config.pgheader,
@@ -1157,7 +1175,9 @@ val () = addDbms {name = "postgres",
                   supportsIsDistinctFrom = true,
                   supportsSHA512 = SOME {InitializeDb = "CREATE EXTENSION IF NOT EXISTS pgcrypto;",
                                          GenerateHash = fn name => "DIGEST(" ^ name ^ ", 'sha512')"},
-                  supportsSimilar = SOME {InitializeDb = "CREATE EXTENSION IF NOT EXISTS pg_trgm;"}}
+                  supportsSimilar = SOME {InitializeDb = "CREATE EXTENSION IF NOT EXISTS pg_trgm;"},
+                  keywords = keywords,
+                  identifierQuote = "\""}
 
 val () = setDbms "postgres"
 

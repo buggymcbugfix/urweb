@@ -49,6 +49,10 @@ val ident = String.translate (fn #"'" => "PRIME"
 
 fun checkRel (table, checkNullable) (s, xts) =
     let
+        (* The catalog stores the bare name, without the quotes an identifier
+         * may carry in generated SQL (and quotes would not survive inside the
+         * C string literals below). *)
+        val s = Settings.unquoteSql s
         val q = "SELECT COUNT(*) FROM sqlite_schema WHERE name = '" ^ s ^ "' COLLATE NOCASE"
     in
         box [string "if (sqlite3_prepare_v2(conn->conn, \"",
@@ -845,6 +849,31 @@ fun p_cast (s, _) = s
 
 fun p_blank _ = "?"
 
+(* Every SQLite keyword, from https://sqlite.org/lang_keywords.html.  Some
+ * of them can in fact be used unquoted as identifiers ("fallback" tokens),
+ * but which ones is a parser detail, so all of them are quoted. *)
+val keywords = [
+    "ABORT", "ACTION", "ADD", "AFTER", "ALL", "ALTER", "ALWAYS", "ANALYZE",
+    "AND", "AS", "ASC", "ATTACH", "AUTOINCREMENT", "BEFORE", "BEGIN", "BETWEEN",
+    "BY", "CASCADE", "CASE", "CAST", "CHECK", "COLLATE", "COLUMN", "COMMIT",
+    "CONFLICT", "CONSTRAINT", "CREATE", "CROSS", "CURRENT", "CURRENT_DATE", "CURRENT_TIME", "CURRENT_TIMESTAMP",
+    "DATABASE", "DEFAULT", "DEFERRABLE", "DEFERRED", "DELETE", "DESC", "DETACH", "DISTINCT",
+    "DO", "DROP", "EACH", "ELSE", "END", "ESCAPE", "EXCEPT", "EXCLUDE",
+    "EXCLUSIVE", "EXISTS", "EXPLAIN", "FAIL", "FILTER", "FIRST", "FOLLOWING", "FOR",
+    "FOREIGN", "FROM", "FULL", "GENERATED", "GLOB", "GROUP", "GROUPS", "HAVING",
+    "IF", "IGNORE", "IMMEDIATE", "IN", "INDEX", "INDEXED", "INITIALLY", "INNER",
+    "INSERT", "INSTEAD", "INTERSECT", "INTO", "IS", "ISNULL", "JOIN", "KEY",
+    "LAST", "LEFT", "LIKE", "LIMIT", "MATCH", "MATERIALIZED", "NATURAL", "NO",
+    "NOT", "NOTHING", "NOTNULL", "NULL", "NULLS", "OF", "OFFSET", "ON",
+    "OR", "ORDER", "OTHERS", "OUTER", "OVER", "PARTITION", "PLAN", "PRAGMA",
+    "PRECEDING", "PRIMARY", "QUERY", "RAISE", "RANGE", "RECURSIVE", "REFERENCES", "REGEXP",
+    "REINDEX", "RELEASE", "RENAME", "REPLACE", "RESTRICT", "RETURNING", "RIGHT", "ROLLBACK",
+    "ROW", "ROWS", "SAVEPOINT", "SELECT", "SET", "TABLE", "TEMP", "TEMPORARY",
+    "THEN", "TIES", "TO", "TRANSACTION", "TRIGGER", "UNBOUNDED", "UNION", "UNIQUE",
+    "UPDATE", "USING", "VACUUM", "VALUES", "VIEW", "VIRTUAL", "WHEN", "WHERE",
+    "WINDOW", "WITH", "WITHOUT"
+   ]
+
 val () = addDbms {name = "sqlite",
                   randomFunction = "RANDOM",
                   header = Config.sqheader,
@@ -877,6 +906,8 @@ val () = addDbms {name = "sqlite",
                   requiresTimestampDefaults = false,
                   supportsIsDistinctFrom = true,
                   supportsSHA512 = NONE,
-                  supportsSimilar = NONE}
+                  supportsSimilar = NONE,
+                  keywords = keywords,
+                  identifierQuote = "\""}
 
 end
