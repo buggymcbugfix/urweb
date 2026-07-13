@@ -1,0 +1,38 @@
+# Editor configuration, see http://editorconfig.org
+root = true
+
+[*]
+charset = utf-8
+indent_style = space
+indent_size = 4
+insert_final_newline = false
+# todo: trim it all and set this to true
+trim_trailing_whitespace = false
+max_line_length = off
+
+[*.{md,txt}]
+trim_trailing_whitespace = false
+indent_style = space
+indent_size = 2
+
+[*.ml]
+indent_size = 4
+
+[*.nix]
+indent_style = space
+indent_size = 2
+
+[*.patch]
+trim_trailing_whitespace = false
+
+[*.{ur,urs}]
+indent_size = 4
+
+[talk.ur]
+indent_size = 3
+
+[*.c]
+indent_size = 2
+
+[*.am]
+indent_style = tab
