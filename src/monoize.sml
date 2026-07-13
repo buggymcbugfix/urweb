@@ -161,7 +161,7 @@ fun lowercaseFirst "" = ""
   | lowercaseFirst s = String.str (Char.toLower (String.sub (s, 0)))
                        ^ String.extract (s, 1, NONE)
 
-fun monoNameLc env c = lowercaseFirst (monoName env c)
+fun monoNameLc env c = monoName env c
 
 fun readType' (t, loc) = (L'.TFun ((L'.TFfi ("Basis", "string"), loc),
                                    (L'.TOption t, loc)), loc)
