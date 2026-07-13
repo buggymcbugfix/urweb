@@ -2338,6 +2338,9 @@ fun monoExp (env, st, fm) (all as (e, loc)) =
           | L.ECApp ((L.EFfi ("Basis", "sql_neg"), _), _) =>
             ((L'.EAbs ("_", (L'.TRecord [], loc), (L'.TFfi ("Basis", "string"), loc),
                        str "-"), loc), fm)
+          | L.ECApp ((L.EFfi ("Basis", "sql_abs"), _), _) =>
+            ((L'.EAbs ("_", (L'.TRecord [], loc), (L'.TFfi ("Basis", "string"), loc),
+                       str "abs"), loc), fm)
 
           | L.ECApp (
             (L.ECApp (

@@ -639,6 +639,7 @@ val sql_octet_length : sql_ufunc blob int
 val sql_known : t ::: Type -> sql_ufunc t bool
 val sql_lower : sql_ufunc string string
 val sql_upper : sql_ufunc string string
+val sql_abs : t ::: Type -> sql_arith t -> sql_ufunc t t
 
 con sql_bfunc :: Type -> Type -> Type -> Type
 val sql_bfunc : tables ::: {{Type}} -> agg ::: {{Type}} -> exps ::: {Type}
