@@ -2741,6 +2741,24 @@ fun monoExp (env, st, fm) (all as (e, loc)) =
              (L.ECApp (
               (L.ECApp (
                (L.ECApp (
+                (L.EFfi ("Basis", "sql_is_not_null"), _), _),
+                _), _),
+               _), _),
+              _), _)) =>
+            let
+                val s = (L'.TFfi ("Basis", "string"), loc)
+            in
+                ((L'.EAbs ("s", s, s,
+                           strcat [str "(",
+                                   (L'.ERel 0, loc),
+                                   str " IS NOT NULL)"]), loc),
+                 fm)
+            end
+
+          | (L.ECApp (
+             (L.ECApp (
+              (L.ECApp (
+               (L.ECApp (
                 (L.EFfi ("Basis", "sql_coalesce"), _), _),
                 _), _),
                _), _),

@@ -2193,6 +2193,12 @@ sqlexp : TRUE                           (sql_inject (EVar (["Basis"], "True", In
                                              (EApp ((EVar (["Basis"], "sql_is_null", Infer), loc),
                                                     sqlexp), loc)
                                          end)
+       | sqlexp IS NOT NULL             (let
+                                             val loc = s (sqlexpleft, NULLright)
+                                         in
+                                             (EApp ((EVar (["Basis"], "sql_is_not_null", Infer), loc),
+                                                    sqlexp), loc)
+                                         end)
 
        | CIF sqlexp CTHEN sqlexp CELSE sqlexp (let
                                                    val loc = s (CIFleft, sqlexp3right)
