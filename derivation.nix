@@ -8,7 +8,7 @@
   libtool,
   linkFarm,
   makeBinaryWrapper,
-  mlton,
+  mlton20210117,
   openssl,
   postgresql,
   runCommand,
@@ -45,7 +45,7 @@ stdenv.mkDerivation {
     autoconf
     automake
     libtool
-    mlton
+    mlton20210117
   ];
 
   # link/runtime dependencies
