@@ -313,6 +313,8 @@ val jsFuncsBase = basisM [("alert", "alert"),
                           ("minTime", "0"),
                           ("stringToBool_error", "s2be"),
                           ("stringToBool", "s2b"),
+                          ("stringToChar_error", "s2ce"),
+                          ("stringToChar", "s2c"),
 
                           ("islower", "isLower"),
                           ("isupper", "isUpper"),
