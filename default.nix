@@ -1,9 +1,8 @@
 let
   pinnedNixpkgs = import (builtins.fetchTarball {
-    name = "pinned-nixpkgs-for-urweb-school";
-    url = https://github.com/NixOS/nixpkgs/archive/25.05.tar.gz;
+    url = https://releases.nixos.org/nixos/unstable/nixos-26.11pre1035164.753cc8a3a874/nixexprs.tar.xz;
     # Hash obtained using `nix-prefetch-url --unpack <url>`
-    sha256 = "1915r28xc4znrh2vf4rrjnxldw2imysz819gzhk9qlrkqanmfsxd";
+    sha256 = "04qa7d57m4l4sny0lnrzmnm854xszv43sfnfgs51xzmc5akssg1y";
   }) {};
 in
 {pkgs ? pinnedNixpkgs}: pkgs.callPackage ./derivation.nix {}
