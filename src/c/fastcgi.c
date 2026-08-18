@@ -285,7 +285,11 @@ static int read_nvp(unsigned char **buf, int len, nvp *nv) {
     return -1;
   if ((valueLength = read_funny_len(buf, &len)) < 0)
     return -2;
-  if (len < nameLength + valueLength)
+  if (nameLength < 0
+      || valueLength < 0
+      || nameLength > INT_MAX - valueLength
+      || len < nameLength + valueLength
+      || nameLength == INT_MAX)
     return -3;
 
   if (nameLength+1 > nv->name_len) {
