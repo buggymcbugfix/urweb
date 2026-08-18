@@ -801,18 +801,11 @@ val useMore : ctx ::: {Unit} -> use1 ::: {Type} -> use2 ::: {Type}
 
 con html = [Html]
 con head = [Head]
-
-con body' = [MakeForm, Body]
-con form' = [Body, Form]
-con subform' = [Body, Subform]
-con tabl' = [MakeForm, Table]
-con tr' = [MakeForm, Tr]
-
-con body = [Dyn] ++ body'
-con form = [Dyn] ++ form'
-con subform = [Dyn] ++ subform'
-con tabl = [Dyn] ++ tabl'
-con tr = [Dyn] ++ tr'
+con body = [Dyn, MakeForm, Body]
+con form = [Dyn, Body, Form]
+con subform = [Dyn, Body, Subform]
+con tabl = [Dyn, MakeForm, Table]
+con tr = [Dyn, MakeForm, Tr]
 
 con xhtml = xml html
 con page = xhtml [] []
