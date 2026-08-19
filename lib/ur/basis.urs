@@ -940,7 +940,6 @@ val datalist : bodyTag boxAttrs
 (** Interactive Elements **)
 val details : bodyTag boxAttrs
 val dialog : bodyTag boxAttrs
-val menuitem : bodyTag boxAttrs
 
 (** Grouping Content **)
 val figure : bodyTag boxAttrs
