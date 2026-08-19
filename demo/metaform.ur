@@ -7,7 +7,7 @@ functor Make (M : sig
     fun handler values = return <xml><body>
       {@mapUX2 [string] [string] [body]
         (fn [nm :: Name] [rest ::_] [[nm] ~ rest] name value => <xml>
-          <li> {[name]} = {[value]}</li>
+          <p> {[name]} = {[value]}</p>
         </xml>)
         M.fl M.names values}
     </body></xml>
@@ -16,7 +16,7 @@ functor Make (M : sig
       <form>
         {@foldUR [string] [fn cols => xml form [] (mapU string cols)]
           (fn [nm :: Name] [rest ::_] [[nm] ~ rest] name acc => <xml>
-            <li> {[name]}: <textbox{nm}/></li>
+            <p> {[name]}: <textbox{nm}/></p>
             {useMore acc}
           </xml>)
           <xml/>

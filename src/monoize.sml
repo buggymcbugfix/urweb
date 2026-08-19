@@ -250,6 +250,8 @@ fun monoType env =
                   | L.CFfi ("Basis", "xbody") => (L'.TFfi ("Basis", "string"), loc)
                   | L.CFfi ("Basis", "xtable") => (L'.TFfi ("Basis", "string"), loc)
                   | L.CFfi ("Basis", "xtr") => (L'.TFfi ("Basis", "string"), loc)
+                  | L.CFfi ("Basis", "xol") => (L'.TFfi ("Basis", "string"), loc)
+                  | L.CFfi ("Basis", "xul") => (L'.TFfi ("Basis", "string"), loc)
                   | L.CFfi ("Basis", "xform") => (L'.TFfi ("Basis", "string"), loc)
 
                   | L.CFfi ("Basis", "url") => (L'.TFfi ("Basis", "string"), loc)

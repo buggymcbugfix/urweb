@@ -805,6 +805,7 @@ con xhead = xml head [] []
 con xtable = xml tabl [] []
 con xtr = xml tr [] []
 con xform = xml form [] []
+con xlist = xml [Dyn, List] [] []
 
 
 (*** HTML details *)
@@ -879,6 +880,20 @@ con tableEvents = focusEvents ++ mouseEvents ++ keyEvents
 con boxAttrs = [Data = data_attr, Id = id, Title = string, Role = string, Align = string] ++ boxEvents
 con tableAttrs = [Data = data_attr, Id = id, Title = string, Align = string] ++ tableEvents
 
+con listTag =
+    fn (attrs :: {Type}) =>
+        unit ->
+                  (* the context in which the tag may be placed *)
+                                   (* the context required of children of the tag *)
+        tag attrs body [List, Dyn] [] []
+
+val ol : listTag (boxAttrs ++ [Reversed = bool, Start = int, Typ = string (**)]) (** we should change this to `variant [Numbers = unit, UppercaseLetters = unit, LowercaseLetters = unit, UppercaseRomanNumerals = unit, LowercaseRomanNumerals = unit]` *)
+val ul : listTag boxAttrs
+val menu : listTag boxAttrs
+val li :
+    unit -> 
+    tag boxAttrs [List, Dyn] body [] []
+
 val body : unit -> tag ([Data = data_attr, Id = id, Title = string, Onload = transaction unit, Onunload = transaction unit, Onhashchange = transaction unit]
                             ++ boxEvents)
                        html body [] []
@@ -912,10 +927,6 @@ val h3 : bodyTag boxAttrs
 val h4 : bodyTag boxAttrs
 val h5 : bodyTag boxAttrs
 val h6 : bodyTag boxAttrs
-
-val li : bodyTag boxAttrs
-val ol : bodyTag boxAttrs
-val ul : bodyTag boxAttrs
 
 val hr : bodyTag boxAttrs
 

@@ -7,6 +7,8 @@ fun diversion () = return <xml><body>
 </body></xml>
 
 fun main () = return <xml><body>
-  <li> <a link={diversion ()}>See something shiny!</a></li>
-  <li> <a link={MM.main ()}>Fill out a form!</a></li>
+  <ul>
+    <li> <a link={diversion ()}>See something shiny!</a></li>
+    <li> <a link={MM.main ()}>Fill out a form!</a></li>
+  </ul>
 </body></xml>
