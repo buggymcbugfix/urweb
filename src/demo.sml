@@ -68,7 +68,7 @@ fun make' {prefix, dirname, guided} =
         val fname = OS.Path.joinDirFile {dir = dirname,
                                          file = "demo.ur"}
         val urOut = TextIO.openOut fname
-        val () = TextIO.output (urOut, "fun main () = return <xml><body>\n")
+        val () = TextIO.output (urOut, "fun main () = return <xml><body><ul>\n")
 
         fun mergeWith f (o1, o2) =
             case (o1, o2) of
@@ -389,7 +389,7 @@ fun make' {prefix, dirname, guided} =
             NONE => raise Fail "No demo applications!"
           | SOME combined =>
             let
-                val () = (TextIO.output (urOut, "</body></xml>\n");
+                val () = (TextIO.output (urOut, "</ul></body></xml>\n");
                           TextIO.closeOut urOut)
 
                 val fname = OS.Path.joinDirFile {dir = dirname,
