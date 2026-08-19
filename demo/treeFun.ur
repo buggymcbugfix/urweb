@@ -22,13 +22,15 @@ functor Make(M : sig
                             children <- recurse (Some r.Tab.id);
                             return <xml>
                               <li> {f r.Tab}</li>
-                              
-                              <ul>
-                                {children}
-                              </ul>
+                              <li>
+                                <ul>
+                                  {children}
+                                </ul>
+                              </li>
                             </xml>)
         in
-            recurse root
+          res <- recurse root;
+          return <xml><ul>{res}</ul></xml>
         end
 
 end

@@ -15,6 +15,8 @@ structure SL = ListFun.Make(S)
 
 fun main () = return <xml><body>
   Pick your poison:<br/>
-  <li> <a link={IL.main ()}>Integers</a></li>
-  <li> <a link={SL.main ()}>Strings</a></li>
+  <ul>
+      <li> <a link={IL.main ()}>Integers</a></li>
+      <li> <a link={SL.main ()}>Strings</a></li>
+  </ul>
 </body></xml>

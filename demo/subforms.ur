@@ -4,7 +4,7 @@ fun sub r =
             case ls of
                 [] => <xml/>
               | r :: ls => <xml>
-                <li>{[r.Num]} = {[r.Text]}</li>
+                <p>{[r.Num]} = {[r.Text]}</p>
                 {sub' ls}
               </xml>
     in
@@ -20,7 +20,7 @@ fun subfrms n =
         <xml>
           <entry>
             <hidden{#Num} value={show n}/>
-            <li>{[n]}: <textbox{#Text}/></li>
+            <p>{[n]}: <textbox{#Text}/></p>
           </entry>
           {subfrms (n - 1)}
         </xml>
