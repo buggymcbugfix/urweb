@@ -54,6 +54,19 @@ apt-get install urweb
 brew install urweb
 ```
 
+# Developing the Compiler
+
+To set up a build environment for developing the compiler, your easiest route is to run:
+
+```sh
+nix-shell
+sml # builds the Ur/Web compiler and launches the SML REPL
+```
+
+This presupposes that you have the Nix package manager installed on your system.
+
+In the SML REPL you get access to fast(er) rebuilds of the Ur/Web compiler.
+
 # For More Detail
 
 See [the reference manual](http://www.impredicative.com/ur/manual.pdf).
