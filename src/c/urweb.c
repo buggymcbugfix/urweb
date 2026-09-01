@@ -3999,7 +3999,7 @@ failure_kind uw_initialize(uw_context ctx) {
 
 static int url_bad(uw_Basis_string s) {
   for (; *s; ++s)
-    if (!isgraph((int)*s))
+    if (!isgraph((unsigned char)*s))
       return 1;
 
   return 0;
@@ -4025,7 +4025,7 @@ uw_Basis_string uw_Basis_checkUrl(uw_context ctx, uw_Basis_string s) {
 
 static int mime_format(const char *s) {
   for (; *s; ++s)
-    if (!isalnum((int)*s) && *s != '/' && *s != '-' && *s != '.' && *s != '+')
+    if (!isalnum((unsigned char)*s) && *s != '/' && *s != '-' && *s != '.' && *s != '+')
       return 0;
 
   return 1;
@@ -4083,7 +4083,7 @@ uw_Basis_string uw_Basis_blessResponseHeader(uw_context ctx, uw_Basis_string s) 
 
 static int envVar_format(const char *s) {
   for (; *s; ++s)
-    if (!isalnum((int)*s) && *s != '_' && *s != '.')
+    if (!isalnum((unsigned char)*s) && *s != '_' && *s != '.')
       return 0;
 
   return 1;
@@ -4121,7 +4121,7 @@ uw_Basis_string uw_Basis_checkEnvVar(uw_context ctx, uw_Basis_string s) {
 
 static int meta_format(const char *s) {
   for (; *s; ++s)
-    if (!isalpha((int)*s) && *s != '-')
+    if (!isalpha((unsigned char)*s) && *s != '-')
       return 0;
 
   return 1;
