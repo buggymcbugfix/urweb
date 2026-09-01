@@ -1,7 +1,8 @@
 { pkgs ? import ./nixpkgs.nix }:
 let
-  urweb = pkgs.callPackage ./derivation.nix { }; # your derivation
-  inherit (pkgs) lib;
+  urweb = pkgs.callPackage ./derivation.nix { };
+  # Same derivation minus the sources: its outPath changes iff a reconfigure is needed.
+  toolchainId = builtins.unsafeDiscardStringContext (urweb.overrideAttrs (_: { src = null; })).outPath;
 in
 pkgs.mkShell {
   inputsFrom = [ urweb ];
@@ -13,23 +14,26 @@ pkgs.mkShell {
 
   shellHook = ''
     export DEVPREFIX="$PWD/out"
+    ${urweb.configureEnv "$DEVPREFIX"}
 
-    export SQHEADER="${pkgs.sqlite.dev}/include/sqlite3.h"
-    export PGHEADER="${pkgs.postgresql.dev}/include/libpq-fe.h"
-    export ICU_INCLUDES="-I${pkgs.icu.dev}/include"
-    export CC="${pkgs.gcc}/bin/gcc"
-    export CCARGS="-I$DEVPREFIX/include \
-      -L${lib.getLib pkgs.openssl}/lib \
-      -L${pkgs.sqlite.out}/lib \
-      -L${pkgs.postgresql.lib}/lib \
-      -Wno-error=int-conversion"
+    _urweb_id="${toolchainId} $DEVPREFIX"
+    _urweb_stamp="$DEVPREFIX/.configured-with"
+
+    urweb_configure() {
+      [ -f config.status ] && [ -f src/c/Makefile ] &&
+        [ "$(cat "$_urweb_stamp" 2>/dev/null)" = "$_urweb_id" ] && return 0
+      echo "urweb: toolchain or prefix changed, reconfiguring" >&2
+      make -k distclean >/dev/null 2>&1
+      rm -rf "''${DEVPREFIX:?}" config.status
+      ./autogen.sh && ./configure --prefix="$DEVPREFIX" || return
+      mkdir -p "$DEVPREFIX" && printf '%s\n' "$_urweb_id" > "$_urweb_stamp"
+    }
 
     repl() {
-      [ -x configure ] || ./autogen.sh || return
-      [ -f Makefile ]  || ./configure --prefix="$DEVPREFIX" \
-                            --with-openssl=${pkgs.openssl.dev} || return
-      make -C src/c && make -C src/c install && make smlnj || return
+      urweb_configure && make -C src/c && make -C src/c install && make smlnj || return
       rlwrap -pgreen -- sml .init.sml "$@"
     }
+
+    echo 'Run `repl` to rebuild Ur/Web using smlnj.'
   '';
 }

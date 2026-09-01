@@ -1,5 +1,13 @@
 import (builtins.fetchTarball {
-  url = "https://github.com/NixOS/nixpkgs/archive/26.05.tar.gz";
+  url = https://github.com/NixOS/nixpkgs/archive/nixos-unstable.tar.gz;
   # Hash obtained using `nix-prefetch-url --unpack <url>`
-  sha256 = "0am8xx09fx5yf2p0wb001v0jx1g5hrfb76h4r37xph378jgk7pcr";
-}) { }
+  sha256 = "sha256:8S3Kcxs7D4UtxJxSJZz0m14CGhuW0MxfrIwJxeGWGnQ=";
+}) {
+  overlays = [
+    (final: prev: {
+      mlton20210117 = prev.mlton20210117.override {
+        doCheck = !prev.stdenv.hostPlatform.isDarwin;
+      };
+    })
+  ];
+}
