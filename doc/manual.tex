@@ -2393,6 +2393,7 @@ DML commands $D$ are added to the rules for expressions $e$.
 
 $$\begin{array}{rrcll}
   \textrm{Commands} & D &::=& (\mt{INSERT} \; \mt{INTO} \; T^E \; (f,^+) \; \mt{VALUES} \; (E,^+)) \\
+  &&& (\mt{INSERT} \; \mt{INTO} \; T^E \; \mt{SET} \; (f = E,)^+) & \textrm{(Nonstandard syntax extension)} \\
   &&& (\mt{UPDATE} \; T^E \; \mt{SET} \; (f = E,)^+ \; \mt{WHERE} \; E) \\
   &&& (\mt{DELETE} \; \mt{FROM} \; T^E \; \mt{WHERE} \; E) \\
   \textrm{Table expressions} & T^E &::=& x \mid \{\{e\}\}

@@ -1503,6 +1503,15 @@ eterm  : LPAREN eexp RPAREN             (#1 eexp, s (LPARENleft, RPARENright))
                                                  ();
                                              (EApp (e, (ERecord (ListPair.zip (fields, sqlexps), false), loc)), loc)
                                          end)
+       | LPAREN INSERT INTO texp SET fsets RPAREN
+                                        (let
+                                             val loc = s (LPARENleft, RPARENright)
+
+                                             val e = (EVar (["Basis"], "insert", Infer), loc)
+                                             val e = (EApp (e, texp), loc)
+                                         in
+                                             (EApp (e, (ERecord (fsets, false), loc)), loc)
+                                         end)
        | LPAREN enterDml UPDATE texp SET fsets CWHERE sqlexp leaveDml RPAREN
                                         (let
                                              val loc = s (LPARENleft, RPARENright)
