@@ -87,3 +87,6 @@ result
 
 # macos
 .DS_Store
+
+# SML development
+out

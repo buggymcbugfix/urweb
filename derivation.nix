@@ -10,12 +10,27 @@
   makeBinaryWrapper,
   mlton20210117,
   openssl,
+  pkg-config,
   postgresql,
   runCommand,
   sqlite,
   stdenv,
   urweb,
 }:
+
+let
+  configureEnv = prefix: ''
+    export SQHEADER="${sqlite.dev}/include/sqlite3.h"
+    export PGHEADER="${postgresql.dev}/include/libpq-fe.h"
+    export ICU_INCLUDES="-I${icu.dev}/include"
+    export CC="${gcc}/bin/gcc"
+    export CCARGS="-I${prefix}/include \
+      -L${lib.getLib openssl}/lib \
+      -L${sqlite.out}/lib \
+      -L${postgresql.lib}/lib \
+      -Wno-error=int-conversion"
+  '';
+in
 
 stdenv.mkDerivation {
   pname = "urweb";
@@ -46,6 +61,7 @@ stdenv.mkDerivation {
     automake
     libtool
     mlton20210117
+    pkg-config
   ];
 
   # link/runtime dependencies
@@ -61,18 +77,7 @@ stdenv.mkDerivation {
     curl
   ];
 
-  configureFlags = [ "--with-openssl=${openssl.dev}" ];
-
-  preConfigure = ''
-    export SQHEADER="${sqlite.dev}/include/sqlite3.h"
-    export PGHEADER="${postgresql.dev}/include/libpq-fe.h"
-    export ICU_INCLUDES="-I${icu.dev}/include"
-    export CC="${gcc}/bin/gcc"
-    export CCARGS="-I$out/include \
-      -L${lib.getLib openssl}/lib \
-      -L${sqlite.out}/lib \
-      -L${postgresql.lib}/lib \
-      -Wno-error=int-conversion"
+  preConfigure = configureEnv "$out" + ''
     ./autogen.sh
   '';
 
@@ -100,6 +105,8 @@ stdenv.mkDerivation {
     runHook postInstall
   '';
 
+  passthru.configureEnv = configureEnv;
+  
   /*
     withLibraries accepts urweb libraries:
 

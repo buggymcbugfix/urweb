@@ -78,6 +78,14 @@ apt-get install smlnj libsmlnj-smlnj ml-yacc ml-lpt
 
 To begin an interactive session with the Ur compiler modules, run \texttt{make smlnj}, and then, from within an \texttt{sml} session, run \texttt{CM.make "src/urweb.cm";}.  The \texttt{Compiler} module is the main entry point, and you can find its signature in \texttt{src/compiler.sig}.
 
+To access the SML-NJ build of the Ur/Web compiler via Nix (including some convenience wrappers), run:
+\begin{verbatim}
+$ nix-shell
+[nix-shell]$ repl
+- c "tests/alert"; (* compile this Ur/Web project *)
+- r (); (* rebuild the Ur/Web compiler itself *)
+\end{verbatim}
+
 To run an SQL-backed application with a backend besides SQLite, you will probably want to install one of these servers.
 
 \begin{verbatim}
