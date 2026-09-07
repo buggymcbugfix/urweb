@@ -37,11 +37,13 @@ doc/*.out
 *.sql
 *mlmon.out
 
+# TeX
 *.aux
 *.dvi
 *.pdf
 *.ps
 *.toc
+*.out
 
 .depend
 Makefile.coq
