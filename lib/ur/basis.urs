@@ -1215,11 +1215,11 @@ val dd : other ::: {Unit} -> [other ~ [Body,Dl]]
 val error : t ::: Type -> xbody -> t
 
 (* Client-side-only handlers: *)
-val onError : (xbody -> transaction unit) -> transaction unit
-val onFail : (string -> transaction unit) -> transaction unit
-val onConnectFail : transaction unit -> transaction unit
-val onDisconnect : transaction unit -> transaction unit
-val onServerError : (string -> transaction unit) -> transaction unit
+val onError : (xbody -> transaction unit) -> transaction unit (* calls to `error` *)
+val onFail : (string -> transaction unit) -> transaction unit (* uncaught JavaScript exceptions *)
+val onConnectFail : transaction unit -> transaction unit (* failure of remote procedure calls *)
+val onDisconnect : transaction unit -> transaction unit (* the severance of the connection serving asynchronous messages *)
+val onServerError : (string -> transaction unit) -> transaction unit (* the occurrence of some other error with that connection *)
 
 (* More standard document-level JavaScript handlers *)
 val onClick : (mouseEvent -> transaction unit) -> transaction unit
