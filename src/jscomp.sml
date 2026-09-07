@@ -412,6 +412,12 @@ fun process (file : file) =
         (* function operating on the same value representation, and register  *)
         (* it in urfuncs[] as a constant so interpreted code can call it      *)
         (* through the existing native-function path.                         *)
+        (*                                                                    *)
+        (* Compiled code runs on the JavaScript stack, whose depth browsers   *)
+        (* limit to a few thousand frames, whereas the interpreter's stack    *)
+        (* lives on the heap.  Self-recursive functions are therefore turned  *)
+        (* into loops where possible: for ordinary tail calls and for tail    *)
+        (* calls under a string concatenation (see [selfTails]).              *)
         (* ------------------------------------------------------------------ *)
 
         val jsifyString = String.translate (fn #"\"" => "\\\""
@@ -630,26 +636,89 @@ fun process (file : file) =
                 SOME s => s
               | NONE => raise Fail ("Jscomp: direct compilation of unsupported FFI function " ^ #1 k ^ "." ^ #2 k)
 
-        (* Does the body of function [n] (of arity [ar]) contain a call to
-         * itself, with exactly [ar] arguments, in tail position? *)
-        fun hasSelfTail (n, ar) (e : exp) =
+        (* The leaves of a tree of string concatenations, in order.  [cat] is
+         * associative (also for the XML values with embedded closures that
+         * the runtime represents as trees, since they are flattened in
+         * order), so the tree shape carries no meaning. *)
+        fun catLeaves (e : exp) : exp list =
             case #1 e of
-                ECase (_, pes, _) => List.exists (fn (_, e) => hasSelfTail (n, ar) e) pes
-              | ELet (_, _, _, e2) => hasSelfTail (n, ar) e2
-              | ESeq (_, e2) => hasSelfTail (n, ar) e2
-              | EJavaScript (Source _, e) => hasSelfTail (n, ar) e
-              | EApp _ =>
-                (case spine e of
-                     ((ENamed m, _), args) => m = n andalso length args = ar
-                   | (h as (EAbs _, _), args) =>
-                     length args = lamArity h andalso hasSelfTail (n, ar) (peelBody (length args, h))
-                   | _ => false)
+                EStrcat (e1, e2) => catLeaves e1 @ catLeaves e2
+              | _ => [e]
+
+        (* Is [e] a call of named function [n] with exactly [ar] arguments? *)
+        fun isSelfCall (n, ar) (e : exp) =
+            case spine e of
+                ((ENamed m, _), args) => m = n andalso length args = ar
               | _ => false
 
+        (* Which kinds of self-recursive calls does the body of function [n]
+         * (of arity [ar]) make in tail position?
+         *
+         *   plain:   f args                      -- an ordinary tail call
+         *   cat:     a ^ b ^ ... ^ f args        -- a tail call "modulo cat"
+         *
+         * Both are compiled into a loop.  The second form is how the
+         * standard library builds XML from lists (List.mapX, mapXi, ...):
+         * on the server, Fuse and MonoOpt turn it into a sequence of writes
+         * followed by a genuine tail call, so rewriting the library with an
+         * accumulator would only make the server side quadratic.  Instead
+         * we exploit the associativity of concatenation here: the leaves to
+         * the left of the recursive call are appended to an accumulator, the
+         * loop continues with the call's arguments, and every other return
+         * prepends the accumulator to its result.
+         *
+         * The tail positions recognized here must match those that [cS]
+         * treats as tail positions, or the generated 'continue' would sit
+         * outside its loop. *)
+        fun selfTails (n, ar) (e : exp) : {plain : bool, cat : bool} =
+            let
+                val none = {plain = false, cat = false}
+
+                fun join ({plain = p1, cat = c1}, {plain = p2, cat = c2}) =
+                    {plain = p1 orelse p2, cat = c1 orelse c2}
+
+                fun go (e : exp) =
+                    case #1 e of
+                        ECase (_, pes, _) => foldl (fn ((_, e), acc) => join (acc, go e)) none pes
+                      | ELet (_, _, _, e2) => go e2
+                      | ESeq (_, e2) => go e2
+                      | EJavaScript (Source _, e) => go e
+                      | EApp _ =>
+                        (case spine e of
+                             ((ENamed m, _), args) =>
+                             if m = n andalso length args = ar then
+                                 {plain = true, cat = false}
+                             else
+                                 none
+                           | (h as (EAbs _, _), args) =>
+                             if length args = lamArity h then
+                                 go (peelBody (length args, h))
+                             else
+                                 none
+                           | _ => none)
+                      | EStrcat _ =>
+                        if isSelfCall (n, ar) (List.last (catLeaves e)) then
+                            {plain = false, cat = true}
+                        else
+                            none
+                      | _ => none
+            in
+                go e
+            end
+
+        (* Where a compiled expression's value goes. *)
         datatype target =
-                 Return of (int * int * string list) option  (* self-loop: name, arity, outer params *)
+                 Return of loop option
                | Assign of string
                | Discard
+
+        (* Present while compiling the body of a self-recursive function,
+         * which is wrapped in 'while (true)': [self]/[ar] identify the
+         * function, [outer] are the JavaScript parameters to reassign before
+         * 'continue', and [acc], if present, is the accumulator variable of
+         * the tail-call-modulo-cat transformation, to be prepended to every
+         * returned value. *)
+        withtype loop = {self : int, ar : int, outer : string list, acc : string option}
 
         fun isAtomic x =
             x = "null" orelse x = "true" orelse x = "false"
@@ -1287,7 +1356,11 @@ fun process (file : file) =
 
                 fun emit tgt x =
                     case tgt of
-                        Return _ => "return " ^ x ^ ";"
+                        (* Inside a tail-call-modulo-cat loop, the value
+                         * computed by this iteration is the suffix of the
+                         * overall result; the accumulator holds the prefix. *)
+                        Return (SOME {acc = SOME a, ...}) => "return cat(" ^ a ^ "," ^ x ^ ");"
+                      | Return _ => "return " ^ x ^ ";"
                       | Assign v => v ^ " = " ^ x ^ ";"
                       | Discard => "(" ^ x ^ ");"
 
@@ -1678,10 +1751,46 @@ fun process (file : file) =
 
                       | EJavaScript (Source _, e') => cS env tgt (e', st)
 
+                      | EStrcat _ =>
+                        (case tgt of
+                             Return (SOME {self, ar, outer, acc = SOME a}) =>
+                             let
+                                 val leaves = catLeaves e
+                                 val (prefix, last) = (List.take (leaves, length leaves - 1), List.last leaves)
+                             in
+                                 if isSelfCall (self, ar) last then
+                                     (* Tail call modulo cat:
+                                      *   a ^ b ^ f args   ==>   acc = cat(acc, a); acc = cat(acc, b);
+                                      *                          <reassign parameters>; continue;
+                                      * The leaves are evaluated left to right, before the
+                                      * recursive call's arguments, as in the original. *)
+                                     let
+                                         val (ss, st) =
+                                             ListUtil.foldlMap (fn (leaf, st) =>
+                                                                   let
+                                                                       val (s, x, st) = cE env (leaf, st)
+                                                                   in
+                                                                       (s @ [a ^ " = cat(" ^ a ^ "," ^ x ^ ");"], st)
+                                                                   end) st prefix
+                                         val (sa, xs, st) = cEs env (#2 (spine last), st)
+                                     in
+                                         (List.concat ss @ sa
+                                          @ ListPair.map (fn (p, x) => p ^ " = " ^ x ^ ";") (outer, xs)
+                                          @ ["continue;"], st)
+                                     end
+                                 else
+                                     cSdefault env tgt (e, st)
+                             end
+                           | _ => cSdefault env tgt (e, st))
+
                       | EApp _ =>
                         (case (tgt, spine e) of
-                             (Return (SOME (self, ar, outer)), ((ENamed m, _), args)) =>
+                             (Return (SOME {self, ar, outer, ...}), ((ENamed m, _), args)) =>
                              if m = self andalso length args = ar then
+                                 (* An ordinary self tail call: reassign the
+                                  * parameters and go around again.  Inside a
+                                  * tail-call-modulo-cat loop this is still
+                                  * right, since the accumulator is left as is. *)
                                  let
                                      val (ss, xs, st) = cEs env (args, st)
                                  in
@@ -1735,12 +1844,29 @@ fun process (file : file) =
                         end
                     else
                         let
-                            val loop = hasSelfTail (n, ar) body
+                            val tails = selfTails (n, ar) body
+                            val loop = #plain tails orelse #cat tails
+
+                            (* The loop reassigns the outer parameters a_i and
+                             * rebinds v_i with 'let' on every iteration, so that
+                             * closures created in one iteration keep their own
+                             * bindings. *)
                             val outer = map (fn p => "a" ^ String.extract (p, 1, NONE)) params
-                            val (ss, st) = cS env (Return (if loop then SOME (n, ar, outer) else NONE)) (body, st)
+
+                            (* Accumulator for tail calls modulo cat: the prefix
+                             * of the result produced by earlier iterations. *)
+                            val acc = if #cat tails then SOME "acc_" else NONE
+
+                            val (ss, st) = cS env (Return (if loop then
+                                                                SOME {self = n, ar = ar, outer = outer, acc = acc}
+                                                            else
+                                                                NONE)) (body, st)
                             val fbody =
                                 if loop then
-                                    "while (true) {let " ^ String.concatWith ", " (ListPair.map (fn (p, o') => p ^ " = " ^ o') (params, outer))
+                                    (case acc of
+                                         SOME a => "let " ^ a ^ " = \"\"; "
+                                       | NONE => "")
+                                    ^ "while (true) {let " ^ String.concatWith ", " (ListPair.map (fn (p, o') => p ^ " = " ^ o') (params, outer))
                                     ^ "; " ^ String.concatWith " " ss ^ "}"
                                 else
                                     String.concatWith " " ss
