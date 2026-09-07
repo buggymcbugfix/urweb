@@ -189,15 +189,36 @@ val checkCssUrl = CharVector.all (fn ch => Char.isAlphaNum ch
                                            orelse ch = #"&"
                                            orelse ch = #"="
                                            orelse ch = #"#")
+(* Is [s] a CSS identifier?  This follows the <ident-token> production of CSS
+ * Syntax Level 3 (https://www.w3.org/TR/css-syntax-3/#ident-token-diagram):
+ *
+ *   <ident-start> <ident>*
+ *   '-' <ident-start> <ident>*
+ *   '-' '-' <ident>*                    e.g. custom properties, --my-color
+ *
+ * where <ident-start> is a letter, an underscore or any non-ASCII code point,
+ * and <ident> additionally allows digits and hyphens.  Strings here are UTF-8,
+ * so a non-ASCII code point is a run of bytes >= 128, all accepted.  Backslash
+ * escapes, which the grammar also allows, are deliberately rejected: an escape
+ * could spell any character at all, which would defeat the purpose of the
+ * check.  The bare name "--" is reserved by CSS Custom Properties and is
+ * rejected too.  The runtime checks in urweb.c (uw_Basis_property) and
+ * urweb.js (property) implement the same rule for non-constant strings. *)
 fun checkProperty s =
-  (* See https://www.w3.org/TR/CSS21/grammar.html#scanner, rule `ident` *)
   let
-    fun nmstart ch = Char.isAlpha ch orelse ch = #"_"
-    fun nmchar ch = nmstart ch orelse Char.isDigit ch orelse ch = #"-"
+    fun identStart ch = Char.isAlpha ch orelse ch = #"_" orelse ord ch >= 128
+    fun ident ch = identStart ch orelse Char.isDigit ch orelse ch = #"-"
+
+    val n = size s
+    fun allFrom i = CharVector.all ident (String.extract (s, i, NONE))
   in
-    size s > 0
-    andalso (nmstart (String.sub (s, 0)) orelse size s > 1 andalso String.sub (s, 0) = #"-" andalso nmstart (String.sub (s, 1)))
-    andalso CharVector.all nmchar s
+    n > 0
+    andalso (if String.sub (s, 0) <> #"-" then
+                 identStart (String.sub (s, 0)) andalso allFrom 1
+             else if n > 1 andalso String.sub (s, 1) = #"-" then
+                 n > 2 andalso allFrom 2
+             else
+                 n > 1 andalso identStart (String.sub (s, 1)) andalso allFrom 2)
   end
 
 fun exp e =

@@ -4950,20 +4950,39 @@ uw_Basis_string uw_Basis_css_url(uw_context ctx, uw_Basis_string s) {
   return s;
 }
 
-uw_Basis_string uw_Basis_property(uw_context ctx, uw_Basis_string s) {
-  char *p;
+// CSS identifiers, per the <ident-token> production of CSS Syntax Level 3
+// (minus backslash escapes; see checkProperty in mono_opt.sml for the full
+// rationale).  A non-ASCII code point is a run of UTF-8 bytes >= 0x80, all of
+// which count as identifier characters.
+static int css_ident_start(unsigned char c) {
+  return isalpha(c) || c == '_' || c >= 0x80;
+}
 
-  if (!*s)
+static int css_ident_char(unsigned char c) {
+  return css_ident_start(c) || isdigit(c) || c == '-';
+}
+
+uw_Basis_string uw_Basis_property(uw_context ctx, uw_Basis_string s) {
+  unsigned char *p = (unsigned char *)s;
+
+  if (!*p)
     uw_error(ctx, FATAL, "Empty CSS property");
 
-  if (!U8_IS_SINGLE(s[0]) || (!islower((int)s[0]) && s[0] != '_'))
+  if (*p == '-') {
+    ++p;
+    if (*p == '-') {
+      // '--' <ident>*, e.g. a custom property; the bare name "--" is reserved.
+      ++p;
+      if (!*p)
+        uw_error(ctx, FATAL, "Reserved CSS property name '--'");
+    } else if (!css_ident_start(*p))
+      uw_error(ctx, FATAL, "Bad initial character in CSS property");
+  } else if (!css_ident_start(*p))
     uw_error(ctx, FATAL, "Bad initial character in CSS property");
 
-  for (p = s; *p; ++p) {
-    char c = *p;
-    if (!U8_IS_SINGLE(c) || (!islower((int)c) && !isdigit((int)c) && c != '_' && c != '-'))
+  for (; *p; ++p)
+    if (!css_ident_char(*p))
       uw_error(ctx, FATAL, "Disallowed character in CSS property");
-  }
 
   return s;
 }
