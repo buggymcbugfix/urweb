@@ -144,8 +144,7 @@ stdenv.mkDerivation {
     license = lib.licenses.bsd3;
     platforms = lib.platforms.linux ++ lib.platforms.darwin;
     maintainers = [
-      lib.maintainers.thoughtpolice
-      lib.maintainers.sheganinans
+      lib.maintainers.buggymcbugfix
     ];
   };
 }
