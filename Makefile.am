@@ -124,8 +124,7 @@ dist-hook:
 	cd demo; rm -f demo.ur*
 	cd demo/more; rm -f demo.ur*
 
-check-local: bin/urweb
-	@set -e; \
+TEST_PRELUDE = set -e; \
 	pid=""; \
 	dbfile=$$(mktemp); \
 	cleanup() { \
@@ -139,7 +138,10 @@ check-local: bin/urweb
 	trap cleanup EXIT INT TERM; \
 	\
 	echo "Compiling demo.exe."; \
-	bin/urweb -boot -noEmacs -dbms sqlite -db $$dbfile -demo /Demo demo; \
+	bin/urweb -boot -noEmacs -dbms sqlite -db $$dbfile -demo /Demo demo
+
+check-local: bin/urweb
+	@$(TEST_PRELUDE); \
 	\
 	echo "Running IPv4 test."; \
 	setup; \
@@ -147,7 +149,11 @@ check-local: bin/urweb
 	[ "$$status" = 'OK' ] || { echo "demo.exe failed to start" >&2; exit 1; }; \
 	curl -s "http://localhost:$$port/Demo/Hello/main" | diff tests/hello.html - || { echo "Test 'Hello' failed" >&2; exit 1; }; \
 	curl -s "http://localhost:$$port/Demo/Crud1/create?A=1&B=2&C=3&D=4" | diff tests/crud1.html - || { echo "Test 'Crud1' failed" >&2; exit 1; }; \
-	cleanup; \
+	echo "Tests succeeded."
+
+.PHONY: check-ipv6
+check-ipv6: bin/urweb
+	@$(TEST_PRELUDE); \
 	\
 	echo "Running IPv6 test."; \
 	setup; \
