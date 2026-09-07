@@ -42,6 +42,7 @@ structure TM = BinaryMapFn(struct
                            end)
 
 val explainEmbed = ref false
+val jsDirect = ref true
 
 type state = {
      decls : (string * int * (string * int * typ option) list) list,
@@ -399,9 +400,266 @@ fun process (file : file) =
             else
                 s
 
+        (* ------------------------------------------------------------------ *)
+        (* Direct compilation of named functions to JavaScript.               *)
+        (*                                                                    *)
+        (* Named functions referenced from client-side code are normally      *)
+        (* shipped as serialized ASTs and run by the CEK interpreter in       *)
+        (* urweb.js.  When a function's body uses only constructs that can    *)
+        (* run without the interpreter's ability to suspend (no rpc/recv/     *)
+        (* sleep, and no application of an unknown closure to unit, which is  *)
+        (* how transactions are run), we instead emit an ordinary JavaScript  *)
+        (* function operating on the same value representation, and register  *)
+        (* it in urfuncs[] as a constant so interpreted code can call it      *)
+        (* through the existing native-function path.                         *)
+        (* ------------------------------------------------------------------ *)
+
+        val jsifyString = String.translate (fn #"\"" => "\\\""
+                                             | #"\\" => "\\\\"
+                                             | ch => String.str ch)
+
+        fun jsifyStringMulti (n, s) =
+            case n of
+                0 => s
+              | _ => jsifyStringMulti (n - 1, jsifyString s)
+
+        fun deStrcat level (all as (e, loc)) =
+            case e of
+                EPrim (Prim.String (_, s)) => jsifyStringMulti (level, s)
+              | EStrcat (e1, e2) => deStrcat level e1 ^ deStrcat level e2
+              | EFfiApp ("Basis", "jsifyString", [(e, _)]) => "\"" ^ deStrcat (level + 1) e ^ "\""
+              | _ => (ErrorMsg.errorAt loc "Unexpected non-constant JavaScript code";
+                      Print.prefaces "deStrcat" [("e", MonoPrint.p_exp MonoEnv.empty all)];
+                      "")
+
+        fun spine (e : exp) =
+            let
+                fun sp (e, args) =
+                    case #1 e of
+                        EApp (f, x) => sp (f, x :: args)
+                      | _ => (e, args)
+            in
+                sp (e, [])
+            end
+
+        fun lamArity (e : exp) =
+            case #1 e of
+                EAbs (_, _, _, e') => 1 + lamArity e'
+              | _ => 0
+
+        (* Strip [k] leading lambdas *)
+        fun peelBody (0, e) = e
+          | peelBody (k, (EAbs (_, _, _, body), _)) = peelBody (k - 1, body)
+          | peelBody _ = raise Fail "Jscomp: peelBody"
+
+        fun isUnitT (t : typ) =
+            case #1 t of
+                TRecord [] => true
+              | TFfi ("Basis", "unit") => true
+              | _ => false
+
+        (* Types of the variables a pattern binds, in binding order. *)
+        fun patVarTypes (p : pat) : typ list =
+            case #1 p of
+                PVar (_, t) => [t]
+              | PPrim _ => []
+              | PCon (_, _, NONE) => []
+              | PCon (_, _, SOME p) => patVarTypes p
+              | PRecord xps => List.concat (map (fn (_, p, _) => patVarTypes p) xps)
+              | PNone _ => []
+              | PSome (_, p) => patVarTypes p
+
+        (* Can this expression be serialized as an interpreter AST by jsE? *)
+        fun astOk (e : exp) =
+            not (U.Exp.exists {typ = fn _ => false,
+                               exp = fn e =>
+                                        case e of
+                                            EWrite _ => true
+                                          | EClosure _ => true
+                                          | EQuery _ => true
+                                          | EDml _ => true
+                                          | ENextval _ => true
+                                          | ESetval _ => true
+                                          | EReturnBlob _ => true
+                                          | EUnurlify (_, _, true) => true
+                                          | EFfiApp ("Basis", "sigString", _) => true
+                                          | _ => false} e)
+
+        val arityOf = fn m => case IM.find (nameds, m) of
+                                  SOME e => lamArity e
+                                | NONE => 0
+
+        (* Is [e] compilable directly, given that the named functions in
+         * [cset] are (assumed) compilable? *)
+        fun directOk (cset : IS.set) (e : exp) : bool =
+            let
+                fun ok (env : typ option list) (e : exp) =
+                    case #1 e of
+                        EPrim _ => true
+                      | ERel _ => true
+                      | ENamed _ => true
+                      | ECon (_, _, NONE) => true
+                      | ECon (_, _, SOME e) => ok env e
+                      | ENone _ => true
+                      | ESome (_, e) => ok env e
+                      | EFfi k => isSome (Settings.jsFunc k)
+                      | EFfiApp ("Basis", "sigString", _) => false
+                      | EFfiApp (m, x, args) => isSome (Settings.jsFunc (m, x))
+                                                andalso List.all (fn (e, _) => ok env e) args
+                      | EApp _ =>
+                        let
+                            val (h, args) = spine e
+
+                            fun isUnitArg (a : exp) =
+                                case #1 a of
+                                    ERecord [] => true
+                                  | ERel n => (case (SOME (List.nth (env, n)) handle Subscript => NONE) of
+                                                   SOME (SOME t) => isUnitT t
+                                                 | _ => false)
+                                  | _ => false
+
+                            (* Applying an unknown closure to unit runs a transaction,
+                             * which might suspend; only allow it for heads we compile. *)
+                            val safeArity =
+                                case #1 h of
+                                    EAbs _ => lamArity h
+                                  | ENamed m => if IS.member (cset, m) then arityOf m else 0
+                                  | EFfi _ => 1000000
+                                  | _ => 0
+
+                            fun argsOk (_, []) = true
+                              | argsOk (i, a :: rest) =
+                                (not (isUnitArg a) orelse i < safeArity) andalso argsOk (i + 1, rest)
+                        in
+                            ok env h andalso List.all (ok env) args andalso argsOk (0, args)
+                        end
+                      | EAbs (_, dom, _, body) => ok (SOME dom :: env) body
+                      | EUnop (_, e) => ok env e
+                      | EBinop (_, _, e1, e2) => ok env e1 andalso ok env e2
+                      | ERecord xes => List.all (fn (_, e, _) => ok env e) xes
+                      | EField (e, _) => ok env e
+                      | ECase (e, pes, _) =>
+                        ok env e
+                        andalso List.all (fn (p, e) => ok (map SOME (rev (patVarTypes p)) @ env) e) pes
+                      | EStrcat (e1, e2) => ok env e1 andalso ok env e2
+                      | EError (e, _) => ok env e
+                      | ESeq (e1, e2) => ok env e1 andalso ok env e2
+                      | ELet (_, t, e1, e2) => ok env e1 andalso ok (SOME t :: env) e2
+                      | EJavaScript (Source _, e) => ok env e
+                      | EJavaScript (_, e) => astOk e
+                      | ERedirect (e, _) => ok env e
+                      | EUnurlify (e, _, false) => ok env e
+                      | EUnurlify (_, _, true) => false
+                      | ESignalReturn e => ok env e
+                      | ESignalBind (e1, e2) => ok env e1 andalso ok env e2
+                      | ESignalSource e => ok env e
+                      | ESpawn e => ok env e
+                      | EServerCall _ => false
+                      | ERecv _ => false
+                      | ESleep _ => false
+                      | EWrite _ => false
+                      | EClosure _ => false
+                      | EQuery _ => false
+                      | EDml _ => false
+                      | ENextval _ => false
+                      | ESetval _ => false
+                      | EReturnBlob _ => false
+            in
+                ok [] e
+            end
+
+        (* Greatest fixpoint: drop functions whose compilability relied on a
+         * callee that turned out not to be compilable. *)
+        val directSet =
+            if !jsDirect then
+                let
+                    val all = IM.foldli (fn (n, _, s) => IS.add (s, n)) IS.empty nameds
+
+                    fun refine cset =
+                        let
+                            val cset' = IS.filter (fn n =>
+                                                      case IM.find (nameds, n) of
+                                                          SOME e => directOk cset e
+                                                        | NONE => false) cset
+                        in
+                            if IS.numItems cset' = IS.numItems cset then
+                                cset
+                            else
+                                refine cset'
+                        end
+                in
+                    refine all
+                end
+            else
+                IS.empty
+
+        fun isDirect n = IS.member (directSet, n)
+
+        (* JavaScript literal syntax for a primitive, for code living in app.js *)
+        fun jsLit p =
+            let
+                fun jsChar ch =
+                    case ch of
+                        #"\"" => "\\\""
+                      | #"<" => "\\074"
+                      | #"\\" => "\\\\"
+                      | #"\n" => "\\n"
+                      | #"\r" => "\\r"
+                      | #"\t" => "\\t"
+                      | ch =>
+                        if Char.isPrint ch orelse ord ch >= 128 then
+                            String.str ch
+                        else
+                            "\\" ^ padWith (#"0", Int.fmt StringCvt.OCT (ord ch), 3)
+            in
+                case p of
+                    Prim.String (_, s) => "\"" ^ String.translate jsChar s ^ "\""
+                  | Prim.Char ch => "\"" ^ jsChar ch ^ "\""
+                  | _ => "(" ^ Prim.toString p ^ ")"
+            end
+
+        fun patConS pc =
+            case pc of
+                PConVar n => Int.toString n
+              | PConFfi {mod = "Basis", con = "True", ...} => "true"
+              | PConFfi {mod = "Basis", con = "False", ...} => "false"
+              | PConFfi {con, ...} => "\"" ^ con ^ "\""
+
+        fun ffiName k =
+            case Settings.jsFunc k of
+                SOME s => s
+              | NONE => raise Fail ("Jscomp: direct compilation of unsupported FFI function " ^ #1 k ^ "." ^ #2 k)
+
+        (* Does the body of function [n] (of arity [ar]) contain a call to
+         * itself, with exactly [ar] arguments, in tail position? *)
+        fun hasSelfTail (n, ar) (e : exp) =
+            case #1 e of
+                ECase (_, pes, _) => List.exists (fn (_, e) => hasSelfTail (n, ar) e) pes
+              | ELet (_, _, _, e2) => hasSelfTail (n, ar) e2
+              | ESeq (_, e2) => hasSelfTail (n, ar) e2
+              | EJavaScript (Source _, e) => hasSelfTail (n, ar) e
+              | EApp _ =>
+                (case spine e of
+                     ((ENamed m, _), args) => m = n andalso length args = ar
+                   | (h as (EAbs _, _), args) =>
+                     length args = lamArity h andalso hasSelfTail (n, ar) (peelBody (length args, h))
+                   | _ => false)
+              | _ => false
+
+        datatype target =
+                 Return of (int * int * string list) option  (* self-loop: name, arity, outer params *)
+               | Assign of string
+               | Discard
+
+        fun isAtomic x =
+            x = "null" orelse x = "true" orelse x = "false"
+            orelse (size x > 0 andalso (Char.isDigit (String.sub (x, 0))
+                                        orelse String.sub (x, 0) = #"\""
+                                        orelse String.isPrefix "v_" x))
+
         val foundJavaScript = ref false
 
-        fun jsExp mode outer =
+        fun jsExpI mode outer inner0 (e0, st0) =
             let
                 val len = length outer
 
@@ -507,24 +765,6 @@ fun process (file : file) =
                                                         jsPat p,
                                                         str "}"]
 
-                        val jsifyString = String.translate (fn #"\"" => "\\\""
-                                                             | #"\\" => "\\\\"
-                                                             | ch => String.str ch)
-
-                        fun jsifyStringMulti (n, s) =
-                            case n of
-                                0 => s
-                              | _ => jsifyStringMulti (n - 1, jsifyString s)
-
-                        fun deStrcat level (all as (e, loc)) =
-                            case e of
-                                EPrim (Prim.String (_, s)) => jsifyStringMulti (level, s)
-                              | EStrcat (e1, e2) => deStrcat level e1 ^ deStrcat level e2
-                              | EFfiApp ("Basis", "jsifyString", [(e, _)]) => "\"" ^ deStrcat (level + 1) e ^ "\""
-                              | _ => (ErrorMsg.errorAt loc "Unexpected non-constant JavaScript code";
-                                      Print.prefaces "deStrcat" [("e", MonoPrint.p_exp MonoEnv.empty all)];
-                                      "")
-
                         val quoteExp = quoteExp loc
                     in
                         (*Print.prefaces "jsE" [("e", MonoPrint.p_exp MonoEnv.empty e),
@@ -552,42 +792,7 @@ fun process (file : file) =
 
                           | ENamed n =>
                             let
-                                val st =
-                                    if IS.member (#included st, n) then
-                                        st
-                                    else
-                                        case IM.find (nameds, n) of
-                                            NONE => raise Fail "Jscomp: Unbound ENamed"
-                                          | SOME e =>
-                                            let
-                                                val st = {decls = #decls st,
-                                                          script = #script st,
-                                                          included = IS.add (#included st, n),
-                                                          injectors = #injectors st,
-                                                          listInjectors = #listInjectors st,
-                                                          decoders = #decoders st,
-                                                          maxName = #maxName st}
-
-                                                val old = e
-                                                val (e, st) = jsExp mode [] (e, st)
-                                                val e = deStrcat 0 e
-                                                val e = String.translate (fn #"'" => "\\'"
-                                                                           | #"\\" => "\\\\"
-                                                                           | ch => String.str ch) e
-
-                                                val sc = "urfuncs[" ^ Int.toString n ^ "] = {c:\"t\",f:'"
-                                                         ^ e ^ "'};\n"
-                                            in
-                                                (*Print.prefaces "jsify'" [("old", MonoPrint.p_exp MonoEnv.empty old),
-                                                                         ("new", MonoPrint.p_exp MonoEnv.empty new)];*)
-                                                {decls = #decls st,
-                                                 script = sc :: #script st,
-                                                 included = #included st,
-                                                 injectors = #injectors st,
-                                                 listInjectors = #listInjectors st,
-                                                 decoders= #decoders st,
-                                                 maxName = #maxName st}
-                                            end
+                                val st = includeNamed (mode, n, st)
                             in
                                 (str ("{c:\"n\",n:" ^ Int.toString n ^ "}"), st)
                             end
@@ -1003,8 +1208,562 @@ fun process (file : file) =
                             end
                     end
             in
-                jsE 0
+                jsE inner0 (e0, st0)
             end
+
+        and includeNamed (mode, n, st) =
+            if IS.member (#included st, n) then
+                st
+            else
+                case IM.find (nameds, n) of
+                    NONE => raise Fail "Jscomp: Unbound ENamed"
+                  | SOME e =>
+                    let
+                        val st = {decls = #decls st,
+                                  script = #script st,
+                                  included = IS.add (#included st, n),
+                                  injectors = #injectors st,
+                                  listInjectors = #listInjectors st,
+                                  decoders = #decoders st,
+                                  maxName = #maxName st}
+
+                        val (sc, st) =
+                            if isDirect n then
+                                directFun (n, e, st)
+                            else
+                                let
+                                    val (e, st) = jsExpI mode [] 0 (e, st)
+                                    val e = deStrcat 0 e
+                                    val e = String.translate (fn #"'" => "\\'"
+                                                               | #"\\" => "\\\\"
+                                                               | ch => String.str ch) e
+                                in
+                                    ("urfuncs[" ^ Int.toString n ^ "] = {c:\"t\",f:'"
+                                     ^ e ^ "'};\n", st)
+                                end
+                    in
+                        {decls = #decls st,
+                         script = sc :: #script st,
+                         included = #included st,
+                         injectors = #injectors st,
+                         listInjectors = #listInjectors st,
+                         decoders = #decoders st,
+                         maxName = #maxName st}
+                    end
+
+        (* Compile named function [n] with body [e] to a JavaScript function. *)
+        and directFun (n, e as (_, loc), st) =
+            let
+                val counter = ref 0
+                fun fresh () =
+                    let
+                        val i = !counter
+                    in
+                        counter := i + 1;
+                        "v_" ^ Int.toString i
+                    end
+
+                val uname = "_u" ^ Int.toString n
+                val cname = "_c" ^ Int.toString n
+
+                fun var env i =
+                    List.nth (env, i)
+                    handle Subscript => raise Fail "Jscomp: direct compilation found an unbound variable"
+
+                (* Reference to named function [m] as a value *)
+                fun namedRef (m, st) =
+                    let
+                        val st = includeNamed (Script, m, st)
+                    in
+                        (if isDirect m then
+                             (case arityOf m of
+                                  0 => "_u" ^ Int.toString m ^ "()"
+                                | 1 => "_u" ^ Int.toString m
+                                | _ => "_c" ^ Int.toString m)
+                         else
+                             "nf(" ^ Int.toString m ^ ")",
+                         st)
+                    end
+
+                fun emit tgt x =
+                    case tgt of
+                        Return _ => "return " ^ x ^ ";"
+                      | Assign v => v ^ " = " ^ x ^ ";"
+                      | Discard => "(" ^ x ^ ");"
+
+                fun apChain (f, xs) =
+                    foldl (fn (x, f) => "ap(" ^ f ^ "," ^ x ^ ")") f xs
+
+                (* Compile a pattern match against the value [pv]: returns
+                 * (conditions, bindings in binding order) *)
+                fun cP (pv : string) (p : pat) : string list * (string * string) list =
+                    case #1 p of
+                        PVar _ => ([], [(fresh (), pv)])
+                      | PPrim p => ([pv ^ " == " ^ jsLit p], [])
+                      | PCon (_, PConFfi {mod = "Basis", con = "True", ...}, NONE) => ([pv ^ " == true"], [])
+                      | PCon (_, PConFfi {mod = "Basis", con = "False", ...}, NONE) => ([pv ^ " == false"], [])
+                      | PCon (Option, _, NONE) => ([pv ^ " == null"], [])
+                      | PCon (Option, PConVar cn, SOME p) =>
+                        (case IM.find (someTs, cn) of
+                             NONE => raise Fail "Jscomp: Not in someTs [direct]"
+                           | SOME t =>
+                             let
+                                 val (cs, bs) = cP (if isNullable t then pv ^ ".v" else pv) p
+                             in
+                                 ((pv ^ " != null") :: cs, bs)
+                             end)
+                      | PCon (_, pc, NONE) => ([pv ^ " == " ^ patConS pc], [])
+                      | PCon (_, pc, SOME p) =>
+                        let
+                            val (cs, bs) = cP (pv ^ ".v") p
+                        in
+                            ((pv ^ ".n == " ^ patConS pc) :: cs, bs)
+                        end
+                      | PRecord xps =>
+                        foldl (fn ((x, p, _), (cs, bs)) =>
+                                  let
+                                      val (cs', bs') = cP (pv ^ "._" ^ x) p
+                                  in
+                                      (cs @ cs', bs @ bs')
+                                  end) ([], []) xps
+                      | PNone _ => ([pv ^ " == null"], [])
+                      | PSome (t, p) =>
+                        let
+                            val (cs, bs) = cP (if isNullable t then pv ^ ".v" else pv) p
+                        in
+                            ((pv ^ " != null") :: cs, bs)
+                        end
+
+                (* Expression compilation: (statements, expression) *)
+                fun cE (env : string list) (e as (_, loc), st) =
+                    case #1 e of
+                        EPrim p => ([], jsLit p, st)
+                      | ERel i => ([], var env i, st)
+                      | ENamed m =>
+                        let
+                            val (x, st) = namedRef (m, st)
+                        in
+                            ([], x, st)
+                        end
+
+                      | ECon (Option, _, NONE) => ([], "null", st)
+                      | ECon (Option, PConVar cn, SOME e') =>
+                        let
+                            val (s, x, st) = cE env (e', st)
+                        in
+                            case IM.find (someTs, cn) of
+                                NONE => raise Fail "Jscomp: Not in someTs [direct 2]"
+                              | SOME t => (s, if isNullable t then "{v:" ^ x ^ "}" else x, st)
+                        end
+                      | ECon (_, pc, NONE) => ([], patConS pc, st)
+                      | ECon (_, pc, SOME e') =>
+                        let
+                            val (s, x, st) = cE env (e', st)
+                        in
+                            (s, "{n:" ^ patConS pc ^ ",v:" ^ x ^ "}", st)
+                        end
+                      | ENone _ => ([], "null", st)
+                      | ESome (t, e') =>
+                        let
+                            val (s, x, st) = cE env (e', st)
+                        in
+                            (s, if isNullable t then "{v:" ^ x ^ "}" else x, st)
+                        end
+
+                      | EFfi k => ([], ffiName k, st)
+                      | EFfiApp (m, x, args) =>
+                        let
+                            val (ss, xs, st) = cEs env (map #1 args, st)
+                        in
+                            (ss, ffiName (m, x) ^ "(" ^ String.concatWith "," xs ^ ")", st)
+                        end
+
+                      | EApp _ =>
+                        let
+                            val (h, args) = spine e
+                        in
+                            case #1 h of
+                                EAbs _ =>
+                                let
+                                    val ar = lamArity h
+                                    val nbind = Int.min (ar, length args)
+                                    val bound = List.take (args, nbind)
+                                    val rest = List.drop (args, nbind)
+                                    val (ss, env', st) = bindArgs env (bound, st)
+                                    val (sb, xb, st) = cE env' (peelBody (nbind, h), st)
+                                    val (sr, xs, st) = cEs env (rest, st)
+                                in
+                                    (ss @ sb @ sr, apChain (xb, xs), st)
+                                end
+                              | ENamed m =>
+                                if isDirect m then
+                                    let
+                                        val st = includeNamed (Script, m, st)
+                                        val ar = arityOf m
+                                        val k = length args
+                                        val (ss, xs, st) = cEs env (args, st)
+                                        val um = "_u" ^ Int.toString m
+                                        val cm = "_c" ^ Int.toString m
+                                    in
+                                        if ar = 0 then
+                                            (ss, apChain (um ^ "()", xs), st)
+                                        else if k >= ar then
+                                            (ss, apChain (um ^ "(" ^ String.concatWith "," (List.take (xs, ar)) ^ ")",
+                                                          List.drop (xs, ar)), st)
+                                        else
+                                            (ss, apChain (if ar = 1 then um else cm, xs), st)
+                                    end
+                                else
+                                    let
+                                        val (x, st) = namedRef (m, st)
+                                        val (ss, xs, st) = cEs env (args, st)
+                                    in
+                                        (ss, apChain (x, xs), st)
+                                    end
+                              | EFfi k =>
+                                let
+                                    val (ss, xs, st) = cEs env (args, st)
+                                in
+                                    case xs of
+                                        [] => ([], ffiName k, st)
+                                      | x :: xs' => (ss, apChain (ffiName k ^ "(" ^ x ^ ")", xs'), st)
+                                end
+                              | _ =>
+                                let
+                                    val (ss, xs, st) = cEs env (h :: args, st)
+                                in
+                                    (ss, apChain (hd xs, tl xs), st)
+                                end
+                        end
+
+                      | EAbs (_, _, _, body) =>
+                        let
+                            val v = fresh ()
+                            val (s, st) = cS (v :: env) (Return NONE) (body, st)
+                        in
+                            ([], "function(" ^ v ^ "){" ^ String.concatWith " " s ^ "}", st)
+                        end
+
+                      | EUnop (s, e') =>
+                        let
+                            val (ss, x, st) = cE env (e', st)
+                            val op' = case s of
+                                          "!" => "!"
+                                        | "-" => "-"
+                                        | _ => raise Fail ("Jscomp: Unknown unary operator " ^ s)
+                        in
+                            (ss, "(" ^ op' ^ x ^ ")", st)
+                        end
+                      | EBinop (bi, s, e1, e2) =>
+                        let
+                            val (ss, xs, st) = cEs env ([e1, e2], st)
+                            val (x1, x2) = case xs of [x1, x2] => (x1, x2) | _ => raise Fail "Jscomp: binop"
+                            fun infix' o' = "(" ^ x1 ^ " " ^ o' ^ " " ^ x2 ^ ")"
+                            fun call f = f ^ "(" ^ x1 ^ "," ^ x2 ^ ")"
+                            val x = case s of
+                                        "==" => infix' "=="
+                                      | "!strcmp" => infix' "=="
+                                      | "+" => infix' "+"
+                                      | "-" => infix' "-"
+                                      | "*" => infix' "*"
+                                      | "/" => (case bi of Int => call "divInt" | NotInt => infix' "/")
+                                      | "%" => (case bi of Int => call "modInt" | NotInt => infix' "%")
+                                      | "fdiv" => infix' "/"
+                                      | "fmod" => infix' "%"
+                                      | "<" => infix' "<"
+                                      | "<=" => infix' "<="
+                                      | "strcmp" => call "strcmp"
+                                      | "powl" => call "pow"
+                                      | "powf" => call "pow"
+                                      | _ => raise Fail ("Jscomp: Unknown binary operator " ^ s)
+                        in
+                            (ss, x, st)
+                        end
+
+                      | ERecord [] => ([], "null", st)
+                      | ERecord xes =>
+                        let
+                            val (ss, xs, st) = cEs env (map #2 xes, st)
+                        in
+                            (ss, "{" ^ String.concatWith "," (ListPair.map (fn ((x, _, _), v) => "_" ^ x ^ ":" ^ v) (xes, xs)) ^ "}", st)
+                        end
+                      | EField (e', x) =>
+                        let
+                            val (ss, r, st) = cE env (e', st)
+                        in
+                            (ss, r ^ "._" ^ x, st)
+                        end
+
+                      | ECase _ =>
+                        let
+                            val r = fresh ()
+                            val (ss, st) = cS env (Assign r) (e, st)
+                        in
+                            (("let " ^ r ^ ";") :: ss, r, st)
+                        end
+
+                      | EStrcat (e1, e2) =>
+                        let
+                            val (ss, xs, st) = cEs env ([e1, e2], st)
+                        in
+                            (ss, "cat(" ^ String.concatWith "," xs ^ ")", st)
+                        end
+                      | EError (e', _) =>
+                        let
+                            val (ss, x, st) = cE env (e', st)
+                        in
+                            (ss, "er(" ^ x ^ ")", st)
+                        end
+                      | ESeq (e1, e2) =>
+                        let
+                            val (s1, x1, st) = cE env (e1, st)
+                            val (s2, x2, st) = cE env (e2, st)
+                        in
+                            (s1 @ [emit Discard x1] @ s2, x2, st)
+                        end
+                      | ELet _ =>
+                        let
+                            val r = fresh ()
+                            val (ss, st) = cS env (Assign r) (e, st)
+                        in
+                            (("let " ^ r ^ ";") :: ss, r, st)
+                        end
+
+                      | EJavaScript (Source _, e') => cE env (e', st)
+                      | EJavaScript (_, e') =>
+                        (* An embedded closure (e.g. an event handler inside XML):
+                         * serialize its body for the interpreter, closing over the
+                         * current JavaScript variables as its environment. *)
+                        let
+                            val inner = length env
+                            val (ast, st) = jsExpI Script [] inner (e', st)
+                            val ast = deStrcat 0 ast
+                            val envList = foldr (fn (v, acc) => "cons(" ^ v ^ "," ^ acc ^ ")") "null" env
+                        in
+                            (foundJavaScript := true;
+                             ([], "cs({c:\"wc\",env:" ^ envList ^ ",body:" ^ ast ^ "})", st))
+                        end
+
+                      | ERedirect (e', _) =>
+                        let
+                            val (ss, x, st) = cE env (e', st)
+                        in
+                            (ss, "redirect(" ^ x ^ ")", st)
+                        end
+                      | EUnurlify (e', t, false) =>
+                        let
+                            val (ss, x, st) = cE env (e', st)
+                            val (unurl, st) = unurlifyExp loc (t, st)
+                        in
+                            (ss, "unurlify(function(s){var t=s.split(\"/\");var i=0;return " ^ unurl ^ "}," ^ x ^ ")", st)
+                        end
+                      | ESignalReturn e' =>
+                        let
+                            val (ss, x, st) = cE env (e', st)
+                        in
+                            (ss, "sr(" ^ x ^ ")", st)
+                        end
+                      | ESignalBind (e1, e2) =>
+                        let
+                            val (ss, xs, st) = cEs env ([e1, e2], st)
+                        in
+                            (ss, "sb(" ^ String.concatWith "," xs ^ ")", st)
+                        end
+                      | ESignalSource e' =>
+                        let
+                            val (ss, x, st) = cE env (e', st)
+                        in
+                            (ss, "ss(" ^ x ^ ")", st)
+                        end
+                      | ESpawn e' =>
+                        let
+                            val (ss, x, st) = cE env (e', st)
+                        in
+                            (ss, "sp(" ^ x ^ ")", st)
+                        end
+
+                      | _ => raise Fail "Jscomp: direct compilation of unsupported expression"
+
+                (* Bind arguments (evaluated in [env]) to fresh variables,
+                 * returning the extended environment. *)
+                and bindArgs env (args, st) =
+                    foldl (fn (a, (ss, env', st)) =>
+                              let
+                                  val (s, x, st) = cE env (a, st)
+                                  val v = fresh ()
+                              in
+                                  (ss @ s @ ["let " ^ v ^ " = " ^ x ^ ";"], v :: env', st)
+                              end) ([], env, st) args
+
+                (* Compile a list of expressions, preserving left-to-right
+                 * evaluation order when later ones need statements. *)
+                and cEs env (es, st) =
+                    let
+                        fun go ([], accS, accX, st) = (accS, rev accX, st)
+                          | go (e :: es, accS, accX, st) =
+                            let
+                                val (s, x, st) = cE env (e, st)
+                            in
+                                if null s then
+                                    go (es, accS, x :: accX, st)
+                                else
+                                    let
+                                        val (hoisted, accX) =
+                                            foldr (fn (x, (hoisted, accX)) =>
+                                                      if isAtomic x then
+                                                          (hoisted, x :: accX)
+                                                      else
+                                                          let
+                                                              val v = fresh ()
+                                                          in
+                                                              (hoisted @ ["let " ^ v ^ " = " ^ x ^ ";"], v :: accX)
+                                                          end) ([], []) accX
+                                    in
+                                        go (es, accS @ hoisted @ s, x :: accX, st)
+                                    end
+                            end
+                    in
+                        go (es, [], [], st)
+                    end
+
+                (* Statement compilation, delivering the value to [tgt] *)
+                and cS (env : string list) (tgt : target) (e, st) =
+                    case #1 e of
+                        ECase (d, pes, _) =>
+                        let
+                            val (sd, xd, st) = cE env (d, st)
+                            val dv = if isAtomic xd then xd else fresh ()
+                            val sd = if isAtomic xd then sd else sd @ ["let " ^ dv ^ " = " ^ xd ^ ";"]
+
+                            val (branches, st) =
+                                ListUtil.foldlMap (fn ((p, body), st) =>
+                                                      let
+                                                          val (cs, bs) = cP dv p
+                                                          val env' = rev (map #1 bs) @ env
+                                                          val (sb, st) = cS env' tgt (body, st)
+                                                          val cond = case cs of
+                                                                         [] => "true"
+                                                                       | _ => String.concatWith " && " cs
+                                                          val binds = map (fn (v, x) => "let " ^ v ^ " = " ^ x ^ ";") bs
+                                                      in
+                                                          ((cond, binds @ sb), st)
+                                                      end) st pes
+
+                            val chain =
+                                String.concatWith " else "
+                                                  (map (fn (cond, body) =>
+                                                           "if (" ^ cond ^ ") {" ^ String.concatWith " " body ^ "}")
+                                                       branches)
+                                ^ " else { er(\"Match failure in compiled Ur code\"); }"
+                        in
+                            (sd @ [chain], st)
+                        end
+
+                      | ELet (_, _, e1, e2) =>
+                        let
+                            val (s1, x1, st) = cE env (e1, st)
+                            val v = fresh ()
+                            val (s2, st) = cS (v :: env) tgt (e2, st)
+                        in
+                            (s1 @ ["let " ^ v ^ " = " ^ x1 ^ ";"] @ s2, st)
+                        end
+
+                      | ESeq (e1, e2) =>
+                        let
+                            val (s1, x1, st) = cE env (e1, st)
+                            val (s2, st) = cS env tgt (e2, st)
+                        in
+                            (s1 @ [emit Discard x1] @ s2, st)
+                        end
+
+                      | EJavaScript (Source _, e') => cS env tgt (e', st)
+
+                      | EApp _ =>
+                        (case (tgt, spine e) of
+                             (Return (SOME (self, ar, outer)), ((ENamed m, _), args)) =>
+                             if m = self andalso length args = ar then
+                                 let
+                                     val (ss, xs, st) = cEs env (args, st)
+                                 in
+                                     (ss @ ListPair.map (fn (p, x) => p ^ " = " ^ x ^ ";") (outer, xs) @ ["continue;"], st)
+                                 end
+                             else
+                                 cSdefault env tgt (e, st)
+                           | (_, ((EAbs _, _), args)) =>
+                             let
+                                 val h = #1 (spine e)
+                                 val ar = lamArity h
+                             in
+                                 if length args = ar then
+                                     (* beta-redex: bind and continue in the same context *)
+                                     let
+                                         val (ss, env', st) = bindArgs env (args, st)
+                                         val (sb, st) = cS env' tgt (peelBody (ar, h), st)
+                                     in
+                                         (ss @ sb, st)
+                                     end
+                                 else
+                                     cSdefault env tgt (e, st)
+                             end
+                           | _ => cSdefault env tgt (e, st))
+
+                      | _ => cSdefault env tgt (e, st)
+
+                and cSdefault env tgt (e, st) =
+                    let
+                        val (ss, x, st) = cE env (e, st)
+                    in
+                        (ss @ [emit tgt x], st)
+                    end
+
+                val ar = lamArity e
+
+                fun peel (0, e, acc) = (e, rev acc)
+                  | peel (k, (EAbs (_, _, _, body), _), acc) = peel (k - 1, body, fresh () :: acc)
+                  | peel _ = raise Fail "Jscomp: peel [3]"
+
+                val (body, params) = peel (ar, e, [])
+                val env = rev params
+
+                val (code, st) =
+                    if ar = 0 then
+                        let
+                            val (ss, st) = cS [] (Return NONE) (e, st)
+                        in
+                            ("function " ^ uname ^ "(){" ^ String.concatWith " " ss ^ "}\n"
+                             ^ "urfuncs[" ^ Int.toString n ^ "] = {c:\"f\",f:" ^ uname ^ ",a:null};\n", st)
+                        end
+                    else
+                        let
+                            val loop = hasSelfTail (n, ar) body
+                            val outer = map (fn p => "a" ^ String.extract (p, 1, NONE)) params
+                            val (ss, st) = cS env (Return (if loop then SOME (n, ar, outer) else NONE)) (body, st)
+                            val fbody =
+                                if loop then
+                                    "while (true) {let " ^ String.concatWith ", " (ListPair.map (fn (p, o') => p ^ " = " ^ o') (params, outer))
+                                    ^ "; " ^ String.concatWith " " ss ^ "}"
+                                else
+                                    String.concatWith " " ss
+                            val fparams = if loop then outer else params
+                            val curried =
+                                if ar = 1 then
+                                    ""
+                                else
+                                    "function " ^ cname ^ "(" ^ hd params ^ "){"
+                                    ^ String.concat (map (fn p => "return function(" ^ p ^ "){") (tl params))
+                                    ^ "return " ^ uname ^ "(" ^ String.concatWith "," params ^ ");"
+                                    ^ String.concat (map (fn _ => "}") (tl params)) ^ "}\n"
+                        in
+                            ("function " ^ uname ^ "(" ^ String.concatWith "," fparams ^ "){" ^ fbody ^ "}\n"
+                             ^ curried
+                             ^ "urfuncs[" ^ Int.toString n ^ "] = {c:\"c\",v:" ^ (if ar = 1 then uname else cname) ^ "};\n",
+                             st)
+                        end
+            in
+                (code, st)
+            end
+
+        fun jsExp mode outer = jsExpI mode outer 0
 
         fun patBinds ((p, _), env) =
             case p of
