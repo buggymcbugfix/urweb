@@ -27,9 +27,6 @@ trim_trailing_whitespace = false
 [*.{ur,urs}]
 indent_size = 4
 
-[talk.ur]
-indent_size = 3
-
 [*.c]
 indent_size = 2
 
