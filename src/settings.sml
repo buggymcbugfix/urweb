@@ -712,6 +712,9 @@ fun setDbms s =
         NONE => raise Fail ("Unknown DBMS " ^ s)
       | SOME db => curDb := db
 fun currentDbms () = !curDb
+val dbmsChoice = ref (NONE : string option)
+fun setDbmsChoice so = (Option.app setDbms so; dbmsChoice := so)
+fun getDbmsChoice () = !dbmsChoice
 
 val dbstring = ref (NONE : string option)
 fun setDbstring so = dbstring := so
@@ -1120,6 +1123,7 @@ fun reset () =
      meta := [];
      debug := false;
      dev := false;
+     dbmsChoice := NONE;
      dbstring := NONE;
      exe := NONE;
      sql := NONE;

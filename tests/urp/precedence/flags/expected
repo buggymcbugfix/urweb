@@ -1,4 +1,4 @@
-Prefix: /urp/
+Prefix: /flag/
 Database: dbname=flag
 Exe: flag.exe
 SQL file: flag.sql
@@ -11,7 +11,7 @@ Linker: (none)
 JsModule: (none)
 Url allow #*
 Source precedence
-Dbms: postgres
+Dbms: sqlite
 Sigfile: flag.sig
 Filecache: (none)
 SafeGetDefault: false

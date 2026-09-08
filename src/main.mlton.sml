@@ -186,7 +186,7 @@ fun oneRun args =
                     SOME "set prefix used before all URI's"),
               ("db", ONE ("<string>", Settings.setDbstring o SOME),
                     SOME "database connection information"),
-              ("dbms", ONE ("[sqlite|mysql|postgres]", Settings.setDbms),
+              ("dbms", ONE ("[sqlite|mysql|postgres]", Settings.setDbmsChoice o SOME),
                     SOME "select database engine"),
               ("debug", call_true Settings.setDebug,
                     SOME "save some intermediate C files"),

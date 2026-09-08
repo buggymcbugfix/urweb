@@ -653,7 +653,7 @@ fun parseUrp' accLibs fname =
                      val meta = ref []
                      val libs = ref []
                      val protocol = ref NONE
-                     val dbms = ref NONE
+                     val dbms = ref (Settings.getDbmsChoice ())
                      val sigFile = ref (Settings.getSigFile ())
                      val fileCache = ref (Settings.getFileCache ())
                      val safeGetDefault = ref false
@@ -840,8 +840,12 @@ fun parseUrp' accLibs fname =
                                        | _ => (ErrorMsg.error (cmd ^ " argument not of the form Module.func=func'");
                                                (("", ""), ""))
                              in
+                                 (* The urp directive won't override command-line supplied values. *)
                                  case cmd of
-                                     "prefix" => prefix := SOME arg
+                                     "prefix" =>
+                                     (case !prefix of
+                                          NONE => prefix := SOME arg
+                                        | SOME _ => ())
                                    | "database" =>
                                      (case !database of
                                           NONE => database := SOME arg

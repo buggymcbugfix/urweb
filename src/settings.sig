@@ -239,6 +239,9 @@ signature SETTINGS = sig
     val addDbms : dbms -> unit
     val setDbms : string -> unit
     val currentDbms : unit -> dbms
+    (* The DBMS named on the command line, which takes precedence over the .urp 'dbms' directive *)
+    val setDbmsChoice : string option -> unit
+    val getDbmsChoice : unit -> string option
 
     val setDbstring : string option -> unit
     val getDbstring : unit -> string option
