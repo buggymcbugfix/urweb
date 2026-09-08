@@ -1,0 +1,1 @@
+Testing single-word directives that might be mistaken with filenames.

@@ -1,0 +1,29 @@
+Prefix: /
+Database: (none)
+Exe: dev.exe
+SQL file: (none)
+Endpoints file: (none)
+Debug: true
+Dev: true
+Profile: true
+Timeout: 60
+Linker: (none)
+JsModule: (none)
+Url allow #*
+Source dev
+Dbms: (none)
+Sigfile: (none)
+Filecache: (none)
+SafeGetDefault: true
+OnError: (none)
+MinHeap: 0
+MimeTypes: (none)
+Settings:
+ Html5: false
+ MangleSql: false
+ LessSafeFfi: true
+ TimeFormat: %c
+ CoreInline: 5
+ MonoInline: 5
+ Limits: (none)
+ MimeTypes: /etc/mime.types

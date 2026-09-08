@@ -546,11 +546,14 @@ fun parseUrp' accLibs fname =
 
                      val inf = opener ()
 
+                     (* Does the file have a directives section? *)
                      fun hasSpaceLine () =
                          case inputCommentableLine inf of
-                             Content s => s = "debug" orelse s = "profile"
+                             (* Directives that consist of a single word and thus need to be distinguished from filenames: *)
+                             Content s => s = "debug" orelse s = "dev" orelse s = "profile"
                                           orelse s = "html5" orelse s = "xhtml"
                                           orelse s = "noMangleSql" orelse s = "lessSafeFfi"
+                                          orelse s = "safeGetDefault"
                                           orelse CharVector.exists (fn ch => ch = #" " orelse ch = #"\t") s orelse hasSpaceLine ()
                            | EndOfFile => false
                            | OnlyComment => hasSpaceLine ()
