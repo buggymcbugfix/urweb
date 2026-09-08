@@ -1,0 +1,47 @@
+Prefix: /lib/
+Database: dbname=app
+Exe: scope.exe
+SQL file: (none)
+Endpoints file: (none)
+Debug: true
+Dev: true
+Profile: true
+Timeout: 60
+Ffi libffi
+Link lib.o
+Linker: lib-linker
+Header lib.h
+Script /lib.js
+ClientToServer Lib.c2s
+Effectful Lib.eff
+BenignEffectful Lib.ben
+ClientOnly Lib.co
+ServerOnly Lib.so
+JsModule: App
+JsFunc App.f = f
+JsFunc Lib.g = g
+Rewrite all "Lib/*" -> ""
+Url allow #*
+Url allow #*
+Url allow /lib/*
+Source scopelib
+Source scope
+Dbms: mysql
+Sigfile: lib.sig
+Filecache: lib.cache
+SafeGetDefault: true
+SafeGet Lib/get
+OnError: Lib.onError
+MinHeap: 500
+MimeTypes: (none)
+Settings:
+ Html5: false
+ MangleSql: false
+ LessSafeFfi: true
+ TimeFormat: %Y
+ CoreInline: 3
+ MonoInline: 3
+ Limits: heap=1000
+ MimeTypes: /etc/mime.types
+ JsFunc App.f -> App.f
+ JsFunc Lib.g -> App.g

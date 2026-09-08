@@ -15,7 +15,7 @@ all-local: smlnj mlton
 
 SUBDIRS = src/c
 
-.PHONY: smlnj mlton mlton-tc test check-local
+.PHONY: smlnj mlton mlton-tc test check-local check-urp update-urp
 
 smlnj: src/urweb.cm xml/entities.sml
 mlton: bin/urweb
@@ -140,7 +140,15 @@ TEST_PRELUDE = set -e; \
 	echo "Compiling demo.exe."; \
 	bin/urweb -boot -noEmacs -dbms sqlite -db $$dbfile -demo /Demo demo
 
-check-local: bin/urweb
+# Golden tests for .urp parsing (see tests/urp/run.sh); 'make update-urp'
+# accepts the current output as the new expected output.
+check-urp: bin/urweb
+	@tests/urp/run.sh
+
+update-urp: bin/urweb
+	@tests/urp/run.sh -u
+
+check-local: check-urp bin/urweb
 	@$(TEST_PRELUDE); \
 	\
 	echo "Running IPv4 test."; \

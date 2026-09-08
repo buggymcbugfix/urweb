@@ -278,60 +278,96 @@ val parseUr = {
               handle LrParser.ParseError => [],
      print = SourcePrint.p_file}
 
-fun p_job ({prefix, database, exe, sql, endpoints, sources, debug, profile,
-            timeout, ffi, link, headers, scripts,
-            clientToServer, effectful, benignEffectful, clientOnly, serverOnly, jsModule, jsFuncs, ...} : job) =
-    let
-        open Print.PD
-        open Print
+(* Dump of a parsed job, one line per field, in the order of the job record.
+ * This is what 'urweb -stop parseJob' prints, so the golden tests in
+ * tests/urp/ compare against it; keep the format stable. *)
+fun p_lines lines =
+    Print.vbox (List.concat (map (fn l => [Print.PD.string l, Print.PD.newline]) lines))
 
-        fun p_ffi name = p_list_sep (box []) (fn (m, s) =>
-                                                 box [string name, space, string m, string ".", string s, newline])
+fun p_job (job : job) =
+    let
+        fun opt (label, v) = label ^ ": " ^ Option.getOpt (v, "(none)")
+        fun bool (label, v) = label ^ ": " ^ (if v then "true" else "false")
+        fun each (label, ss) = map (fn s => label ^ " " ^ s) ss
+        fun ffi (m, x) = m ^ "." ^ x
+        fun pkind k = case k of
+                          Settings.Any => "all"
+                        | Settings.Url => "url"
+                        | Settings.Table => "table"
+                        | Settings.Sequence => "sequence"
+                        | Settings.View => "view"
+                        | Settings.Relation => "relation"
+                        | Settings.Cookie => "cookie"
+                        | Settings.Style => "style"
+        fun pattern (kind, p) = case kind of
+                                    Settings.Exact => p
+                                  | Settings.Prefix => p ^ "*"
+        fun rule ({action, kind, pattern = p} : Settings.rule) =
+            (case action of Settings.Allow => "allow " | Settings.Deny => "deny ") ^ pattern (kind, p)
+        fun rewrite ({pkind = pk, kind, from, to, hyphenate} : Settings.rewrite) =
+            pkind pk ^ " \"" ^ pattern (kind, from) ^ "\" -> \"" ^ to ^ "\"" ^ (if hyphenate then " [-]" else "")
     in
-        box [if debug then
-                 box [string "DEBUG", newline]
-             else
-                 box [],
-             if profile then
-                 box [string "PROFILE", newline]
-             else
-                 box [],
-             case database of
-                 NONE => string "No database."
-               | SOME db => string ("Database: " ^ db),
-             newline,
-             string "Exe: ",
-             string exe,
-             newline,
-             case sql of
-                 NONE => string "No SQL file."
-               | SOME sql => string ("SQL fle: " ^ sql),
-             newline,
-             case endpoints of
-                 NONE => string "No endpoints file."
-               | SOME ep => string ("Endpoints fle: " ^ ep),
-             newline,
-             string "Timeout: ",
-             string (Int.toString timeout),
-             newline,
-             p_list_sep (box []) (fn s => box [string "Ffi", space, string s, newline]) ffi,
-             p_list_sep (box []) (fn s => box [string "Header", space, string s, newline]) headers,
-             p_list_sep (box []) (fn s => box [string "Script", space, string s, newline]) scripts,
-             p_list_sep (box []) (fn s => box [string "Link", space, string s, newline]) link,
-             p_ffi "ClientToServer" clientToServer,
-             p_ffi "Effectful" effectful,
-             p_ffi "BenignEffectful" benignEffectful,
-             p_ffi "ClientOnly" clientOnly,
-             p_ffi "ServerOnly" serverOnly,
-             case jsModule of
-                 NONE => string "No JavaScript FFI module"
-               | SOME m => string ("JavaScript FFI module: " ^ m),
-             p_list_sep (box []) (fn ((m, s), s') =>
-                                     box [string "JsFunc", space, string m, string ".", string s,
-                                          space, string "=", space, string s', newline]) jsFuncs,
-             string "Sources:",
-             p_list string sources,
-             newline]
+        p_lines ([opt ("Prefix", SOME (#prefix job)),
+                  opt ("Database", #database job),
+                  opt ("Exe", SOME (#exe job)),
+                  opt ("SQL file", #sql job),
+                  opt ("Endpoints file", #endpoints job),
+                  bool ("Debug", #debug job),
+                  bool ("Dev", #dev job),
+                  bool ("Profile", #profile job),
+                  opt ("Timeout", SOME (Int.toString (#timeout job)))]
+                 @ each ("Ffi", #ffi job)
+                 @ each ("Link", #link job)
+                 @ [opt ("Linker", #linker job)]
+                 @ each ("Header", #headers job)
+                 @ each ("Script", #scripts job)
+                 @ each ("ClientToServer", map ffi (#clientToServer job))
+                 @ each ("Effectful", map ffi (#effectful job))
+                 @ each ("BenignEffectful", map ffi (#benignEffectful job))
+                 @ each ("ClientOnly", map ffi (#clientOnly job))
+                 @ each ("ServerOnly", map ffi (#serverOnly job))
+                 @ [opt ("JsModule", #jsModule job)]
+                 @ each ("JsFunc", map (fn (f, s) => ffi f ^ " = " ^ s) (#jsFuncs job))
+                 @ each ("Rewrite", map rewrite (#rewrites job))
+                 @ each ("Url", map rule (#filterUrl job))
+                 @ each ("Mime", map rule (#filterMime job))
+                 @ each ("RequestHeader", map rule (#filterRequest job))
+                 @ each ("ResponseHeader", map rule (#filterResponse job))
+                 @ each ("EnvVar", map rule (#filterEnv job))
+                 @ each ("Meta", map rule (#filterMeta job))
+                 @ each ("Source", #sources job)
+                 @ [opt ("Dbms", #dbms job),
+                    opt ("Sigfile", #sigFile job),
+                    opt ("Filecache", #fileCache job),
+                    bool ("SafeGetDefault", #safeGetDefault job)]
+                 @ each ("SafeGet", #safeGets job)
+                 @ [opt ("OnError", Option.map (fn (m, ms, x) => String.concatWith "." (m :: ms @ [x])) (#onError job)),
+                    opt ("MinHeap", SOME (Int.toString (#minHeap job))),
+                    opt ("MimeTypes", #mimeTypes job)])
+    end
+
+(* The global settings that .urp parsing affects without going through the job
+ * record, plus the JavaScript names the job's jsFunc directives resolve to;
+ * printed after the job by 'urweb -stop parseJob'. *)
+fun p_settings (job : job) =
+    let
+        fun bool b = if b then "true" else "false"
+    in
+        p_lines (["Settings:",
+                  " Html5: " ^ bool (Settings.getIsHtml5 ()),
+                  " MangleSql: " ^ bool (Settings.getMangleSql ()),
+                  " LessSafeFfi: " ^ bool (Settings.getLessSafeFfi ()),
+                  " TimeFormat: " ^ Settings.getTimeFormat (),
+                  " CoreInline: " ^ Int.toString (Settings.getCoreInline ()),
+                  " MonoInline: " ^ Int.toString (Settings.getMonoInline ()),
+                  " Limits: " ^ (case Settings.limits () of
+                                     [] => "(none)"
+                                   | ls => String.concatWith ", " (map (fn (c, n) => c ^ "=" ^ Int.toString n)
+                                                                        (rev ls))),
+                  " MimeTypes: " ^ Settings.getMimeFilePath ()]
+                 @ map (fn ((m, x), _) => " JsFunc " ^ m ^ "." ^ x ^ " -> "
+                                          ^ Option.getOpt (Settings.jsFunc (m, x), "(none)"))
+                       (#jsFuncs job))
     end
 
 fun trim s =
@@ -991,16 +1027,17 @@ fun parseUrp' accLibs fname =
              {Job = pu fname, Libs = !bigLibs}
          end)
 
-fun p_job' {Job = j, Libs = _ : string list} = p_job j
+fun p_parsed j = Print.vbox [p_job j, p_settings j]
+fun p_parsed' {Job = j, Libs = _ : string list} = p_parsed j
 
 val parseUrp = {
     func = #Job o parseUrp' true,
-    print = p_job
+    print = p_parsed
 }
 
 val parseUrp' = {
     func = parseUrp' false,
-    print = p_job'
+    print = p_parsed'
 }
 
 val toParseJob = transform parseUrp "parseJob"

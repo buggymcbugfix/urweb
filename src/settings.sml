@@ -974,6 +974,7 @@ val noMimeFile = ref false
 
 val mimeFilePath = ref "/etc/mime.types"
 fun setMimeFilePath file = mimeFilePath := file
+fun getMimeFilePath () = !mimeFilePath
 
 fun noMime () =
     (TextIO.output (TextIO.stdErr, "WARNING: Error opening " ^ !mimeFilePath ^ ".  Static files will be served with no suggested MIME types.\n");

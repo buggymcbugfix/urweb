@@ -1,0 +1,8 @@
+library scopelib
+dbms postgres
+database dbname=app
+mimeTypes app.mime
+jsModule App
+jsFunc App.f=f
+
+scope

@@ -1,0 +1,45 @@
+# Deployment directives, which only the main project should decide:
+database dbname=lib
+dbms mysql
+exe lib.exe
+sql lib.sql
+prefix /lib/
+sigfile lib.sig
+filecache lib.cache
+debug
+dev
+profile
+timeout 30
+onError Lib.onError
+limit heap 1000
+minHeap 500
+linker lib-linker
+timeFormat %Y
+xhtml
+noMangleSql
+coreInline 3
+monoInline 3
+mimeTypes lib.mime
+safeGetDefault
+# Directives that contribute parts of the library:
+ffi libffi
+include lib.h
+link lib.o
+script /lib.js
+jsModule Lib
+jsFunc Lib.g=g
+clientToServer Lib.c2s
+effectful Lib.eff
+benignEffectful Lib.ben
+clientOnly Lib.co
+serverOnly Lib.so
+allow url /lib/*
+rewrite all Lib/*
+safeGet Lib/get
+noXsrfProtection /lib/nx
+alwaysInline Lib/ai
+neverInline Lib/ni
+lessSafeFfi
+path libpath=/x
+
+scopelib

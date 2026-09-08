@@ -1,0 +1,8 @@
+dbms postgres
+prefix /urp/
+database dbname=urp
+exe urp.exe
+sql urp.sql
+sigfile urp.sig
+
+precedence
