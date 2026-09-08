@@ -2520,6 +2520,7 @@ uw_unit uw_Basis_htmlifyBool_w(uw_context ctx, uw_Basis_bool b) {
 #define TIME_FMT "%x %X"
 #define TIME_FMT_PG "%Y-%m-%d %T"
 #define TIME_FMT_JS "%Y/%m/%d %T"
+#define TIME_FMT_NOSEC "%Y-%m-%d %H:%M"
 
 uw_Basis_string uw_Basis_timeToString(uw_context, uw_Basis_time);
 
@@ -3400,6 +3401,9 @@ uw_Basis_time uw_Basis_unsqlTime(uw_context ctx, uw_Basis_string s) {
     } else if (strptime(s, TIME_FMT, &stm) == end) {
       uw_Basis_time r = { mktime(&stm) };
       return r;
+    } else if (strptime(s, TIME_FMT_NOSEC, &stm) == end) {
+      uw_Basis_time r = { mktime(&stm) };
+      return r;
     } else
       uw_error(ctx, FATAL, "Can't parse time: %s", uw_Basis_htmlifyString(ctx, s));
   }
@@ -3437,6 +3441,9 @@ uw_Basis_time uw_Basis_stringToTime_error(uw_context ctx, uw_Basis_string s) {
     } else if (strptime(s, TIME_FMT_JS, &stm) == end) {
       uw_Basis_time r = { mktime(&stm) };
       return r;
+    } else if (strptime(s, TIME_FMT_NOSEC, &stm) == end) {
+      uw_Basis_time r = { mktime(&stm) };
+      return r;
     } else
       uw_error(ctx, FATAL, "Can't parse time: %s", uw_Basis_htmlifyString(ctx, s));
   }
@@ -3448,6 +3455,9 @@ uw_Basis_time uw_Basis_stringToTimef_error(uw_context ctx, const char *fmt, uw_B
   stm.tm_isdst = -1;
 
   if (strptime(s, fmt, &stm) == end) {
+    uw_Basis_time r = { mktime(&stm) };
+    return r;
+  } else if (strptime(s, TIME_FMT_NOSEC, &stm) == end) {
     uw_Basis_time r = { mktime(&stm) };
     return r;
   } else
