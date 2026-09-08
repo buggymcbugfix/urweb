@@ -1104,7 +1104,16 @@ fun addJsFile LoadFromFilename =
 fun listJsFiles () = SM.listItems (!jsFiles)
 
 val jsOutput = ref (NONE : string option)
-fun setOutputJsFile so = jsOutput := so
+fun setOutputJsFile so =
+    (case so of
+         SOME s =>
+         if s = "" orelse CharVector.exists (fn ch => ch = #"/") s then
+             raise Fail ("Bad -js argument \"" ^ s ^ "\": expected a plain path component, without \"/\".\n"
+                         ^ "The generated JavaScript is embedded in the executable and served at the application prefix followed by this name.")
+         else
+             ()
+       | NONE => ();
+     jsOutput := so)
 fun getOutputJsFile () = !jsOutput
 
 fun reset () =
