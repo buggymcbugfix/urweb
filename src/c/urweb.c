@@ -2725,24 +2725,36 @@ uw_Basis_string uw_Basis_strcat(uw_context ctx, uw_Basis_string s1, uw_Basis_str
 }
 
 uw_Basis_string uw_Basis_substring(uw_context ctx, uw_Basis_string s, uw_Basis_int start, uw_Basis_int len) {
-  int full_len = uw_Basis_strlen(ctx, s);
-  
+  int offset = 0, end;
+  uw_Basis_int i;
+
   if (start < 0)
     uw_error(ctx, FATAL, "substring: Negative start index");
   if (len < 0)
     uw_error(ctx, FATAL, "substring: Negative length");
-  if (start + len > full_len)
-    uw_error(ctx, FATAL, "substring: Start index plus length is too large");
 
-  int offset = 0;
-  U8_FWD_N(s, offset, -1, start);
-  
-  if (start + len == full_len) {
+  // Walk over [start] code points, then over [len] more, checking for the
+  // terminator as we go.  This costs O(start + len) rather than the O(strlen)
+  // of measuring the whole string first, which matters for parsers that
+  // repeatedly take a substring at the front of a long input (e.g. Json).
+  // Reaching the terminator early is exactly the old start + len > strlen(s).
+  for (i = 0; i < start; ++i) {
+    if (s[offset] == 0)
+      uw_error(ctx, FATAL, "substring: Start index plus length is too large");
+    U8_FWD_1(s, offset, -1);
+  }
+
+  end = offset;
+  for (i = 0; i < len; ++i) {
+    if (s[end] == 0)
+      uw_error(ctx, FATAL, "substring: Start index plus length is too large");
+    U8_FWD_1(s, end, -1);
+  }
+
+  if (s[end] == 0) {
+    // The substring runs to the end of s, so the buffer can be shared.
     return s + offset;
   } else {
-    int end = offset;
-    U8_FWD_N(s, end, -1, len);
-
     int actual_len = end - offset;
 
     uw_Basis_string r = uw_malloc(ctx, actual_len + 1);
