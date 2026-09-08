@@ -6,4 +6,4 @@ so that the standard library is found in the build tree.
 
 - lib/libmod.ur is reached through `path LIB=../lib` and is named `$LIB/libmod.ur`.
 - app/app.ur and app/sub/inner.ur are below the current directory and are named relative to it.
-- shared.ur is neither, so it keeps its absolute path (shown as `<tests/urp>/paths/shared.ur`).
+- shared.ur is neither, so it keeps its absolute path (shown as `<tests/golden>/paths/shared.ur`).
