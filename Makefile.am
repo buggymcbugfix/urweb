@@ -140,15 +140,21 @@ TEST_PRELUDE = set -e; \
 	echo "Compiling demo.exe."; \
 	bin/urweb -boot -noEmacs -dbms sqlite -db $$dbfile -demo /Demo demo
 
-# Golden tests for .urp parsing (see tests/urp/run.sh); 'make update-urp'
+# Golden tests (see tests/golden/run.sh): 'make check-golden' runs every
+# family, 'make check-golden-FAMILY' one of them, 'make update-golden'
 # accepts the current output as the new expected output.
-check-urp: bin/urweb
-	@tests/urp/run.sh
+GOLDEN_FAMILIES = urp
 
-update-urp: bin/urweb
-	@tests/urp/run.sh -u
+check-golden: bin/urweb
+	@tests/golden/run.sh
 
-check-local: check-urp bin/urweb
+$(GOLDEN_FAMILIES:%=check-golden-%): check-golden-%: bin/urweb
+	@tests/golden/run.sh $*
+
+update-golden: bin/urweb
+	@tests/golden/run.sh -u
+
+check-local: check-golden bin/urweb
 	@$(TEST_PRELUDE); \
 	\
 	echo "Running IPv4 test."; \

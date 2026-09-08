@@ -1,7 +1,7 @@
-Prefix: /flag/
-Database: dbname=flag
-Exe: flag.exe
-SQL file: flag.sql
+Prefix: /urp/
+Database: dbname=urp
+Exe: <tests/golden>/urp/precedence/urp.exe
+SQL file: <tests/golden>/urp/precedence/urp.sql
 Endpoints file: (none)
 Debug: false
 Dev: false
@@ -10,9 +10,9 @@ Timeout: 60
 Linker: (none)
 JsModule: (none)
 Url allow #*
-Source <tests/urp>/precedence/precedence
-Dbms: sqlite
-Sigfile: flag.sig
+Source <tests/golden>/urp/precedence/precedence
+Dbms: postgres
+Sigfile: urp.sig
 Filecache: (none)
 SafeGetDefault: false
 OnError: (none)

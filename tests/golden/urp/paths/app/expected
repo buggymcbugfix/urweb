@@ -5,7 +5,7 @@ Expression:  "lib"
 Incompatible constructors
 Have:  string
 Need:  int
-<tests/urp>/paths/shared.ur:1:14: (to 1:22) Unification failure
+<tests/golden>/urp/paths/shared.ur:1:14: (to 1:22) Unification failure
 Expression:  "shared"
   Have con:  string
   Need con:  int
