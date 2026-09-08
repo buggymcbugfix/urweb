@@ -145,7 +145,7 @@ A blank line separates the named directives from a list of modules to include in
 
 For each entry \texttt{M} in the module list, the file \texttt{M.urs} is included in the project if it exists, and the file \texttt{M.ur} must exist and is always included.
 
-Here is the complete list of directive forms.  ``FFI'' stands for ``foreign function interface,'' Ur's facility for interaction between Ur programs and C and JavaScript libraries.
+Here is the complete list of directive forms.  ``FFI'' stands for ``foreign function interface,'' Ur's facility for interaction between Ur programs and C and JavaScript libraries.  Note that options set on the command-line override the value set by the directive.
 \begin{itemize}
 \item \texttt{[allow|deny] [url|mime|requestHeader|responseHeader|env|meta] PATTERN} registers a rule governing which URLs, MIME types, HTTP request headers, HTTP response headers, environment variable names, or HTML \texttt{<meta>} names are allowed to appear explicitly in this application.  The first such rule to match a name determines the verdict.  If \texttt{PATTERN} ends in \texttt{*}, it is interpreted as a prefix rule.  Otherwise, a string must match it exactly.
 \item \texttt{alwaysInline PATH} requests that every call to the referenced function be inlined.  Section \ref{structure} explains how functions are assigned path strings.
@@ -153,8 +153,10 @@ Here is the complete list of directive forms.  ``FFI'' stands for ``foreign func
 \item \texttt{clientOnly Module.ident} registers an FFI function or transaction that may only be run in client browsers.
 \item \texttt{clientToServer Module.ident} adds FFI type \texttt{Module.ident} to the list of types that are OK to marshal from clients to servers.  Values like XML trees and SQL queries are hard to marshal without introducing expensive validity checks, so it's easier to ensure that the server never trusts clients to send such values.  The file \texttt{include/urweb/urweb\_cpp.h} shows examples of the C support functions that are required of any type that may be marshalled.  These include \texttt{attrify}, \texttt{urlify}, and \texttt{unurlify} functions.
 \item \texttt{coreInline TREESIZE} sets how many nodes the AST of a function definition may have before the optimizer stops trying hard to inline calls to that function.  (This is one of two options for one of two intermediate languages within the compiler.)
-\item \texttt{database DBSTRING} sets the string to pass to libpq to open a database connection.
-\item \texttt{debug} saves some intermediate C files, which is mostly useful to help in debugging the compiler itself.
+\item \texttt{database DBSTRING} sets the connection string for the database backend.  The format is the one expected by Postgres's \texttt{PQconnectdb()}, described under the \texttt{-db} command-line option in Section \ref{sec:building}.
+\item \texttt{dbms [postgres|mysql|sqlite]} selects the database backend (the default is \texttt{postgres}).
+\item \texttt{debug} compiles the generated C code without optimization and with debugging symbols (\texttt{-O0 -g}), keeps that code in \texttt{/tmp/webapp.c} (and its object file in \texttt{/tmp/webapp.o}).  This is mostly useful to help in debugging the compiler itself; the same effect is available via the \texttt{-debug} command-line option.
+\item \texttt{dev} compiles the generated C code without optimization (\texttt{-O0}), which makes builds noticeably faster during development, without the other effects of \texttt{debug}.  The same effect is available as the \texttt{-dev} command-line option.
 \item \texttt{effectful Module.ident} registers an FFI function or transaction as having side effects.  The optimizer avoids removing, moving, or duplicating calls to such functions.  This is the default behavior for \texttt{transaction}-based types.
 \item \texttt{exe FILENAME} sets the filename to which to write the output executable.  The default for file \texttt{P.urp} is \texttt{P.exe}.
 \item \texttt{file URI FILENAME} asks for the application executable to respond to requests for \texttt{URI} by serving a snapshot of the contents of \texttt{FILENAME} as of compile time.  That is, the file contents are baked into the executable.  System file \texttt{/etc/mime.types} is consulted (again, at compile time) to figure out the right MIME type to suggest in the HTTP response.
@@ -165,6 +167,7 @@ Here is the complete list of directive forms.  ``FFI'' stands for ``foreign func
 \item \texttt{include FILENAME} adds \texttt{FILENAME} to the list of files to be \texttt{\#include}d in C sources.  This is most useful for interfacing with new FFI modules.
 \item \texttt{jsFile FILENAME} asks to serve the contents of a file as JavaScript.  All such content is concatenated into a single file, included via a \texttt{<script>} tag on every page that needs client-side scripting.
 \item \texttt{jsFunc Module.ident=name} gives the JavaScript name of an FFI value.
+\item \texttt{lessSafeFfi} enables \texttt{ffi} declarations inside \texttt{.ur} files, so that FFI functions can be declared next to the code that uses them rather than in a separate \texttt{.urs} file named by an \texttt{ffi} directive.  This weakens a useful property (that only \texttt{.urp} files need auditing to trust an application's use of the FFI), so it must be requested explicitly; see Section \ref{sec:lessSafeFfi}.
 \item \texttt{jsModule Module} helps make \texttt{jsFunc} directives less verbose, by setting a module name to prefix in front of \texttt{name} arguments (so running e.g. \texttt{jsFunc MyFfi.foo=bar} actually sets up \texttt{Mod.bar} as the JavaScript name for that function, if \texttt{jsModule Mod} was run beforehand).
 \item \texttt{library FILENAME} parses \texttt{FILENAME.urp} and merges its contents with the rest of the current file's contents.  If \texttt{FILENAME.urp} doesn't exist, the compiler also tries \texttt{FILENAME/lib.urp}.
 \item \texttt{limit class num} sets a resource usage limit for generated applications.  The limit \texttt{class} will be set to the non-negative integer \texttt{num}.  The classes are:
@@ -210,6 +213,7 @@ Here is the complete list of directive forms.  ``FFI'' stands for ``foreign func
 
 
 \subsection{Building an Application}
+\label{sec:building}
 
 To compile project \texttt{P.urp}, simply run
 \begin{verbatim}
@@ -303,10 +307,14 @@ sqlite3 path/to/database/file <app.sql
     \end{verbatim}
   \end{itemize}
 
+\item \texttt{-debug}: Same as the \texttt{debug} directive in a project file: compile the generated C code with \texttt{-O0 -g}, keep it in \texttt{/tmp/webapp.c}, and print the compiler phases as they run.
+\item \texttt{-dev}: Same as the \texttt{dev} directive in a project file: compile the generated C code without optimization, for faster builds.
 \item \texttt{-dumpSource}: When compilation fails, output to stderr the complete source code of the last intermediate program before the compilation phase that signaled the error.  (Warning: these outputs can be very long and aren't especially optimized for readability!)
 
+\item \texttt{-dumpVerboseSource}: Like \texttt{-dumpSource}, but prints the intermediate program with more detail (e.g., the internal numbering of identifiers), which can help when reading the output of the later, lower-level phases.
 \item \texttt{-endpoints FILENAME}: Populate the specified file with a JSON description of all the HTTP endpoints that the compiled application supports, with information on MIME content type, for static resources.
 
+\item \texttt{-help}, \texttt{-version}, \texttt{-numeric-version}: Print, respectively, a summary of the command-line options, the version of the compiler, and its version as a plain number (convenient for scripts); then exit.
 \item \texttt{-explainEmbed}: Trigger more verbose error messages about inability to embed server-side values in client-side code.
 
 \item \texttt{-js FILENAME}: Ur/Web applications with client-side code link in generated JavaScript files, which, by default, are assigned random-looking names.  Use this directive to override the filename chosen for the JavaScript code.  Be forewarned that the default method uses a name based on hashing the code itself, which is done for a good reason: browsers are very eager to cache JavaScript code, and application changes may fail to propagate quickly to browsers if this filename stays the same between versions.  In such cases, it isn't just that the user sees an old version of your application.  Instead, the application runs with a mix of old and new files, leading to arbitrary bugs that Ur/Web prevents, when used properly.
@@ -2619,6 +2627,7 @@ FFI modules may introduce new tags as values with $\mt{Basis.tag}$ types.  See \
 The onus is on the coder of a new tag's interface to think about consequences for code injection attacks, messing with the DOM in ways that may break Ur/Web reactive programming, etc.
 
 \subsection{The Less Safe FFI}
+\label{sec:lessSafeFfi}
 
 An alternative interface is provided for declaring FFI functions inline within normal Ur/Web modules.  This facility must be opted into with the \texttt{lessSafeFfi} \texttt{.urp} directive, since it breaks a crucial property, allowing code in a \texttt{.ur} file to break basic invariants of the Ur/Web type system.  Without this option, one only needs to audit \texttt{.urp} files to be sure an application obeys the type-system rules.  The alternative interface may be more convenient for such purposes as declaring an FFI function typed in terms of some type local to a module.
 
