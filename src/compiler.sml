@@ -1682,7 +1682,7 @@ fun compileC {cname, oname, ename, libs, profile, debug, dev, linker, link = lin
                       "-L" ^ !Settings.configLib ^ " " ^ #linkDynamic proto ^ " -lurweb"
 
         val opt = if debug orelse dev then
-                      " -O0"
+                      " -O0 -Wno-cpp"
                   else
                       " -O3"
 
