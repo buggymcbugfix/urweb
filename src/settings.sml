@@ -412,7 +412,8 @@ fun jsFuncName f =
     case !jsModule of
         SOME m => m ^ "." ^ f
       | NONE => f
-fun setJsFuncs ls = jsFuncs := foldl (fn ((k, v), m) => M.insert (m, k, jsFuncName v)) jsFuncsBase ls
+(* The .urp parser has already applied each file's jsModule to these names. *)
+fun setJsFuncs ls = jsFuncs := foldl (fn ((k, v), m) => M.insert (m, k, v)) jsFuncsBase ls
 fun jsFunc x = M.find (!jsFuncs, x)
 fun addJsFunc (k, v) = jsFuncs := M.insert (!jsFuncs, k, jsFuncName v)
 fun allJsFuncs () = M.listItemsi (!jsFuncs)
@@ -976,7 +977,15 @@ structure SM = BinaryMapFn(struct
 val noMimeFile = ref false
 
 val mimeFilePath = ref "/etc/mime.types"
-fun setMimeFilePath file = mimeFilePath := file
+val mimeTypes = ref (NONE : string SM.map option)
+(* Changing the path drops the table read from the old one, so that later lookups use the new file. *)
+fun setMimeFilePath file =
+    if file = !mimeFilePath then
+        ()
+    else
+        (mimeFilePath := file;
+         mimeTypes := NONE;
+         noMimeFile := false)
 fun getMimeFilePath () = !mimeFilePath
 
 fun noMime () =
@@ -1004,8 +1013,6 @@ fun readMimeTypes () =
         before TextIO.closeIn inf
     end handle IO.Io _ => noMime ()
              | OS.SysErr _ => noMime ()
-
-val mimeTypes = ref (NONE : string SM.map option)
 
 fun getMimeTypes () =
     case !mimeTypes of

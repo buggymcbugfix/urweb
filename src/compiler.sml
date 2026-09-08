@@ -63,7 +63,6 @@ type job = {
      filterResponse : Settings.rule list,
      filterEnv : Settings.rule list,
      filterMeta : Settings.rule list,
-     protocol : string option,
      dbms : string option,
      sigFile : string option,
      fileCache : string option,
@@ -428,7 +427,6 @@ fun institutionalizeJob (job : job) =
      Settings.setResponseHeaderRules (#filterResponse job);
      Settings.setEnvVarRules (#filterEnv job);
      Settings.setMetaRules (#filterMeta job);
-     Option.app Settings.setProtocol (#protocol job);
      Option.app Settings.setDbms (#dbms job);
      Settings.setSafeGetDefault (#safeGetDefault job);
      Settings.setSafeGets (#safeGets job);
@@ -475,6 +473,10 @@ val compare = String.compare
 end
 
 structure SS = BinarySetFn(SK)
+
+(* The (file, directive) pairs already warned about below, so that each warning
+ * is printed once even though 'compile' parses the .urp files twice. *)
+val warnedLibDirectives = ref SS.empty
 structure SM = BinaryMapFn(SK)
 
 fun parseUrp' accLibs fname =
@@ -514,7 +516,6 @@ fun parseUrp' accLibs fname =
                         filterResponse = [],
                         filterEnv = [],
                         filterMeta = [],
-                        protocol = NONE,
                         dbms = NONE,
                         sigFile = NONE,
                         fileCache = NONE,
@@ -533,7 +534,9 @@ fun parseUrp' accLibs fname =
              val bigLibs = ref []
              val libSet = ref SS.empty
 
-             fun pu filename =
+             (* Parses one .urp file, including the libraries it names; isLib says
+              * whether this file was reached through a 'library' directive. *)
+             fun pu isLib filename =
                  let
                      val filename = OS.Path.mkAbsolute {path = filename, relativeTo = OS.FileSys.getDir ()}
                      val thisPath = OS.Path.dir filename
@@ -652,7 +655,6 @@ fun parseUrp' accLibs fname =
                      val env = ref []
                      val meta = ref []
                      val libs = ref []
-                     val protocol = ref NONE
                      val dbms = ref (Settings.getDbmsChoice ())
                      val sigFile = ref (Settings.getSigFile ())
                      val fileCache = ref (Settings.getFileCache ())
@@ -664,6 +666,12 @@ fun parseUrp' accLibs fname =
 
                      fun finish sources =
                          let
+                             (* The file's jsModule prefixes the file's own jsFunc names, so
+                              * that a library keeps its module when merged into a project. *)
+                             val jsName = case !jsModule of
+                                              NONE => (fn s => s)
+                                            | SOME m => (fn s => m ^ "." ^ s)
+
                              val job = {
                                  prefix = Option.getOpt (!prefix, "/"),
                                  database = !database,
@@ -686,7 +694,7 @@ fun parseUrp' accLibs fname =
                                  clientOnly = rev (!clientOnly),
                                  serverOnly = rev (!serverOnly),
                                  jsModule = !jsModule,
-                                 jsFuncs = rev (!jsFuncs),
+                                 jsFuncs = map (fn (f, s) => (f, jsName s)) (rev (!jsFuncs)),
                                  rewrites = rev (!rewrites),
                                  filterUrl = rev (!url),
                                  filterMime = rev (!mime),
@@ -695,7 +703,6 @@ fun parseUrp' accLibs fname =
                                  filterEnv = rev (!env),
                                  filterMeta = rev (!meta),
                                  sources = sources,
-                                 protocol = !protocol,
                                  dbms = !dbms,
                                  sigFile = !sigFile,
                                  fileCache = !fileCache,
@@ -706,42 +713,23 @@ fun parseUrp' accLibs fname =
                                  mimeTypes = !mimeTypes
                              }
 
-                             fun mergeO f (old, new) =
-                                 case (old, new) of
-                                     (NONE, _) => new
-                                   | (_, NONE) => old
-                                   | (SOME v1, SOME v2) => SOME (f (v1, v2))
-
-                             fun same desc = mergeO (fn (x : string, y) =>
-                                                        (if x = y then
-                                                             ()
-                                                         else
-                                                             ErrorMsg.error ("Multiple "
-                                                                             ^ desc ^ " values that don't agree");
-                                                         x))
-
+                             (* Merges a library (new) into the project or library that
+                              * includes it (old).  Deployment settings are the includer's; a
+                              * library's own were already dropped by the parser, with a
+                              * warning.  Everything else accumulates. *)
                              fun merge (old : job, new : job) = {
-                                 prefix = case #prefix old of
-                                              "/" => #prefix new
-                                            | pold => case #prefix new of
-                                                          "/" => pold
-                                                        | pnew => (if pold = pnew then
-                                                                       ()
-                                                                   else
-                                                                       ErrorMsg.error ("Multiple prefix values that don't agree: "
-                                                                                       ^ pold ^ ", " ^ pnew);
-                                                                   pold),
-                                 database = mergeO (fn (old, _) => old) (#database old, #database new),
+                                 prefix = #prefix old,
+                                 database = #database old,
                                  exe = #exe old,
                                  sql = #sql old,
                                  endpoints = #endpoints old,
-                                 debug = #debug old orelse #debug new,
-                                 dev = #dev old orelse #dev new,
-                                 profile = #profile old orelse #profile new,
+                                 debug = #debug old,
+                                 dev = #dev old,
+                                 profile = #profile old,
                                  timeout = #timeout old,
                                  ffi = #ffi old @ #ffi new,
                                  link = #link old @ #link new,
-                                 linker = mergeO (fn (_, new) => new) (#linker old, #linker new),
+                                 linker = #linker old,
                                  headers = #headers old @ #headers new,
                                  scripts = #scripts old @ #scripts new,
                                  clientToServer = #clientToServer old @ #clientToServer new,
@@ -761,15 +749,14 @@ fun parseUrp' accLibs fname =
                                  sources = #sources new
                                            @ List.filter (fn s => List.all (fn s' => s' <> s) (#sources new))
                                                          (#sources old),
-                                 protocol = mergeO #2 (#protocol old, #protocol new),
-                                 dbms = mergeO #2 (#dbms old, #dbms new),
-                                 sigFile = mergeO #2 (#sigFile old, #sigFile new),
-                                 fileCache = mergeO #2 (#fileCache old, #fileCache new),
-                                 safeGetDefault = #safeGetDefault old orelse #safeGetDefault new,
+                                 dbms = #dbms old,
+                                 sigFile = #sigFile old,
+                                 fileCache = #fileCache old,
+                                 safeGetDefault = #safeGetDefault old,
                                  safeGets = #safeGets old @ #safeGets new,
-                                 onError = mergeO #2 (#onError old, #onError new),
-                                 minHeap = Int.max (#minHeap old, #minHeap new),
-                                 mimeTypes = mergeO #2 (#mimeTypes old, #mimeTypes new)
+                                 onError = #onError old,
+                                 minHeap = #minHeap old,
+                                 mimeTypes = #mimeTypes old
                              }
                          in
                              if accLibs then
@@ -808,6 +795,13 @@ fun parseUrp' accLibs fname =
                            | _ => (ErrorMsg.error "Bad filter kind";
                                    url)
 
+                     (* Directives that configure the deployment of an application rather than contribute a component to it.
+                        They only make sense in the top-level project, so in a library they are ignored with a warning. *)
+                     val projectOnly = ["prefix", "database", "dbms", "sigfile", "filecache", "exe", "sql",
+                                        "debug", "dev", "profile", "timeout", "onError", "limit", "minHeap",
+                                        "linker", "timeFormat", "noMangleSql", "html5", "xhtml",
+                                        "coreInline", "monoInline", "mimeTypes", "safeGetDefault"]
+
                      fun read () =
                          case inputCommentableLine inf of
                              EndOfFile => finish []
@@ -840,6 +834,18 @@ fun parseUrp' accLibs fname =
                                        | _ => (ErrorMsg.error (cmd ^ " argument not of the form Module.func=func'");
                                                (("", ""), ""))
                              in
+                                 if isLib andalso List.exists (fn cmd' => cmd' = cmd) projectOnly then
+                                     let
+                                         val key = filename ^ ":" ^ cmd
+                                     in
+                                         if SS.member (!warnedLibDirectives, key) then
+                                             ()
+                                         else
+                                             (warnedLibDirectives := SS.add (!warnedLibDirectives, key);
+                                              TextIO.output (TextIO.stdErr, "WARNING: " ^ filename ^ ".urp: directive '" ^ cmd
+                                                                            ^ "' only applies to the top-level project; ignored in a library\n"))
+                                     end
+                                 else
                                  (* The urp directive won't override command-line supplied values. *)
                                  case cmd of
                                      "prefix" =>
@@ -948,7 +954,7 @@ fun parseUrp' accLibs fname =
                                              if SS.member (!libSet, arg) then
                                                  ()
                                              else
-                                                 (libs := pu arg :: !libs;
+                                                 (libs := pu true arg :: !libs;
                                                   libSet := SS.add (!libSet, arg))
                                          end
                                      else
@@ -994,7 +1000,10 @@ fun parseUrp' accLibs fname =
                                    | "html5" => Settings.setIsHtml5 true
                                    | "xhtml" => Settings.setIsHtml5 false
                                    | "lessSafeFfi" => Settings.setLessSafeFfi true
-                                   | "mimeTypes" => Settings.setMimeFilePath (relify arg)
+                                   | "mimeTypes" =>
+                                     (* Set right away too, since 'file' directives look up MIME types as they are read. *)
+                                     (mimeTypes := SOME (relify arg);
+                                      Settings.setMimeFilePath (relify arg))
 
                                    | "file" =>
                                      (case String.fields Char.isSpace arg of
@@ -1028,7 +1037,7 @@ fun parseUrp' accLibs fname =
                      job
                  end
          in
-             {Job = pu fname, Libs = !bigLibs}
+             {Job = pu false fname, Libs = !bigLibs}
          end)
 
 fun p_parsed j = Print.vbox [p_job j, p_settings j]
@@ -1732,82 +1741,86 @@ fun compileC {cname, oname, ename, libs, profile, debug, dev, linker, link = lin
     end
 
 fun compile job =
-    case run toChecknest job of
-        NONE => false
-      | SOME file =>
-        let
-            val job = valOf (run (transform parseUrp "parseUrp") job)
-
-            val (cname, oname, cleanup) =
-                if #debug job then
-                    ("/tmp/webapp.c", "/tmp/webapp.o", fn () => ())
-                else
-                    let
-                        val dir = OS.FileSys.tmpName ()
-                        val () = if OS.FileSys.access (dir, []) then
-                                     OS.FileSys.remove dir
-                                 else
-                                     ()
-                        val cname = OS.Path.joinDirFile {dir = dir, file = "webapp.c"}
-                        val oname = OS.Path.joinDirFile {dir = dir, file = "webapp.o"}
-                    in
-                        OS.FileSys.mkDir dir;
-                        (cname, oname,
-                      fn () => (if OS.Process.isSuccess (OS.Process.system ("rm -rf " ^ dir)) then
-                                    ()
-                                else
-                                    raise Fail ("Unable to delete temporary directory " ^ dir)))
-                    end
-            val ename = #exe job
-        in
+    let
+        val _ = warnedLibDirectives := SS.empty
+    in
+        case run toChecknest job of
+            NONE => false
+          | SOME file =>
             let
-                val outf = TextIO.openOut cname
-                val s = TextIOPP.openOut {dst = outf, wid = 80}
+                val job = valOf (run (transform parseUrp "parseUrp") job)
 
-                val hasDb = List.exists (fn (Cjr.DDatabase _, _) => true | _ => false) (#1 file)
-                val libs =
-                    if hasDb then
-                        #link (Settings.currentDbms ())
+                val (cname, oname, cleanup) =
+                    if #debug job then
+                        ("/tmp/webapp.c", "/tmp/webapp.o", fn () => ())
                     else
-                        ""
+                        let
+                            val dir = OS.FileSys.tmpName ()
+                            val () = if OS.FileSys.access (dir, []) then
+                                         OS.FileSys.remove dir
+                                     else
+                                         ()
+                            val cname = OS.Path.joinDirFile {dir = dir, file = "webapp.c"}
+                            val oname = OS.Path.joinDirFile {dir = dir, file = "webapp.o"}
+                        in
+                            OS.FileSys.mkDir dir;
+                            (cname, oname,
+                          fn () => (if OS.Process.isSuccess (OS.Process.system ("rm -rf " ^ dir)) then
+                                        ()
+                                    else
+                                        raise Fail ("Unable to delete temporary directory " ^ dir)))
+                        end
+                val ename = #exe job
             in
-                Print.fprint s (CjrPrint.p_file CjrEnv.empty file);
-		TextIO.output1 (outf, #"\n");
-                TextIO.closeOut outf;
+                let
+                    val outf = TextIO.openOut cname
+                    val s = TextIOPP.openOut {dst = outf, wid = 80}
 
-                if ErrorMsg.anyErrors () then
-                    false
-                else
-                    (case #sql job of
-                         NONE => ()
-                       | SOME sql =>
-                         let
-                             val outf = TextIO.openOut sql
-                             val s = TextIOPP.openOut {dst = outf, wid = 80}
-                         in
-                             Print.fprint s (CjrPrint.p_sql CjrEnv.empty file);
-                             TextIO.closeOut outf
-                         end;
+                    val hasDb = List.exists (fn (Cjr.DDatabase _, _) => true | _ => false) (#1 file)
+                    val libs =
+                        if hasDb then
+                            #link (Settings.currentDbms ())
+                        else
+                            ""
+                in
+                    Print.fprint s (CjrPrint.p_file CjrEnv.empty file);
+                    TextIO.output1 (outf, #"\n");
+                    TextIO.closeOut outf;
 
-                     case #endpoints job of
-                         NONE => ()
-                       | SOME endpoints =>
-                         let
-                             val report = Endpoints.summarize ()
-                             val outf = TextIO.openOut endpoints
-                             val s = TextIOPP.openOut {dst = outf, wid = 80}
-                         in
-                             Print.fprint s (Endpoints.p_report report);
-                             TextIO.closeOut outf
-                         end;
+                    if ErrorMsg.anyErrors () then
+                        false
+                    else
+                        (case #sql job of
+                             NONE => ()
+                           | SOME sql =>
+                             let
+                                 val outf = TextIO.openOut sql
+                                 val s = TextIOPP.openOut {dst = outf, wid = 80}
+                             in
+                                 Print.fprint s (CjrPrint.p_sql CjrEnv.empty file);
+                                 TextIO.closeOut outf
+                             end;
 
-                     compileC {cname = cname, oname = oname, ename = ename, libs = libs,
-                               profile = #profile job, debug = #debug job, dev = #dev job, linker = #linker job, link = #link job}
+                         case #endpoints job of
+                             NONE => ()
+                           | SOME endpoints =>
+                             let
+                                 val report = Endpoints.summarize ()
+                                 val outf = TextIO.openOut endpoints
+                                 val s = TextIOPP.openOut {dst = outf, wid = 80}
+                             in
+                                 Print.fprint s (Endpoints.p_report report);
+                                 TextIO.closeOut outf
+                             end;
 
-                     before cleanup ())
+                         compileC {cname = cname, oname = oname, ename = ename, libs = libs,
+                                   profile = #profile job, debug = #debug job, dev = #dev job, linker = #linker job, link = #link job}
+
+                         before cleanup ())
+                end
+                handle ex => (((cleanup ()) handle _ => ()); raise ex)
             end
-            handle ex => (((cleanup ()) handle _ => ()); raise ex)
-        end
+    end
 
 fun compiler job =
     if compile job then
