@@ -2157,6 +2157,11 @@ $$\begin{array}{l}
   \mt{val} \; \mt{confirm} : \mt{string} \to \mt{transaction} \; \mt{bool}
 \end{array}$$
 
+The current page can be reloaded, as with the browser's reload button.  As for any navigation started from a script, the page is only torn down once the calling thread yields, so code following the call may still run.
+$$\begin{array}{l}
+  \mt{val} \; \mt{reload} : \mt{transaction} \; \mt{unit}
+\end{array}$$
+
 Any transaction may be run in a new thread with the $\mt{spawn}$ function.
 $$\begin{array}{l}
   \mt{val} \; \mt{spawn} : \mt{transaction} \; \mt{unit} \to \mt{transaction} \; \mt{unit}

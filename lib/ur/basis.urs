@@ -237,6 +237,7 @@ val checkMeta : string -> option meta
 
 val alert : string -> transaction unit
 val confirm : string -> transaction bool
+val reload : transaction unit
 val spawn : transaction unit -> transaction unit
 val sleep : int -> transaction unit
 
