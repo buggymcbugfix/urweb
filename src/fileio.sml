@@ -16,9 +16,15 @@ fun checkFileModTime fname =
   end
 
 fun mostRecentModTime () =
-  if Time.compare (!mostRecentModTimeRef, Time.zeroTime) = EQUAL
-  then Globals.getResetTime ()
-  else !mostRecentModTimeRef
+  case OS.Process.getEnv "SOURCE_DATE_EPOCH" of
+      SOME s =>
+        (case LargeInt.fromString s of
+             SOME n => Time.fromSeconds n
+           | NONE => Globals.getResetTime ())
+    | NONE =>
+        if Time.compare (!mostRecentModTimeRef, Time.zeroTime) = EQUAL
+        then Globals.getResetTime ()
+        else !mostRecentModTimeRef
 
 fun txtOpenIn fname =
   let
