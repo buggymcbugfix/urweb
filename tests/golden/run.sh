@@ -58,9 +58,18 @@
 #
 # FAMILIES
 #
-#   urp   urweb -stop parseJob ARGS   The parsed and merged job, the settings that
-#                                     .urp directives set directly, and any warnings
-#                                     or errors; stops before reading any source file.
+#   urp        urweb -stop parseJob ARGS   The parsed and merged job, the settings
+#                                          that .urp directives set directly, and any
+#                                          warnings or errors; stops before reading
+#                                          any source file.
+#   typecheck  urweb -tc ARGS              What elaboration says: type errors with
+#                                          their positions, or nothing when the
+#                                          program typechecks.
+#   compile    urweb -stop checknest ARGS  The generated C, from every phase up
+#                                          to and including C generation but
+#                                          without running the C compiler; for a
+#                                          program that does not compile, the
+#                                          diagnostics instead.
 
 start=$(pwd -P)
 cd "$(dirname "$0")" || exit 1
@@ -71,6 +80,13 @@ case $urweb in
     /*) ;;
     *) urweb=$start/$urweb ;;
 esac
+# The in-tree compiler needs -boot to find the library in the source tree;
+# an installed one (URWEB set) must not get it.
+urweb_flags=${URWEB_FLAGS-$([ -n "$URWEB" ] || echo '-boot -noEmacs')}
+
+# ✨reproducibility✨
+SOURCE_DATE_EPOCH=0
+export SOURCE_DATE_EPOCH
 
 update=
 case $1 in
@@ -82,8 +98,22 @@ esac
 # the test's arguments and prints what the golden holds.
 
 run_urp() {
-    "$urweb" -stop parseJob "$@" 2>&1 \
+    "$urweb" $urweb_flags -stop parseJob "$@" 2>&1 \
         | sed -e '/Stopped compilation after phase parseJob$/d'
+}
+
+run_typecheck() {
+    "$urweb" $urweb_flags -tc "$@" 2>&1
+}
+# 1. The C includes reference the build machine's absolute paths, as set by the configure script.
+# 2. `urweb.js` is embedded as one string, followed by the program's own code.
+#    We strip this as we don't want to bloat our golden tests
+run_compile() {
+    "$urweb" $urweb_flags -stop checknest "$@" 2>&1 \
+        | sed -e '/Stopped compilation after phase checknest$/d' \
+              -e 's|^\( *#include "\)[^"]*/\(include/urweb/[^"]*"\)|\1\2|' \
+              -e 's|^\( *#include <\)/[^>]*/\([^/>]*>\)|\1\2|' \
+              -e 's|^\( *static char jslib\[\] = \)"..*";$|\1"*script elided*";|'
 }
 
 failed=0
