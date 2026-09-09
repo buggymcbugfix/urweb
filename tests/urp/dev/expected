@@ -1,6 +1,6 @@
 Prefix: /
 Database: (none)
-Exe: dev.exe
+Exe: <tests/urp>/dev/dev.exe
 SQL file: (none)
 Endpoints file: (none)
 Debug: true
@@ -10,7 +10,7 @@ Timeout: 60
 Linker: (none)
 JsModule: (none)
 Url allow #*
-Source dev
+Source <tests/urp>/dev/dev
 Dbms: (none)
 Sigfile: (none)
 Filecache: (none)

@@ -39,6 +39,14 @@ signature ERROR_MSG = sig
     val posToString : pos -> string
     val spanToString : span -> string
 
+    (* The directories that 'path NAME=VALUE' maps, as (NAME, VALUE) pairs; a
+     * relative VALUE counts from the current directory.  Messages name a file
+     * below one of them as $NAME/rest. *)
+    val setPathRoots : (string * string) list -> unit
+    (* How messages name a file (see setPathRoots).  Spans keep the absolute
+     * path; this only affects what is printed. *)
+    val displayFile : string -> string
+
     val dummyPos : pos
     val dummySpan : span
 
