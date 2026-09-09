@@ -70,6 +70,9 @@
 #                                          without running the C compiler; for a
 #                                          program that does not compile, the
 #                                          diagnostics instead.
+#   sql        urweb -sql FILE ARGS        The schema generated for the -dbms named
+#                                          in ARGS (sqlite, postgres or mysql).  A
+#                                          full compile, see run_sql.
 
 start=$(pwd -P)
 cd "$(dirname "$0")" || exit 1
@@ -114,6 +117,22 @@ run_compile() {
               -e 's|^\( *#include "\)[^"]*/\(include/urweb/[^"]*"\)|\1\2|' \
               -e 's|^\( *#include <\)/[^>]*/\([^/>]*>\)|\1\2|' \
               -e 's|^\( *static char jslib\[\] = \)"..*";$|\1"*script elided*";|'
+}
+
+# The schema named by -sql is written after the C file and right before the
+# C compiler runs, and no -stop phase lies between the two, so this is a
+# full compile whose C stage is ignored: the schema is on disk by then
+# whatever gcc makes of the rest (and mysql cannot even be linked here).  A
+# compiler error leaves no schema, and then the diagnostics are the output.
+run_sql() {
+    tmp=$(mktemp -d)
+    "$urweb" $urweb_flags -sql "$tmp/schema.sql" -output "$tmp/app.exe" "$@" >"$tmp/log" 2>&1
+    if [ -f "$tmp/schema.sql" ]; then
+        cat "$tmp/schema.sql"
+    else
+        cat "$tmp/log"
+    fi
+    rm -rf "$tmp"
 }
 
 failed=0
