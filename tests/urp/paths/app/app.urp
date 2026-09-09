@@ -1,0 +1,6 @@
+path LIB=../lib
+
+$LIB/libmod
+../shared
+sub/inner
+app

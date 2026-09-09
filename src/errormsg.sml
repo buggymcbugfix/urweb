@@ -40,8 +40,55 @@ type 'a located = 'a * span
 fun posToString {line, char} =
     String.concat [Int.toString line, ":", Int.toString char]
 
+(* Directories as (NAME, absolute path) pairs; see displayFile. *)
+val pathRoots : (string * string) list ref = ref []
+
+fun setPathRoots roots =
+    let
+        val cwd = OS.FileSys.getDir ()
+    in
+        pathRoots := map (fn (name, dir) => (name, OS.Path.mkAbsolute {path = dir, relativeTo = cwd})) roots
+    end
+
+(* Is file (a canonical path) below directory dir?  Returns the rest of the path. *)
+fun below (dir, file) =
+    let
+        val dir = if String.isSuffix "/" dir then dir else dir ^ "/"
+    in
+        if String.isPrefix dir file then
+            SOME (String.extract (file, size dir, NONE))
+        else
+            NONE
+    end
+
+(* A file below a path root is $NAME/rest, with the longest root winning, so
+ * that it reads as it would in a .urp file and does not change with the
+ * directory the compiler runs in.  Failing that, a file below the current
+ * directory is relative to it, as other compilers report files.  Anything
+ * else keeps its absolute path; climbing out of the current directory with
+ * '..' would pull in unrelated directories. *)
+fun displayFile "" = ""
+  | displayFile file =
+    let
+        val file = OS.Path.mkCanonical file
+
+        fun longest ((name, dir), best) =
+            case (below (dir, file), best) of
+                (NONE, _) => best
+              | (SOME rest, SOME (_, dir', _)) =>
+                if size dir > size dir' then SOME (name, dir, rest) else best
+              | (SOME rest, NONE) => SOME (name, dir, rest)
+    in
+        case foldl longest NONE (!pathRoots) of
+            SOME (name, _, rest) => "$" ^ name ^ "/" ^ rest
+          | NONE =>
+            case below (OS.FileSys.getDir (), file) of
+                SOME rest => rest
+              | NONE => file
+    end
+
 fun spanToString {file, first, last} =
-    String.concat [file, ":", posToString first, "-", posToString last]
+    String.concat [displayFile file, ":", posToString first, "-", posToString last]
 
 val dummyPos = {line = 0,
                 char = 0}
@@ -119,7 +166,7 @@ fun error s = (TextIO.output (TextIO.stdErr, s);
                structuresCurrentlyElaborating :=
                  List.map (fn (s, e) => (s, true)) (!structuresCurrentlyElaborating))
 
-fun errorAt (span : span) s = (TextIO.output (TextIO.stdErr, #file span);
+fun errorAt (span : span) s = (TextIO.output (TextIO.stdErr, displayFile (#file span));
                                TextIO.output (TextIO.stdErr, ":");
                                TextIO.output (TextIO.stdErr, posToString (#first span));
                                TextIO.output (TextIO.stdErr, ": (to ");
