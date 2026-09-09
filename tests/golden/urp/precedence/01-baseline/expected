@@ -1,7 +1,7 @@
 Prefix: /urp/
 Database: dbname=urp
-Exe: <tests/golden>/urp/precedence/urp.exe
-SQL file: <tests/golden>/urp/precedence/urp.sql
+Exe: urp.exe
+SQL file: urp.sql
 Endpoints file: (none)
 Debug: false
 Dev: false
@@ -10,7 +10,7 @@ Timeout: 60
 Linker: (none)
 JsModule: (none)
 Url allow #*
-Source <tests/golden>/urp/precedence/precedence
+Source precedence
 Dbms: postgres
 Sigfile: urp.sig
 Filecache: (none)

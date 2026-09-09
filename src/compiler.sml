@@ -288,6 +288,8 @@ fun p_job (job : job) =
         fun opt (label, v) = label ^ ": " ^ Option.getOpt (v, "(none)")
         fun bool (label, v) = label ^ ": " ^ (if v then "true" else "false")
         fun each (label, ss) = map (fn s => label ^ " " ^ s) ss
+        fun file (label, v) = opt (label, Option.map ErrorMsg.displayFile v)
+        fun files (label, ss) = each (label, map ErrorMsg.displayFile ss)
         fun ffi (m, x) = m ^ "." ^ x
         fun pkind k = case k of
                           Settings.Any => "all"
@@ -308,17 +310,17 @@ fun p_job (job : job) =
     in
         p_lines ([opt ("Prefix", SOME (#prefix job)),
                   opt ("Database", #database job),
-                  opt ("Exe", SOME (#exe job)),
-                  opt ("SQL file", #sql job),
-                  opt ("Endpoints file", #endpoints job),
+                  file ("Exe", SOME (#exe job)),
+                  file ("SQL file", #sql job),
+                  file ("Endpoints file", #endpoints job),
                   bool ("Debug", #debug job),
                   bool ("Dev", #dev job),
                   bool ("Profile", #profile job),
                   opt ("Timeout", SOME (Int.toString (#timeout job)))]
-                 @ each ("Ffi", #ffi job)
-                 @ each ("Link", #link job)
+                 @ files ("Ffi", #ffi job)
+                 @ files ("Link", #link job)
                  @ [opt ("Linker", #linker job)]
-                 @ each ("Header", #headers job)
+                 @ files ("Header", #headers job)
                  @ each ("Script", #scripts job)
                  @ each ("ClientToServer", map ffi (#clientToServer job))
                  @ each ("Effectful", map ffi (#effectful job))
@@ -334,15 +336,15 @@ fun p_job (job : job) =
                  @ each ("ResponseHeader", map rule (#filterResponse job))
                  @ each ("EnvVar", map rule (#filterEnv job))
                  @ each ("Meta", map rule (#filterMeta job))
-                 @ each ("Source", #sources job)
+                 @ files ("Source", #sources job)
                  @ [opt ("Dbms", #dbms job),
-                    opt ("Sigfile", #sigFile job),
-                    opt ("Filecache", #fileCache job),
+                    file ("Sigfile", #sigFile job),
+                    file ("Filecache", #fileCache job),
                     bool ("SafeGetDefault", #safeGetDefault job)]
                  @ each ("SafeGet", #safeGets job)
                  @ [opt ("OnError", Option.map (fn (m, ms, x) => String.concatWith "." (m :: ms @ [x])) (#onError job)),
                     opt ("MinHeap", SOME (Int.toString (#minHeap job))),
-                    opt ("MimeTypes", #mimeTypes job)])
+                    file ("MimeTypes", #mimeTypes job)])
     end
 
 (* The global settings that .urp parsing affects without going through the job
@@ -363,7 +365,7 @@ fun p_settings (job : job) =
                                      [] => "(none)"
                                    | ls => String.concatWith ", " (map (fn (c, n) => c ^ "=" ^ Int.toString n)
                                                                         (rev ls))),
-                  " MimeTypes: " ^ Settings.getMimeFilePath ()]
+                  " MimeTypes: " ^ ErrorMsg.displayFile (Settings.getMimeFilePath ())]
                  @ map (fn ((m, x), _) => " JsFunc " ^ m ^ "." ^ x ^ " -> "
                                           ^ Option.getOpt (Settings.jsFunc (m, x), "(none)"))
                        (#jsFuncs job))

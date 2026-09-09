@@ -22,17 +22,17 @@ WARNING: scopelib.urp: directive 'mimeTypes' only applies to the top-level proje
 WARNING: scopelib.urp: directive 'safeGetDefault' only applies to the top-level project; ignored in a library
 Prefix: /
 Database: dbname=app
-Exe: <tests/golden>/urp/scope/scope.exe
+Exe: scope.exe
 SQL file: (none)
 Endpoints file: (none)
 Debug: false
 Dev: false
 Profile: false
 Timeout: 60
-Ffi <tests/golden>/urp/scope/libffi
-Link <tests/golden>/urp/scope/lib.o
+Ffi libffi
+Link lib.o
 Linker: (none)
-Header <tests/golden>/urp/scope/lib.h
+Header lib.h
 Script /lib.js
 ClientToServer Lib.c2s
 Effectful Lib.eff
@@ -46,8 +46,8 @@ Rewrite all "Lib/*" -> ""
 Url allow #*
 Url allow #*
 Url allow /lib/*
-Source <tests/golden>/urp/scope/scopelib
-Source <tests/golden>/urp/scope/scope
+Source scopelib
+Source scope
 Dbms: postgres
 Sigfile: (none)
 Filecache: (none)
@@ -55,7 +55,7 @@ SafeGetDefault: false
 SafeGet Lib/get
 OnError: (none)
 MinHeap: 0
-MimeTypes: <tests/golden>/urp/scope/app.mime
+MimeTypes: app.mime
 Settings:
  Html5: true
  MangleSql: true
@@ -64,6 +64,6 @@ Settings:
  CoreInline: 5
  MonoInline: 5
  Limits: (none)
- MimeTypes: <tests/golden>/urp/scope/app.mime
+ MimeTypes: app.mime
  JsFunc App.f -> App.f
  JsFunc Lib.g -> Lib.g
