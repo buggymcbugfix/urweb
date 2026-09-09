@@ -10,7 +10,7 @@ Timeout: 60
 Linker: (none)
 JsModule: (none)
 Url allow #*
-Source <tests/golden>/urp/precedence/precedence
+Source precedence
 Dbms: sqlite
 Sigfile: flag.sig
 Filecache: (none)
