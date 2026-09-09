@@ -481,6 +481,7 @@ structure SM = BinaryMapFn(SK)
 
 fun parseUrp' accLibs fname =
     (lastUrp := fname;
+     ErrorMsg.setPathRoots (M.listItemsi (!pathmap));
      if not (Posix.FileSys.access (fname ^ ".urp", []) orelse Posix.FileSys.access (fname ^ "/lib.urp", []))
         andalso Posix.FileSys.access (fname ^ ".ur", []) then
          let
@@ -845,7 +846,7 @@ fun parseUrp' accLibs fname =
                                              ()
                                          else
                                              (warnedLibDirectives := SS.add (!warnedLibDirectives, key);
-                                              TextIO.output (TextIO.stdErr, "WARNING: " ^ filename ^ ".urp: directive '" ^ cmd
+                                              TextIO.output (TextIO.stdErr, "WARNING: " ^ ErrorMsg.displayFile filename ^ ".urp: directive '" ^ cmd
                                                                             ^ "' only applies to the top-level project; ignored in a library\n"))
                                      end
                                  else
@@ -964,7 +965,8 @@ fun parseUrp' accLibs fname =
                                          bigLibs := libify' arg :: !bigLibs
                                    | "path" =>
                                      (case String.fields (fn ch => ch = #"=") arg of
-                                          [n, v] => ((pathmap := M.insert (!pathmap, n, OS.Path.mkAbsolute {path = v, relativeTo = dir}))
+                                          [n, v] => ((pathmap := M.insert (!pathmap, n, OS.Path.mkAbsolute {path = v, relativeTo = dir});
+                                                      ErrorMsg.setPathRoots (M.listItemsi (!pathmap)))
                                                      handle OS.Path.Path => ErrorMsg.error "Invalid 'path' directory argument")
                                         | _ => ErrorMsg.error "path argument not of the form name=value'")
                                    | "onError" =>
@@ -1260,7 +1262,7 @@ val parse = {
                                                                             ^ "character."))
                                                        else
                                                            ();
-                                                       ErrorMsg.error ("Missing source file: " ^ fname);
+                                                       ErrorMsg.error ("Missing source file: " ^ ErrorMsg.displayFile fname);
                                                        anyErrors := true;
                                                        (Source.DSequence "", ErrorMsg.dummySpan))
 

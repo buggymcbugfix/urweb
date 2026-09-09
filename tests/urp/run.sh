@@ -9,8 +9,11 @@
 # compiler runs with no project and its complaint is the expected output).
 # With '-stop parseJob' it prints the parsed and merged job, the settings that
 # .urp directives set directly, and any warnings or errors, then stops before
-# reading any source file.  That output is compared with 'expected'.  Anything
-# else in a test's directory (a 'readme', say) is ignored by the runner.
+# reading any source file.  That output is compared with 'expected', with the
+# absolute path of tests/urp replaced by '<tests/urp>' wherever it appears, so
+# that a path shown relative in 'expected' really was printed relative.
+# Anything else in a test's directory (a 'readme', say) is ignored by the
+# runner.
 #
 # So a program can carry one test, with 'args' and 'expected' next to its .urp
 # file, or several, each in its own subdirectory:
@@ -52,7 +55,7 @@ for expected in $(find "$@" -name expected -type f | LC_ALL=C sort); do
     done
     [ "$prog" != . ] || prog=$dir
     actual=$(cd "$prog" && "$urweb" -stop parseJob $(cat "$here/$dir/args" 2>/dev/null) 2>&1 \
-             | sed -e "s|$here/$prog/||g" -e "s|$here/||g" \
+             | sed -e "s|$here|<tests/urp>|g" \
                    -e '/Stopped compilation after phase parseJob$/d')
     if [ -n "$update" ]; then
         printf '%s\n' "$actual" > "$expected"
