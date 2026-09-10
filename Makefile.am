@@ -143,7 +143,7 @@ TEST_PRELUDE = set -e; \
 # Golden tests (see tests/golden/run.sh): 'make check-golden' runs every
 # family, 'make check-golden-FAMILY' one of them, 'make update-golden'
 # accepts the current output as the new expected output.
-GOLDEN_FAMILIES = urp typecheck compile sql
+GOLDEN_FAMILIES = urp typecheck compile sql js
 
 check-golden: bin/urweb
 	@tests/golden/run.sh
