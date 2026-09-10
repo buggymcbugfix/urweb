@@ -124,15 +124,9 @@ run_compile() {
               -e 's|^\( *static char js[a-z]*\[\] = \)"..*";$|\1"*script elided*";|'
 }
 
-# The schema named by -sql is written after the C file and right before the
-# C compiler runs, and no -stop phase lies between the two, so this is a
-# full compile whose C stage is ignored: the schema is on disk by then
-# whatever gcc makes of the rest (and mysql cannot even be linked here).  A
-# compiler error leaves no schema, and then the diagnostics are the output.
 run_sql() {
     tmp=$(mktemp -d)
-    "$urweb" $urweb_flags -sql "$tmp/schema.sql" -output "$tmp/app.exe" "$@" >"$tmp/log" 2>&1
-    if [ -f "$tmp/schema.sql" ]; then
+    if "$urweb" $urweb_flags -sql "$tmp/schema.sql" -stop sqlify "$@" >"$tmp/log" 2>&1; then
         cat "$tmp/schema.sql"
     else
         cat "$tmp/log"

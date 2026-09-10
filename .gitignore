@@ -25,11 +25,9 @@ src/config.sml
 *.log
 *.status
 
-demo/out/*.html
-demo/demo.*
-
-demo/more/out/*.html
-demo/more/demo.*
+# `-demo` mode
+out
+demo.*
 
 doc/*.html
 doc/*.out
@@ -89,6 +87,3 @@ result
 
 # macos
 .DS_Store
-
-# SML development
-out

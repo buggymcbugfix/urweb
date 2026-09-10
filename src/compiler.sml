@@ -1049,9 +1049,16 @@ fun parseUrp' accLibs fname =
 
 fun p_parsed j = Print.vbox [p_job j, p_settings j]
 fun p_parsed' {Job = j, Libs = _ : string list} = p_parsed j
+val sqlFile = ref (NONE : string option)
 
 val parseUrp = {
-    func = #Job o parseUrp' true,
+    func = fn fname =>
+              let
+                  val job = #Job (parseUrp' true fname)
+              in
+                  sqlFile := #sql job;
+                  job
+              end,
     print = p_parsed
 }
 
@@ -1536,12 +1543,43 @@ val toMono_shake = transform mono_shake "mono_shake1" o toMono_reduce
 
 val toMono_opt2 = transform mono_opt "mono_opt2" o toMono_shake
 
+fun schema (ds, sideInfo) =
+    Cjrize.cjrize (List.filter (fn (d, _) =>
+                                   case d of
+                                       Mono.DTable _ => true
+                                     | Mono.DSequence _ => true
+                                     | Mono.DView _ => true
+                                     | Mono.DIndex _ => true
+                                     | Mono.DDatabase _ => true
+                                     | _ => false) ds,
+                   sideInfo)
+
+fun p_schema file = CjrPrint.p_sql CjrEnv.empty (schema file)
+
+val sqlify = {
+    func = fn file =>
+              (case !sqlFile of
+                   NONE => ()
+                 | SOME fname =>
+                   let
+                       val outf = TextIO.openOut fname
+                       val s = TextIOPP.openOut {dst = outf, wid = 80}
+                   in
+                       Print.fprint s (p_schema file);
+                       TextIO.closeOut outf
+                   end;
+               file),
+    print = p_schema
+}
+
+val toSqlify = transform sqlify "sqlify" o toMono_opt2
+
 val iflow = {
     func = (fn file => (if !doIflow then Iflow.check file else (); file)),
     print = MonoPrint.p_file MonoEnv.empty
 }
 
-val toIflow = transform iflow "iflow" o toMono_opt2
+val toIflow = transform iflow "iflow" o toSqlify
 
 val namejs = {
     func = NameJS.rewrite,
@@ -1650,13 +1688,6 @@ val checknest = {
 }
 
 val toChecknest = transform checknest "checknest" o toPrepare
-
-val sqlify = {
-    func = Cjrize.cjrize,
-    print = CjrPrint.p_sql CjrEnv.empty
-}
-
-val toSqlify = transform sqlify "sqlify" o toMono_opt2
 
 fun escapeFilename s =
     "\""
@@ -1797,18 +1828,7 @@ fun compile job =
                     if ErrorMsg.anyErrors () then
                         false
                     else
-                        (case #sql job of
-                             NONE => ()
-                           | SOME sql =>
-                             let
-                                 val outf = TextIO.openOut sql
-                                 val s = TextIOPP.openOut {dst = outf, wid = 80}
-                             in
-                                 Print.fprint s (CjrPrint.p_sql CjrEnv.empty file);
-                                 TextIO.closeOut outf
-                             end;
-
-                         case #endpoints job of
+                        (case #endpoints job of
                              NONE => ()
                            | SOME endpoints =>
                              let

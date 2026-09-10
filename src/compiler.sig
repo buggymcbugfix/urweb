@@ -117,6 +117,7 @@ signature COMPILER = sig
     val css : (Core.file, Css.report) phase
     val monoize : (Core.file, Mono.file) phase
     val mono_opt : (Mono.file, Mono.file) phase
+    val sqlify : (Mono.file, Mono.file) phase
     val endpoints : (Mono.file, Mono.file) phase
     val untangle : (Mono.file, Mono.file) phase
     val mono_reduce : (Mono.file, Mono.file) phase
@@ -134,7 +135,6 @@ signature COMPILER = sig
     val cjrize : (Mono.file, Cjr.file) phase
     val prepare : (Cjr.file, Cjr.file) phase
     val checknest : (Cjr.file, Cjr.file) phase
-    val sqlify : (Mono.file, Cjr.file) phase
 
     val toParseJob : (string, job) transform
     val toParseJob' : (string, {Job : job, Libs : string list}) transform
@@ -179,6 +179,7 @@ signature COMPILER = sig
     val toMono_reduce : (string, Mono.file) transform
     val toMono_shake : (string, Mono.file) transform
     val toMono_opt2 : (string, Mono.file) transform
+    val toSqlify : (string, Mono.file) transform
     val toIflow : (string, Mono.file) transform
     val toNamejs : (string, Mono.file) transform
     val toNamejs_untangle : (string, Mono.file) transform
@@ -203,7 +204,6 @@ signature COMPILER = sig
     val toCjrize : (string, Cjr.file) transform
     val toPrepare : (string, Cjr.file) transform
     val toChecknest : (string, Cjr.file) transform
-    val toSqlify : (string, Cjr.file) transform
 
     val debug : bool ref
     val dev : bool ref

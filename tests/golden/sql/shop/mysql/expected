@@ -17,3 +17,5 @@ CREATE TABLE uw_shop_tag (
 
 CREATE VIEW uw_shop_cheap AS
 SELECT T_Item.uw_name AS uw_name FROM uw_shop_item AS T_Item WHERE (T_Item.uw_price < 10);
+
+Stopped compilation after phase sqlify

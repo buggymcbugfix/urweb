@@ -1,0 +1,8 @@
+database dbname=merging
+sql second.sql
+timeout 90
+rewrite all Second/*
+allow url http://second.example/*
+safeGet Second/get
+
+second
