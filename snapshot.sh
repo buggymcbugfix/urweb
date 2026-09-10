@@ -27,8 +27,8 @@
 #       |-- typecheck.urs           -saveTypecheck  the signatures inferred
 #       |-- schema.sql              -sql            the database schema
 #       |-- client.js               -saveJs         the client-side script
-#       |-- server.c                -saveC          the generated C
-#       `-- endpoints.json          -endpoints      the URLs the app serves
+#       |-- endpoints.json          -endpoints      the URLs the app serves
+#       `-- server.c                -saveC          the generated C
 #
 # One project can have several snapshots (the same program under three database backends, say)
 # by putting each in a case directory of its own:
@@ -100,15 +100,14 @@ die() {
 
 # Everything the compiler can be asked to write.  For each, artifact_spec
 # gives how far the compiler has to run -- a rank, and the phase it may stop
-# after once that artifact is written -- and the flag that asks for it.  A
-# phase of '-' means nothing short of a whole compile will do.
+# after once that artifact is written -- and the flag that asks for it.
 #
 # The ranks are the only thing this script assumes about the order of the
 # compiler's phases, and a run that ends without producing something it asked
 # for says so rather than quietly comparing an empty file, so a reordering in
 # the compiler is loud here.  The assumption would go away if the compiler
 # could be told to stop once it has written everything it was asked for.
-artifacts='stdout.txt stderr.txt settings.txt parsetree.ur typecheck.urs schema.sql client.js server.c endpoints.json'
+artifacts='stdout.txt stderr.txt settings.txt parsetree.ur typecheck.urs schema.sql client.js endpoints.json server.c'
 
 artifact_spec() {
     case $1 in
@@ -119,8 +118,8 @@ artifact_spec() {
         typecheck.urs)  echo '3 elaborate -saveTypecheck' ;;
         schema.sql)     echo '4 sqlify -sql' ;;
         client.js)      echo '5 jscomp -saveJs' ;;
-        server.c)       echo '6 checknest -saveC' ;;
-        endpoints.json) echo '7 - -endpoints' ;;
+        endpoints.json) echo '6 endpoints -endpoints' ;;
+        server.c)       echo '7 checknest -saveC' ;;
         *)              echo '' ;;
     esac
 }
@@ -356,15 +355,7 @@ run_case() {
     # How far to run.  A case whose own args say that is left to it.
     case " $extra " in
         *' -stop '*|*' -stopQuiet '*|*' -tc '*) ;;
-        *)
-            if [ "$stop" = - ]; then
-                # The endpoints report is finished off with the URL of the
-                # client-side script, which is settled while the C is being
-                # written, so there is no stopping short of the whole thing.
-                flags="$flags -output $work/app.exe"
-            else
-                flags="$flags -stopQuiet $stop"
-            fi ;;
+        *) flags="$flags -stopQuiet $stop" ;;
     esac
 
     # shellcheck disable=SC2086 # the flags and the case's own args are lists

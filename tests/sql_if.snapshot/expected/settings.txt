@@ -1,6 +1,6 @@
 Prefix: /
 Database: dbname=sql_if
-Exe: app.exe
+Exe: tests/sql_if.exe
 SQL file: schema.sql
 Endpoints file: endpoints.json
 Debug: false

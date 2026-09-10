@@ -1,6 +1,6 @@
 Prefix: /
 Database: dbname=test
-Exe: app.exe
+Exe: demo/crud3.exe
 SQL file: schema.sql
 Endpoints file: endpoints.json
 Debug: false
