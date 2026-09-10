@@ -144,7 +144,7 @@ fun transform (ph : ('src, 'dst) phase) name = {
                             NONE)
                        else if !stop = SOME name then
                            (Print.eprint (#print ph v);
-                            ErrorMsg.error ("Stopped compilation after phase " ^ name);
+                            ErrorMsg.error ("\nStopped compilation after phase " ^ name);
                             NONE)
                        else
                            (if !dumpSource then
