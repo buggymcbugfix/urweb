@@ -1,6 +1,6 @@
 Prefix: /
 Database: dbname=spawn
-Exe: app.exe
+Exe: tests/spawn.exe
 SQL file: schema.sql
 Endpoints file: endpoints.json
 Debug: true
