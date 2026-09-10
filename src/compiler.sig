@@ -224,6 +224,7 @@ signature COMPILER = sig
     val setSaveParsetree : string -> unit
     val setSaveTypecheck : string -> unit
     val setSaveC : string -> unit
+    val resetPhaseFlags : unit -> unit
     (* Stop compilation after this phase. *)
 
 end
