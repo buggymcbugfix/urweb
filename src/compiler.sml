@@ -1370,6 +1370,39 @@ val parse = {
 
 val toParse = transform parse "parse" o toParseJob
 
+(* What a .urs for the whole program would say: one entry per top-level
+ * module, with the signature elaboration inferred for it. *)
+fun p_sgns file =
+    let
+        (* Only the program's own modules.  [elabFile] prepends [Basis] and [Top] with no
+           source positions and the rest comes from files in the library search path. *)
+        val lib = Settings.libUr ()
+        fun ours (d : Elab.decl) =
+            let
+                val f = #file (#2 d)
+            in
+                f <> "" andalso not (String.isPrefix lib f)
+            end
+
+        val (pds, _) = ListUtil.foldlMap
+                           (fn (d, env) =>
+                               ((case #1 d of
+                                     Elab.DStr (x, _, sgn, _) =>
+                                     if ours d then
+                                         SOME (Print.box [Print.PD.string ("structure " ^ x ^ " : "),
+                                                          ElabPrint.p_sgn env sgn])
+                                     else
+                                         NONE
+                                   | _ => NONE),
+                                ElabEnv.declBinds env d))
+                           ElabEnv.empty file
+    in
+        Print.p_list_sep Print.PD.newline (fn x => x) (List.mapPartial (fn x => x) pds)
+    end
+
+val saveTypecheck = ref (NONE : string option)
+fun setSaveTypecheck fname = saveTypecheck := SOME fname
+
 val elaborate = {
     func = fn file => let
                   val basisF = Settings.libFile "basis.urs"
@@ -1382,10 +1415,15 @@ val elaborate = {
 
                   val tm1 = OS.FileSys.modTime topF
                   val tm2 = OS.FileSys.modTime topF'
+
+                  val file = Elaborate.elabFile basis (OS.FileSys.modTime basisF)
+                                                topStr topSgn (if Time.< (tm1, tm2) then tm2 else tm1)
+                                                ElabEnv.empty (fn env => env) file
               in
-                  Elaborate.elabFile basis (OS.FileSys.modTime basisF)
-                                     topStr topSgn (if Time.< (tm1, tm2) then tm2 else tm1)
-                                     ElabEnv.empty (fn env => env) file
+                  case !saveTypecheck of
+                      NONE => ()
+                    | SOME fname => if ErrorMsg.anyErrors () then () else saveDoc fname (p_sgns file);
+                  file
               end,
     print = ElabPrint.p_file ElabEnv.empty
 }
