@@ -229,7 +229,9 @@ fun oneRun args =
               ("static", call_true Settings.setStaticLinking,
                     SOME "enable static linking"),
               ("stop", ONE ("<phase>", Compiler.setStop),
-                    SOME "stop compilation after <phase>"),
+                    SOME "stop compilation after <phase>, printing what it produced"),
+              ("stopQuiet", ONE ("<phase>", Compiler.setStopQuiet),
+                    SOME "stop compilation after <phase>, printing nothing"),
               ("path", TWO ("<name>", "<path>", Compiler.addPath),
                     SOME ("set path variable <name> to <path> for use in "^
                           ".urp files")),
