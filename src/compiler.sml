@@ -1538,7 +1538,7 @@ val toEspecialize2 = transform especialize "especialize2" o toShake4
 val toShake4' = transform shake "shake4'" o toEspecialize2
 val toUnpoly2 = transform unpoly "unpoly2" o toShake4'
 val toSpecialize2 = transform specialize "specialize2" o toUnpoly2
-val toShake4'' = transform shake "shake4'" o toSpecialize2
+val toShake4'' = transform shake "shake4''" o toSpecialize2
 val toEspecialize3 = transform especialize "especialize3" o toShake4''
 val toSpecialize3 = transform specialize "specialize3" o toEspecialize3
 
