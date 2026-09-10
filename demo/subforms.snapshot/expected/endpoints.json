@@ -1,0 +1,6 @@
+{"endpoints":
+ [{"method": "GET", "url": "Subforms/main", "content-type": null},
+                                                                  
+   {"method": "POST", "url": "Subforms/sub", "content-type": null},
+                                                                   
+   {"method": "GET", "url": "Subforms/form", "content-type": null}]}

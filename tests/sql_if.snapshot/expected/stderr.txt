@@ -1,0 +1,7 @@
+tests/sql_if.ur:4:4: (to 7:3) Error in final record unification
+Can't unify record constructors
+Have:  [Dyn = (), MakeForm = (), Body = ()]
+Need:  [List = (), Dyn = ()]
+tests/sql_if.ur:4:4: (to 7:3) Stuck unifying these records after canceling matching pieces:
+Have:  [MakeForm = (), Body = ()]
+Need:  [List = ()]

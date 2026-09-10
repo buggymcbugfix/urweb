@@ -1,0 +1,6 @@
+{"endpoints":
+ [{"method": "GET", "url": "Sql/main", "content-type": null},
+                                                             
+   {"method": "POST", "url": "Sql/delete", "content-type": null},
+                                                                 
+   {"method": "POST", "url": "Sql/add", "content-type": null}]}

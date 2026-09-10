@@ -1,0 +1,6 @@
+{"endpoints":
+ [{"method": "GET", "url": "Tree/main", "content-type": null},
+                                                              
+   {"method": "POST", "url": "Tree/del", "content-type": null},
+                                                               
+   {"method": "POST", "url": "Tree/add", "content-type": null}]}

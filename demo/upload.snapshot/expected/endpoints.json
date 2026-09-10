@@ -1,0 +1,4 @@
+{"endpoints":
+ [{"method": "GET", "url": "Upload/main", "content-type": null},
+                                                                
+   {"method": "POST", "url": "Upload/echo", "content-type": null}]}

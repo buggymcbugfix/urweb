@@ -1,0 +1,4 @@
+{"endpoints":
+ [{"method": "GET", "url": "Constraints/main", "content-type": null},
+                                                                     
+   {"method": "POST", "url": "Constraints/add", "content-type": null}]}

@@ -1,0 +1,4 @@
+{"endpoints":
+ [{"method": "GET", "url": "Metaform1/main", "content-type": null},
+                                                                   
+   {"method": "POST", "url": "Metaform1/handler", "content-type": null}]}
