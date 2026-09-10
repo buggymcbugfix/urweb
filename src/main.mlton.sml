@@ -124,6 +124,7 @@ fun oneRun args =
                   Elaborate.unifyMore := false;
                   Compiler.dumpSource := false;
                   Compiler.doIflow := false;
+                  Compiler.resetPhaseFlags ();
                   Demo.noEmacs := false;
                   Settings.setDebug false;
                   Settings.setDev false)

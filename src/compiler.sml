@@ -106,6 +106,16 @@ fun saveAfter phase fname = saveFiles := (phase, fname) :: !saveFiles
 val setSaveSettings = saveAfter "parseJob"
 val setSaveParsetree = saveAfter "parse"
 val setSaveC = saveAfter "checknest"
+val saveTypecheck = ref (NONE : string option)
+fun setSaveTypecheck fname = saveTypecheck := SOME fname
+val sqlFile = ref (NONE : string option)
+fun resetPhaseFlags () =
+    (stop := NONE;
+     stopQuiet := NONE;
+     stoppedQuietly := false;
+     saveFiles := [];
+     saveTypecheck := NONE;
+     sqlFile := NONE)
 
 fun saveDoc fname doc =
     let
@@ -1079,7 +1089,6 @@ fun parseUrp' accLibs fname =
 
 fun p_parsed j = Print.vbox [p_job j, p_settings j]
 fun p_parsed' {Job = j, Libs = _ : string list} = p_parsed j
-val sqlFile = ref (NONE : string option)
 
 val parseUrp = {
     func = fn fname =>
@@ -1399,9 +1408,6 @@ fun p_sgns file =
     in
         Print.p_list_sep Print.PD.newline (fn x => x) (List.mapPartial (fn x => x) pds)
     end
-
-val saveTypecheck = ref (NONE : string option)
-fun setSaveTypecheck fname = saveTypecheck := SOME fname
 
 val elaborate = {
     func = fn file => let
