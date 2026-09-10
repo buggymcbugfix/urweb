@@ -1389,9 +1389,9 @@ fun process (file : file) =
                                    ^ "\ntime_format = \"" ^ Prim.toCString (Settings.getTimeFormat ()) ^ "\";\n")
                                   :: map (fn r => "\n// " ^ #Filename r ^ "\n\n" ^ #Content r ^ "\n") (Settings.listJsFiles ()))
 
-        (* Do the [-dumpJs]. *)
+        (* Do the [-saveJs]. *)
         val () =
-            case Settings.getDumpJs () of
+            case Settings.getSaveJs () of
                 NONE => ()
               | SOME fname =>
                 let

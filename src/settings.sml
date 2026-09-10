@@ -1119,9 +1119,9 @@ fun setOutputJsFile so =
      jsOutput := so)
 fun getOutputJsFile () = !jsOutput
 
-val dumpJs = ref (NONE : string option)
-fun setDumpJs so = dumpJs := so
-fun getDumpJs () = !dumpJs
+val saveJs = ref (NONE : string option)
+fun setSaveJs so = saveJs := so
+fun getSaveJs () = !saveJs
 
 fun reset () =
     (Globals.setResetTime ();
