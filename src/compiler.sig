@@ -219,6 +219,10 @@ signature COMPILER = sig
 
     val setStop : string -> unit
     val setStopQuiet : string -> unit
+
+    val setSaveSettings : string -> unit
+    val setSaveParsetree : string -> unit
+    val setSaveC : string -> unit
     (* Stop compilation after this phase. *)
 
 end
