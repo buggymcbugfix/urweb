@@ -1,0 +1,14 @@
+# Deployment settings of a project that will be merged into the demo:
+database dbname=merging
+dbms postgres
+sql first.sql
+sigfile first.sig
+filecache first.cache
+timeout 30
+# Settings that the demo builder accumulates:
+rewrite all First/*
+allow url http://first.example/*
+allow mime text/plain
+safeGet First/get
+
+first
