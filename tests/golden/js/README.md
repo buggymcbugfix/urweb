@@ -1,0 +1,26 @@
+The js family
+=============
+
+`urweb -dumpJs FILE PROJECT` writes the program's own client-side script,
+the one served at `app.<sha1>.js`: its URL rules, its compiled functions,
+its time format and whatever `jsFile` directives pull in.  That is the
+golden.  The runtime, `lib/js/urweb.js`, is served as a file of its own and
+is not the compiler's work, so it does not appear here.
+
+Each function is labelled with the span it came from and numbered within
+the script, from one, in the order the compiler emits them:
+
+    // counter.ur:4:6-4:77
+    urfuncs[1] = {c:"t",f:'{c:"l",b:...}'};
+
+Both matter for reading a diff.  The numbers used to be the compiler's
+global name indices, so anything added to the standard library shifted
+every one of them and the whole golden moved; the names in the C are worse
+still, since name_js invents them from the same counter.  A span survives
+both, and says where to look.
+
+The `recursion` case has a function that calls itself, so the numbering is
+exercised where it is easiest to get wrong: a function needs its number
+before its body is compiled.  `serverOnly` has no client-side code at all,
+and its empty golden says so; the day it stops being empty, something
+started needing a script that did not before.

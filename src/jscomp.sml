@@ -1388,6 +1388,18 @@ fun process (file : file) =
             String.concatWith "" ((urlRules ^ String.concat (rev (#script st))
                                    ^ "\ntime_format = \"" ^ Prim.toCString (Settings.getTimeFormat ()) ^ "\";\n")
                                   :: map (fn r => "\n// " ^ #Filename r ^ "\n\n" ^ #Content r ^ "\n") (Settings.listJsFiles ()))
+
+        (* Do the [-dumpJs]. *)
+        val () =
+            case Settings.getDumpJs () of
+                NONE => ()
+              | SOME fname =>
+                let
+                    val outf = TextIO.openOut fname
+                in
+                    if !foundJavaScript then TextIO.output (outf, script) else ();
+                    TextIO.closeOut outf
+                end
     in
         (if !foundJavaScript then
              (DJavaScript script, ErrorMsg.dummySpan) :: ds

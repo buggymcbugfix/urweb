@@ -73,6 +73,10 @@
 #   sql        urweb -sql FILE ARGS        The schema generated for the -dbms named
 #                                          in ARGS (sqlite, postgres or mysql).  A
 #                                          full compile, see run_sql.
+#   js         urweb -dumpJs FILE ARGS     The app's own client-side script, as
+#                                          served at app.<sha1>.js: without the
+#                                          lib/js/urweb.js runtime, which is served
+#                                          as a file of its own.
 
 start=$(pwd -P)
 cd "$(dirname "$0")" || exit 1
@@ -130,6 +134,22 @@ run_sql() {
     "$urweb" $urweb_flags -sql "$tmp/schema.sql" -output "$tmp/app.exe" "$@" >"$tmp/log" 2>&1
     if [ -f "$tmp/schema.sql" ]; then
         cat "$tmp/schema.sql"
+    else
+        cat "$tmp/log"
+    fi
+    rm -rf "$tmp"
+}
+
+# -dumpJs writes the program's own client-side script, the one served at
+# app.<sha1>.js; the runtime is not the compiler's work and is a file of its
+# own.  jscomp writes it, so the run can stop there.  A program with no
+# client-side code has an empty script, and a compiler error leaves none,
+# so then the diagnostics are the output.
+run_js() {
+    tmp=$(mktemp -d)
+    "$urweb" $urweb_flags -dumpJs "$tmp/app.js" -stop jscomp "$@" >"$tmp/log" 2>&1
+    if [ -f "$tmp/app.js" ]; then
+        cat "$tmp/app.js"
     else
         cat "$tmp/log"
     fi

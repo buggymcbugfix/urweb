@@ -1119,6 +1119,10 @@ fun setOutputJsFile so =
      jsOutput := so)
 fun getOutputJsFile () = !jsOutput
 
+val dumpJs = ref (NONE : string option)
+fun setDumpJs so = dumpJs := so
+fun getDumpJs () = !dumpJs
+
 fun reset () =
     (Globals.setResetTime ();
      urlPrefixFull := "/";
