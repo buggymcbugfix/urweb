@@ -152,7 +152,10 @@ $(GOLDEN_FAMILIES:%=check-golden-%): check-golden-%: bin/urweb
 	@tests/golden/run.sh $*
 
 update-golden: bin/urweb
-	@tests/golden/run.sh -u
+	@tests/golden/run.sh --update
+
+$(GOLDEN_FAMILIES:%=update-golden-%): update-golden-%: bin/urweb
+	@tests/golden/run.sh --update $*
 
 check-local: check-golden bin/urweb
 	@$(TEST_PRELUDE); \
