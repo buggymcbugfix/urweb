@@ -59,32 +59,33 @@ fun p_report {Endpoints = el} =
          p_list_sep (box [string ",", newline]) p_endpoint el,
          string "]}"]
 
-val endpoints = ref ([] : endpoint list)
-val jsFiles = ref ([] : string list)
+fun scriptUrls script =
+    let
+        val inf = FileIO.txtOpenIn (OS.Path.joinDirFile {dir = Settings.libJs (), file = "urweb.js"})
+        val runtime = TextIO.inputAll inf
+        val () = TextIO.closeIn inf
 
-fun addJavaScript x = jsFiles := x :: !jsFiles
+        fun url name = OS.Path.joinDirFile {dir = Settings.getUrlPrefix (), file = name}
+    in
+        {Runtime = url ("runtime." ^ SHA1.bintohex (SHA1.hash runtime) ^ ".js"),
+         App = url (case Settings.getOutputJsFile () of
+                        NONE => "app." ^ SHA1.bintohex (SHA1.hash script) ^ ".js"
+                      | SOME name => name)}
+    end
 
-fun reset () = (endpoints := []; jsFiles := [])
-
-fun collect file =
+fun collect (decls, _) =
     let
         fun exportKindToMethod (Link _) = GET
           | exportKindToMethod (Action _) = POST
           | exportKindToMethod (Rpc _) = POST
           | exportKindToMethod (Extern _) = POST
 
-        fun decl ((d, _), st as endpoints) =
-            let
-            in
-                case d of
-                    DExport (ek, id, i, tl, rt, f) =>
-                    {Method = exportKindToMethod ek, Url = id, LastModified = NONE, ContentType = NONE} :: st
-                 | _ => st
-            end
+        fun decl ((d, _), st) =
+            case d of
+                DExport (ek, id, _, _, _, _) =>
+                {Method = exportKindToMethod ek, Url = id, LastModified = NONE, ContentType = NONE} :: st
+              | _ => st
 
-        val () = reset ()
-
-        val (decls, _) = file
         val ep = foldl decl [] decls
 
         fun binfile ({Uri = u, ContentType = ct, LastModified = lm, Bytes = _ }, st) =
@@ -92,20 +93,19 @@ fun collect file =
 
         val ep = foldl binfile ep (Settings.listFiles ())
 
-        fun jsfile ({Filename = f, Content = _}, st) =
-            {Method = GET, Url = f, LastModified = NONE, ContentType = SOME "text/javascript"} :: st
+        fun script (u, st) =
+            {Method = GET, Url = u, LastModified = NONE, ContentType = SOME "text/javascript"} :: st
 
-        val ep = foldl jsfile ep (Settings.listJsFiles ())
-    in
-        endpoints := ep;
-        file
-    end
+        val ep = foldl (fn ({Filename = f, Content = _}, st) => script (f, st)) ep (Settings.listJsFiles ())
 
-fun summarize () =
-    let
-        val ep = foldl (fn (js, ep) =>
-                           {Method = GET, Url = js, LastModified = NONE, ContentType = SOME "text/javascript"} :: ep)
-                       (!endpoints) (!jsFiles)
+        val ep = case List.find (fn (DJavaScript _, _) => true | _ => false) decls of
+                     SOME (DJavaScript s, _) =>
+                     let
+                         val {Runtime = r, App = a} = scriptUrls s
+                     in
+                         script (r, script (a, ep))
+                     end
+                   | _ => ep
     in
         {Endpoints = ep}
     end

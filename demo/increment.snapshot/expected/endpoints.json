@@ -5,12 +5,6 @@
    {"method": "GET", "url": "/app.C9C6BB13ABD2AC188FF1EDE3D22CCB836A70AE93.js", "content-type": 
     "text/javascript"},
                        
-   {"method": "GET", "url": "/runtime.678742345B8E282393A78F7E3E4433E00FABF9F2.js", "content-type": 
-    "text/javascript"},
-                       
-   {"method": "GET", "url": "/app.C9C6BB13ABD2AC188FF1EDE3D22CCB836A70AE93.js", "content-type": 
-    "text/javascript"},
-                       
    {"method": "GET", "url": "Increment/main", "content-type": null},
                                                                     
    {"method": "POST", "url": "Increment/increment", "content-type": null}]}

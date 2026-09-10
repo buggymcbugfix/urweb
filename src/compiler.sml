@@ -1585,14 +1585,7 @@ val mono_opt = {
     print = MonoPrint.p_file MonoEnv.empty
 }
 
-val endpoints = {
-    func = Endpoints.collect,
-    print = MonoPrint.p_file MonoEnv.empty
-}
-
-val toEndpoints = transform endpoints "endpoints" o toMonoize
-
-val toMono_opt1 = transform mono_opt "mono_opt1" o toEndpoints
+val toMono_opt1 = transform mono_opt "mono_opt1" o toMonoize
 
 val untangle = {
     func = Untangle.untangle,
@@ -1685,7 +1678,18 @@ val jscomp = {
 
 val toJscomp = transform jscomp "jscomp" o toDbmodecheck
 
-val toMono_opt3 = transform mono_opt "mono_opt3" o toJscomp
+val endpoints = {
+    func = fn file =>
+              (case Settings.getEndpoints () of
+                   NONE => ()
+                 | SOME fname => saveDoc fname (Endpoints.p_report (Endpoints.collect file));
+               file),
+    print = MonoPrint.p_file MonoEnv.empty
+}
+
+val toEndpoints = transform endpoints "endpoints" o toJscomp
+
+val toMono_opt3 = transform mono_opt "mono_opt3" o toEndpoints
 
 val fuse = {
     func = Fuse.fuse,
@@ -1903,21 +1907,8 @@ fun compile job =
                     if ErrorMsg.anyErrors () then
                         false
                     else
-                        (case #endpoints job of
-                             NONE => ()
-                           | SOME endpoints =>
-                             let
-                                 val report = Endpoints.summarize ()
-                                 val outf = TextIO.openOut endpoints
-                                 val s = TextIOPP.openOut {dst = outf, wid = 80}
-                             in
-                                 Print.fprint s (Endpoints.p_report report);
-                                 TextIO.closeOut outf
-                             end;
-
-                         compileC {cname = cname, oname = oname, ename = ename, libs = libs,
+                        (compileC {cname = cname, oname = oname, ename = ename, libs = libs,
                                    profile = #profile job, debug = #debug job, dev = #dev job, linker = #linker job, link = #link job}
-
                          before cleanup ())
                 end
                 handle ex => (((cleanup ()) handle _ => ()); raise ex)

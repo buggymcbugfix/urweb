@@ -168,6 +168,9 @@ $(SRC)/css.sml
 
 $(SRC)/mono.sml
 
+$(SRC)/sha1.sig
+$(SRC)/sha1.sml
+
 $(SRC)/endpoints.sig
 $(SRC)/endpoints.sml
 
@@ -241,9 +244,6 @@ $(SRC)/filecache.sig
 $(SRC)/filecache.sml
 
 $(SRC)/mono_inline.sml
-
-$(SRC)/sha1.sig
-$(SRC)/sha1.sml
 
 $(SRC)/cjr.sml
 
