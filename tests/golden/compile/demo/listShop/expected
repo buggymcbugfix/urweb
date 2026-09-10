@@ -38,7 +38,6 @@
     struct __uws_3* __uwf_2;
      };
   
-  static char jslib[] = "";
   
   static uw_unit __uwn_toXml_1756(uw_context, struct __uws_1*);
    static uw_unit
@@ -698,13 +697,6 @@
   return;
   }
  
- if (!strcmp(request, "/app.DA39A3EE5E6B4B0D3255BFEF95601890AFD80709.js")) {
- uw_write_header(ctx, "Content-Type: text/javascript\r\n");
-  uw_write_header(ctx, "Last-Modified: Thu, 01 Jan 1970 00:00:00 GMT\r\n");
-  uw_write_header(ctx, "Cache-Control: max-age=31536000, public\r\n");
-  uw_write(ctx, jslib);
-  return;
-  }
  
  
  if (!strncmp(request, "/ListShop/main", 14) && (request[14] == 0 || request[14] == '/')) {

@@ -109,14 +109,15 @@ run_typecheck() {
     "$urweb" $urweb_flags -tc "$@" 2>&1
 }
 # 1. The C includes reference the build machine's absolute paths, as set by the configure script.
-# 2. `urweb.js` is embedded as one string, followed by the program's own code.
-#    We strip this as we don't want to bloat our golden tests
+# 2. The client-side script is embedded as two strings, the `urweb.js` runtime
+#    and the program's own code.  We strip both as we don't want to bloat our
+#    golden tests
 run_compile() {
     "$urweb" $urweb_flags -stop checknest "$@" 2>&1 \
         | sed -e '/Stopped compilation after phase checknest$/d' \
               -e 's|^\( *#include "\)[^"]*/\(include/urweb/[^"]*"\)|\1\2|' \
               -e 's|^\( *#include <\)/[^>]*/\([^/>]*>\)|\1\2|' \
-              -e 's|^\( *static char jslib\[\] = \)"..*";$|\1"*script elided*";|'
+              -e 's|^\( *static char js[a-z]*\[\] = \)"..*";$|\1"*script elided*";|'
 }
 
 # The schema named by -sql is written after the C file and right before the

@@ -32,7 +32,6 @@
    uw_Basis_bool __uwf_EnterSurname;
     uw_Basis_string __uwf_Forename;
      };
-  static char jslib[] = "";
   
   static uw_unit
    __uwn_$pageC_1671(uw_context ctx, 
@@ -302,13 +301,6 @@
   return;
   }
  
- if (!strcmp(request, "/app.DA39A3EE5E6B4B0D3255BFEF95601890AFD80709.js")) {
- uw_write_header(ctx, "Content-Type: text/javascript\r\n");
-  uw_write_header(ctx, "Last-Modified: Thu, 01 Jan 1970 00:00:00 GMT\r\n");
-  uw_write_header(ctx, "Cache-Control: max-age=31536000, public\r\n");
-  uw_write(ctx, jslib);
-  return;
-  }
  
  
  if (!strncmp(request, "/Nested/main", 12) && (request[12] == 0 || request[12] == '/')) {

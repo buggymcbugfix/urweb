@@ -55,7 +55,8 @@ structure CM = BinaryMapFn(struct
 
 val debug = ref false
 
-val app_js = ref ""
+val runtime_js = ref "" (* The Ur/Web runtime from [lib/js/urweb.js] *)
+val app_js = ref "" (* App-specific JS *)
 
 val dummyTyp = (TDatatype (Enum, 0, ref []), ErrorMsg.dummySpan)
 
@@ -2549,16 +2550,25 @@ fun p_decl env (dAll as (d, loc) : decl) =
 
       | DJavaScript s =>
         let
-	    val name =
-		(case Settings.getOutputJsFile () of
-		    NONE => "app." ^ SHA1.bintohex (SHA1.hash s) ^ ".js"
-		  | SOME s => s)
-            val js = OS.Path.joinDirFile {dir = Settings.getUrlPrefix (),
-                                          file = name}
-            val () = app_js := js
-            val () = Endpoints.setJavaScript js
+            val inf = FileIO.txtOpenIn (OS.Path.joinDirFile {dir = Settings.libJs (), file = "urweb.js"})
+            val runtime = TextIO.inputAll inf
+            val () = TextIO.closeIn inf
+
+            fun url name = OS.Path.joinDirFile {dir = Settings.getUrlPrefix (), file = name}
+            val runtime_url = url ("runtime." ^ SHA1.bintohex (SHA1.hash runtime) ^ ".js")
+            val app_url = url (case Settings.getOutputJsFile () of
+                                   NONE => "app." ^ SHA1.bintohex (SHA1.hash s) ^ ".js"
+                                 | SOME name => name)
+            val () = runtime_js := runtime_url
+            val () = app_js := app_url
+            val () = Endpoints.addJavaScript runtime_url
+            val () = Endpoints.addJavaScript app_url
         in
             box [string "static char jslib[] = \"",
+                 string (Prim.toCString runtime),
+                 string "\";",
+                 newline,
+                 string "static char jsapp[] = \"",
                  string (Prim.toCString s),
                  string "\";"]
         end
@@ -2645,7 +2655,9 @@ fun p_file env (ds, ps) =
                   urlifies := IS.empty;
                   urlifiesL := IS.empty;
                   self := NONE;
-                  global_initializers := [])
+                  global_initializers := [];
+                  runtime_js := "";
+                  app_js := "")
 
         (* First, pull out all of the enumerated types, to be declared first. *)
         val (ds, enums) = ListUtil.foldlMapPartial (fn (d, enums) =>
@@ -3001,11 +3013,13 @@ fun p_file env (ds, ps) =
                               newline]
             end
 
+        (* The runtime must run before the program's script, which assigns
+           variables the runtime declares and calls its functions. *)
         fun allScripts () =
             foldl (fn (x, scripts) =>
                       scripts
                       ^ "<script type=\\\"text/javascript\\\" src=\\\"" ^ x ^ "\\\"></script>\\n")
-                  "" (Settings.getScripts () @ [!app_js])
+                  "" (Settings.getScripts () @ List.filter (fn x => x <> "") [!runtime_js, !app_js])
 
         fun p_page (ek, s, n, ts, ran, side, dbmode, tellSig) =
             let
@@ -3578,22 +3592,24 @@ fun p_file env (ds, ps) =
              string "}",
              newline,
              newline,
-             string "if (!strcmp(request, \"",
-             string (!app_js),
-             string "\")) {",
-             newline,
-             box [string "uw_write_header(ctx, \"Content-Type: text/javascript\\r\\n\");",
-                  newline,
-                  string ("uw_write_header(ctx, \"Last-Modified: " ^ Date.fmt rfcFmt lastMod ^ "\\r\\n\");"),
-                  newline,
-                  string ("uw_write_header(ctx, \"Cache-Control: max-age=31536000, public\\r\\n\");"),
-                  newline,
-                  string "uw_write(ctx, jslib);",
-                  newline,
-                  string "return;",
-                  newline],
-             string "}",
-             newline,
+             p_list_sep newline (fn (url, var) =>
+                                    box [string "if (!strcmp(request, \"",
+                                         string url,
+                                         string "\")) {",
+                                         newline,
+                                         box [string "uw_write_header(ctx, \"Content-Type: text/javascript\\r\\n\");",
+                                              newline,
+                                              string ("uw_write_header(ctx, \"Last-Modified: " ^ Date.fmt rfcFmt lastMod ^ "\\r\\n\");"),
+                                              newline,
+                                              string ("uw_write_header(ctx, \"Cache-Control: max-age=31536000, public\\r\\n\");"),
+                                              newline,
+                                              string ("uw_write(ctx, " ^ var ^ ");"),
+                                              newline,
+                                              string "return;",
+                                              newline],
+                                         string "}",
+                                         newline])
+                        (if !hasJs then [(!runtime_js, "jslib"), (!app_js, "jsapp")] else []),
              newline,
 
              p_list_sep newline (fn r =>
