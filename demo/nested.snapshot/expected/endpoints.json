@@ -1,0 +1,10 @@
+{"endpoints":
+ [{"method": "GET", "url": "Nested/main", "content-type": null},
+                                                                
+   {"method": "POST", "url": "Nested/fromA", "content-type": null},
+                                                                   
+   {"method": "POST", "url": "Nested/pageC'", "content-type": null},
+                                                                    
+   {"method": "GET", "url": "Nested/pageA", "content-type": null},
+                                                                  
+   {"method": "GET", "url": "Nested/pageB", "content-type": null}]}

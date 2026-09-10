@@ -15,7 +15,7 @@ all-local: smlnj mlton
 
 SUBDIRS = src/c
 
-.PHONY: smlnj mlton mlton-tc test check-local check-urp update-urp
+.PHONY: smlnj mlton mlton-tc test check-local check-snapshot update-snapshot
 
 smlnj: src/urweb.cm xml/entities.sml
 mlton: bin/urweb
@@ -140,24 +140,16 @@ TEST_PRELUDE = set -e; \
 	echo "Compiling demo.exe."; \
 	bin/urweb -boot -noEmacs -dbms sqlite -db $$dbfile -demo /Demo demo
 
-# Golden tests (see tests/golden/run.sh): 'make check-golden' runs every
-# family, 'make check-golden-FAMILY' one of them, 'make update-golden'
-# accepts the current output as the new expected output.
-GOLDEN_FAMILIES = urp typecheck compile sql js
+# Snapshot tests (see ./snapshot.sh).  Always from here, since a
+# snapshot records the file names the compiler printed and those are
+# relative to the directory it ran in.
+check-snapshot: bin/urweb
+	@./snapshot.sh --check .
 
-check-golden: bin/urweb
-	@tests/golden/run.sh
+update-snapshot: bin/urweb
+	@./snapshot.sh .
 
-$(GOLDEN_FAMILIES:%=check-golden-%): check-golden-%: bin/urweb
-	@tests/golden/run.sh $*
-
-update-golden: bin/urweb
-	@tests/golden/run.sh --update
-
-$(GOLDEN_FAMILIES:%=update-golden-%): update-golden-%: bin/urweb
-	@tests/golden/run.sh --update $*
-
-check-local: check-golden bin/urweb
+check-local: check-snapshot bin/urweb
 	@$(TEST_PRELUDE); \
 	\
 	echo "Running IPv4 test."; \

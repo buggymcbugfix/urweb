@@ -1,0 +1,6 @@
+{"endpoints":
+ [{"method": "GET", "url": "CookieSec/main", "content-type": null},
+                                                                   
+   {"method": "POST", "url": "CookieSec/set", "content-type": null},
+                                                                    
+   {"method": "POST", "url": "CookieSec/imHere", "content-type": null}]}

@@ -1,0 +1,6 @@
+{"endpoints":
+ [{"method": "GET", "url": "Outer/main", "content-type": null},
+                                                               
+   {"method": "POST", "url": "Outer/addT", "content-type": null},
+                                                                 
+   {"method": "POST", "url": "Outer/addU", "content-type": null}]}

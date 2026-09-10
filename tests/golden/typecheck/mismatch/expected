@@ -1,7 +1,0 @@
-mismatch.ur:1:14: (to 1:19) Unification failure
-Expression:  "one"
-  Have con:  string
-  Need con:  int
-Incompatible constructors
-Have:  string
-Need:  int

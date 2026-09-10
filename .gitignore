@@ -35,6 +35,10 @@ doc/*.out
 *.sql
 *mlmon.out
 
+# A snapshot's files are named after what they hold, so some of them look
+# like build output.  They are the tests.
+!**/*.snapshot/**
+
 # TeX
 *.aux
 *.dvi

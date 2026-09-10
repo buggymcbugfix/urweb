@@ -1,0 +1,4 @@
+{"endpoints":
+ [{"method": "GET", "url": "Rec/other", "content-type": null},
+                                                              
+   {"method": "GET", "url": "Rec/main", "content-type": null}]}
