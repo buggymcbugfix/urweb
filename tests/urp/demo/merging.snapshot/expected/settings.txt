@@ -1,0 +1,38 @@
+Prefix: /Merging
+Database: dbname=merging
+Exe: tests/urp/demo/demo.exe
+SQL file: tests/urp/demo/demo.sql
+Endpoints file: (none)
+Debug: false
+Dev: false
+Profile: false
+Timeout: 60
+Linker: (none)
+JsModule: (none)
+Rewrite all "First/*" -> ""
+Rewrite all "Second/*" -> ""
+Url allow #*
+Url allow http://first.example/*
+Url allow http://second.example/*
+Mime allow text/plain
+Source tests/urp/demo/first
+Source tests/urp/demo/second
+Source tests/urp/demo/demo
+Dbms: (none)
+Sigfile: first.sig
+Filecache: first.cache
+SafeGetDefault: false
+SafeGet First/get
+SafeGet Second/get
+OnError: (none)
+MinHeap: 0
+MimeTypes: (none)
+Settings:
+ Html5: true
+ MangleSql: true
+ LessSafeFfi: false
+ TimeFormat: %c
+ CoreInline: 5
+ MonoInline: 5
+ Limits: (none)
+ MimeTypes: /etc/mime.types

@@ -1,0 +1,8 @@
+{"endpoints":
+ [{"method": "GET", "url": "Metaform2/main", "content-type": null},
+                                                                   
+   {"method": "GET", "url": "Metaform2/diversion", "content-type": null},
+                                                                         
+   {"method": "GET", "url": "Metaform2/MM/main", "content-type": null},
+                                                                       
+   {"method": "POST", "url": "Metaform2/MM/handler", "content-type": null}]}

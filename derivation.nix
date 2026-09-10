@@ -48,6 +48,7 @@ stdenv.mkDerivation {
         ./lib
         ./m4
         ./Makefile.am
+        ./snapshot.sh
         ./src
         ./tests
         ./xml

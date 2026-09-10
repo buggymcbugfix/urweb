@@ -1,0 +1,12 @@
+{"endpoints":
+ [{"method": "GET", "url": "Crud1/main", "content-type": null},
+                                                               
+   {"method": "GET", "url": "Crud1/upd", "content-type": null},
+                                                               
+   {"method": "GET", "url": "Crud1/confirm", "content-type": null},
+                                                                   
+   {"method": "POST", "url": "Crud1/create", "content-type": null},
+                                                                   
+   {"method": "POST", "url": "Crud1/save", "content-type": null},
+                                                                 
+   {"method": "POST", "url": "Crud1/delete", "content-type": null}]}

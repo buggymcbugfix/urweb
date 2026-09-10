@@ -1,0 +1,47 @@
+Prefix: /
+Database: dbname=app
+Exe: tests/urp/scope/scope.exe
+SQL file: (none)
+Endpoints file: (none)
+Debug: false
+Dev: false
+Profile: false
+Timeout: 60
+Ffi tests/urp/scope/libffi
+Link tests/urp/scope/lib.o
+Linker: (none)
+Header tests/urp/scope/lib.h
+Script /lib.js
+ClientToServer Lib.c2s
+Effectful Lib.eff
+BenignEffectful Lib.ben
+ClientOnly Lib.co
+ServerOnly Lib.so
+JsModule: App
+JsFunc App.f = App.f
+JsFunc Lib.g = Lib.g
+Rewrite all "Lib/*" -> ""
+Url allow #*
+Url allow #*
+Url allow /lib/*
+Source tests/urp/scope/scopelib
+Source tests/urp/scope/scope
+Dbms: postgres
+Sigfile: (none)
+Filecache: (none)
+SafeGetDefault: false
+SafeGet Lib/get
+OnError: (none)
+MinHeap: 0
+MimeTypes: tests/urp/scope/app.mime
+Settings:
+ Html5: true
+ MangleSql: true
+ LessSafeFfi: true
+ TimeFormat: %c
+ CoreInline: 5
+ MonoInline: 5
+ Limits: (none)
+ MimeTypes: tests/urp/scope/app.mime
+ JsFunc App.f -> App.f
+ JsFunc Lib.g -> Lib.g

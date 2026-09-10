@@ -1,1 +1,0 @@
--dbms sqlite -prefix /flag/ -db dbname=flag -output flag.exe -sql flag.sql -sigfile flag.sig precedence

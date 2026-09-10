@@ -1,0 +1,4 @@
+{"endpoints":
+ [{"method": "GET", "url": "View/main", "content-type": null},
+                                                              
+   {"method": "POST", "url": "View/ins", "content-type": null}]}

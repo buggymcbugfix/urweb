@@ -1,0 +1,35 @@
+$LIB/libmod.ur:1:14: (to 1:19) Unification failure
+Expression:  "lib"
+  Have con:  string
+  Need con:  int
+Incompatible constructors
+Have:  string
+Need:  int
+tests/urp/paths/shared.ur:1:14: (to 1:22) Unification failure
+Expression:  "shared"
+  Have con:  string
+  Need con:  int
+Incompatible constructors
+Have:  string
+Need:  int
+tests/urp/paths/app/sub/inner.ur:1:14: (to 1:21) Unification failure
+Expression:  "inner"
+  Have con:  string
+  Need con:  int
+Incompatible constructors
+Have:  string
+Need:  int
+tests/urp/paths/app/app.ur:1:14: (to 1:19) Unification failure
+Expression:  "app"
+  Have con:  string
+  Need con:  int
+Incompatible constructors
+Have:  string
+Need:  int
+tests/urp/paths/app/app.ur:2:17: (to 2:22) Unification failure
+Expression:  "tests/urp/paths/app/app.ur:2:17-2:22"
+  Have con:  string
+  Need con:  int
+Incompatible constructors
+Have:  string
+Need:  int

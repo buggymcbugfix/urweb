@@ -1,0 +1,10 @@
+{"endpoints":
+ [{"method": "GET", "url": "ListShop/main", "content-type": null},
+                                                                  
+   {"method": "GET", "url": "ListShop/IL/main", "content-type": null},
+                                                                      
+   {"method": "GET", "url": "ListShop/SL/main", "content-type": null},
+                                                                      
+   {"method": "POST", "url": "ListShop/SL/cons", "content-type": null},
+                                                                       
+   {"method": "POST", "url": "ListShop/IL/cons", "content-type": null}]}

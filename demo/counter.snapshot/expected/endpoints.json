@@ -1,0 +1,4 @@
+{"endpoints":
+ [{"method": "GET", "url": "Counter/main", "content-type": null},
+                                                                 
+   {"method": "GET", "url": "Counter/counter", "content-type": null}]}

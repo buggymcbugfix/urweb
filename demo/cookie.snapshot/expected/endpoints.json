@@ -1,0 +1,8 @@
+{"endpoints":
+ [{"method": "GET", "url": "Cookie/main", "content-type": null},
+                                                                
+   {"method": "POST", "url": "Cookie/delete", "content-type": null},
+                                                                    
+   {"method": "POST", "url": "Cookie/set", "content-type": null},
+                                                                 
+   {"method": "POST", "url": "Cookie/setExp", "content-type": null}]}

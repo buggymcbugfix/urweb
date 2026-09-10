@@ -1,0 +1,4 @@
+{"endpoints":
+ [{"method": "GET", "url": "Ref/main", "content-type": null},
+                                                             
+   {"method": "POST", "url": "Ref/mutate", "content-type": null}]}
