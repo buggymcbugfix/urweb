@@ -100,6 +100,25 @@ val stopQuiet = ref (NONE : string option) (* Like [-stop], but silent and succe
 fun setStopQuiet s = stopQuiet := SOME s
 val stoppedQuietly = ref false
 
+val saveFiles = ref ([] : (string * string) list)
+fun saveAfter phase fname = saveFiles := (phase, fname) :: !saveFiles
+
+val setSaveSettings = saveAfter "parseJob"
+val setSaveParsetree = saveAfter "parse"
+val setSaveC = saveAfter "checknest"
+
+fun saveDoc fname doc =
+    let
+        val outf = TextIO.openOut fname
+        val s = Print.openOut {dst = outf, wid = 80}
+    in
+        (
+            Print.fprint s doc;
+            Print.PD.PPS.closeStream s;
+            TextIO.closeOut outf
+        )
+    end
+        
 fun transform (ph : ('src, 'dst) phase) name = {
     func = fn input => let
                   val () = if !debug then
@@ -116,19 +135,23 @@ fun transform (ph : ('src, 'dst) phase) name = {
                       (!doDumpSource ();
                        doDumpSource := (fn () => ());
                        NONE)
-                  else if !stopQuiet = SOME name then
-                      (stoppedQuietly := true;
-                       NONE)
-                  else if !stop = SOME name then
-                      (Print.eprint (#print ph v);
-                       ErrorMsg.error ("Stopped compilation after phase " ^ name);
-                       NONE)
                   else
-                      (if !dumpSource then
-                           doDumpSource := (fn () => Print.eprint (#print ph v))
+                      (case List.find (fn (ph', _) => ph' = name) (!saveFiles) of
+                           NONE => ()
+                         | SOME (_, fname) => saveDoc fname (#print ph v);
+                       if !stopQuiet = SOME name then
+                           (stoppedQuietly := true;
+                            NONE)
+                       else if !stop = SOME name then
+                           (Print.eprint (#print ph v);
+                            ErrorMsg.error ("Stopped compilation after phase " ^ name);
+                            NONE)
                        else
-                           ();
-                       SOME v)
+                           (if !dumpSource then
+                                doDumpSource := (fn () => Print.eprint (#print ph v))
+                            else
+                                ();
+                            SOME v))
               end,
     print = #print ph,
     time = fn (input, pmap) => let
