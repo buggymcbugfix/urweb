@@ -2554,15 +2554,9 @@ fun p_decl env (dAll as (d, loc) : decl) =
             val runtime = TextIO.inputAll inf
             val () = TextIO.closeIn inf
 
-            fun url name = OS.Path.joinDirFile {dir = Settings.getUrlPrefix (), file = name}
-            val runtime_url = url ("runtime." ^ SHA1.bintohex (SHA1.hash runtime) ^ ".js")
-            val app_url = url (case Settings.getOutputJsFile () of
-                                   NONE => "app." ^ SHA1.bintohex (SHA1.hash s) ^ ".js"
-                                 | SOME name => name)
+            val {Runtime = runtime_url, App = app_url} = Endpoints.scriptUrls s
             val () = runtime_js := runtime_url
             val () = app_js := app_url
-            val () = Endpoints.addJavaScript runtime_url
-            val () = Endpoints.addJavaScript app_url
         in
             box [string "static char jslib[] = \"",
                  string (Prim.toCString runtime),
