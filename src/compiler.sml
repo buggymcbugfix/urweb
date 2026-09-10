@@ -96,6 +96,10 @@ val doDumpSource = ref (fn () => ())
 val stop = ref (NONE : string option)
 fun setStop s = stop := SOME s
 
+val stopQuiet = ref (NONE : string option) (* Like [-stop], but silent and successful *)
+fun setStopQuiet s = stopQuiet := SOME s
+val stoppedQuietly = ref false
+
 fun transform (ph : ('src, 'dst) phase) name = {
     func = fn input => let
                   val () = if !debug then
@@ -111,6 +115,9 @@ fun transform (ph : ('src, 'dst) phase) name = {
                   if ErrorMsg.anyErrors () then
                       (!doDumpSource ();
                        doDumpSource := (fn () => ());
+                       NONE)
+                  else if !stopQuiet = SOME name then
+                      (stoppedQuietly := true;
                        NONE)
                   else if !stop = SOME name then
                       (Print.eprint (#print ph v);
@@ -1781,9 +1788,10 @@ fun compileC {cname, oname, ename, libs, profile, debug, dev, linker, link = lin
 fun compile job =
     let
         val _ = warnedLibDirectives := SS.empty
+        val _ = stoppedQuietly := false
     in
         case run toChecknest job of
-            NONE => false
+            NONE => !stoppedQuietly
           | SOME file =>
             let
                 val job = valOf (run (transform parseUrp "parseUrp") job)
