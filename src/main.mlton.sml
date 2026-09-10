@@ -236,6 +236,8 @@ fun oneRun args =
                     SOME "output the merged project settings as <file>"),
               ("saveParsetree", ONE ("<file>", Compiler.setSaveParsetree),
                     SOME "output the parsed source as <file>"),
+              ("saveTypecheck", ONE ("<file>", Compiler.setSaveTypecheck),
+                    SOME "output the signatures elaboration inferred as <file>"),
               ("saveC", ONE ("<file>", Compiler.setSaveC),
                     SOME "output the generated C as <file>"),
               ("path", TWO ("<name>", "<path>", Compiler.addPath),
