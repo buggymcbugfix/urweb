@@ -1334,13 +1334,6 @@ fun process (file : file) =
                         maxName = U.File.maxName file + 1}
                        (#1 file)
 
-        val inf = FileIO.txtOpenIn (OS.Path.joinDirFile {dir = Settings.libJs (), file = "urweb.js"})
-        fun lines acc =
-            case TextIO.inputLine inf of
-                NONE => String.concat (rev acc)
-              | SOME line => lines (line :: acc)
-        val lines = lines []
-
         val urlRules = foldr (fn (r, s) =>
                                  "cons({allow:"
                                  ^ (if #action r = Settings.Allow then "true" else "false")
@@ -1354,16 +1347,17 @@ fun process (file : file) =
 
         val urlRules = "urlRules = " ^ urlRules ^ ";\n\n"
 
+        (* The app-specific JS. *)
         val script =
-            if !foundJavaScript then
-                String.concatWith "" ((lines ^ urlRules ^ String.concat (rev (#script st))
-                                       ^ "\ntime_format = \"" ^ Prim.toCString (Settings.getTimeFormat ()) ^ "\";\n")
-                                      :: map (fn r => "\n// " ^ #Filename r ^ "\n\n" ^ #Content r ^ "\n") (Settings.listJsFiles ()))
-            else
-                ""
+            String.concatWith "" ((urlRules ^ String.concat (rev (#script st))
+                                   ^ "\ntime_format = \"" ^ Prim.toCString (Settings.getTimeFormat ()) ^ "\";\n")
+                                  :: map (fn r => "\n// " ^ #Filename r ^ "\n\n" ^ #Content r ^ "\n") (Settings.listJsFiles ()))
     in
-        TextIO.closeIn inf;
-        ((DJavaScript script, ErrorMsg.dummySpan) :: ds, #2 file)
+        (if !foundJavaScript then
+             (DJavaScript script, ErrorMsg.dummySpan) :: ds
+         else
+             ds,
+         #2 file)
     end
 
 end

@@ -23,7 +23,6 @@
   
  
   
-  static char jslib[] = "";
   
   static uw_unit
    __uwn_wrap_main_1659(uw_context ctx, uw_unit __uwr_x0_0, 
@@ -85,13 +84,6 @@
   return;
   }
  
- if (!strcmp(request, "/app.DA39A3EE5E6B4B0D3255BFEF95601890AFD80709.js")) {
- uw_write_header(ctx, "Content-Type: text/javascript\r\n");
-  uw_write_header(ctx, "Last-Modified: Thu, 01 Jan 1970 00:00:00 GMT\r\n");
-  uw_write_header(ctx, "Cache-Control: max-age=31536000, public\r\n");
-  uw_write(ctx, jslib);
-  return;
-  }
  
  
  if (!strncmp(request, "/Hello/main", 11) && (request[11] == 0 || request[11] == '/')) {

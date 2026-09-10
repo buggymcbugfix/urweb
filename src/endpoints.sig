@@ -38,7 +38,7 @@ signature ENDPOINTS = sig
 
     val reset : unit -> unit
     val collect : Mono.file -> Mono.file
-    val setJavaScript : string -> unit
+    val addJavaScript : string (* URL *) -> unit
     val summarize : unit -> report
 
 end

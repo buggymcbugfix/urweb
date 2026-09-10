@@ -415,7 +415,6 @@
   struct __uws_4 {
    struct __uws_3 __uwf_T;
     };
-  static char jslib[] = "";
   
   static uw_unit
    __uwn_initializer_1739(uw_context ctx, uw_unit __uwr___0)
@@ -1136,13 +1135,6 @@
   return;
   }
  
- if (!strcmp(request, "/app.DA39A3EE5E6B4B0D3255BFEF95601890AFD80709.js")) {
- uw_write_header(ctx, "Content-Type: text/javascript\r\n");
-  uw_write_header(ctx, "Last-Modified: Thu, 01 Jan 1970 00:00:00 GMT\r\n");
-  uw_write_header(ctx, "Cache-Control: max-age=31536000, public\r\n");
-  uw_write(ctx, jslib);
-  return;
-  }
  
  
  if (!strncmp(request, "/Ref/main", 9) && (request[9] == 0 || request[9] == '/')) {

@@ -60,11 +60,11 @@ fun p_report {Endpoints = el} =
          string "]}"]
 
 val endpoints = ref ([] : endpoint list)
-val jsFile = ref (NONE : string option)
+val jsFiles = ref ([] : string list)
 
-fun setJavaScript x = jsFile := SOME x
+fun addJavaScript x = jsFiles := x :: !jsFiles
 
-fun reset () = (endpoints := []; jsFile := NONE)
+fun reset () = (endpoints := []; jsFiles := [])
 
 fun collect file =
     let
@@ -103,13 +103,9 @@ fun collect file =
 
 fun summarize () =
     let
-        val ep = !endpoints
-        val js = !jsFile
-        val ep =
-            case js of
-                NONE => ep
-             |  SOME js =>
-                {Method = GET, Url = js, LastModified = NONE, ContentType = SOME "text/javascript"} :: ep
+        val ep = foldl (fn (js, ep) =>
+                           {Method = GET, Url = js, LastModified = NONE, ContentType = SOME "text/javascript"} :: ep)
+                       (!endpoints) (!jsFiles)
     in
         {Endpoints = ep}
     end
