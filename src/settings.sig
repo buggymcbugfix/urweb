@@ -345,6 +345,9 @@ signature SETTINGS = sig
     val setOutputJsFile : string option (* filename *) -> unit
     val getOutputJsFile : unit -> string option
 
+    val setSaveJs : string option (* filename *) -> unit
+    val getSaveJs : unit -> string option
+
     val setMimeFilePath : string -> unit
     val getMimeFilePath : unit -> string
     (* Set unusual location for /etc/mime.types. *)

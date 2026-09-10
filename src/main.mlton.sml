@@ -222,6 +222,8 @@ fun oneRun args =
                     SOME "serve the generated JavaScript at URL <prefix><name>"),
               ("sql", ONE ("<file>", Settings.setSql o SOME),
                     SOME "output sql script as <file>"),
+              ("saveJs", ONE ("<file>", Settings.setSaveJs o SOME),
+                    SOME "output the app's own client-side script as <file>"),
               ("endpoints", ONE ("<file>", Settings.setEndpoints o SOME),
                     SOME "output exposed URL endpoints in JSON as <file>"),
               ("static", call_true Settings.setStaticLinking,
