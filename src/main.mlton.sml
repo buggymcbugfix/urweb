@@ -232,6 +232,12 @@ fun oneRun args =
                     SOME "stop compilation after <phase>, printing what it produced"),
               ("stopQuiet", ONE ("<phase>", Compiler.setStopQuiet),
                     SOME "stop compilation after <phase>, printing nothing"),
+              ("saveSettings", ONE ("<file>", Compiler.setSaveSettings),
+                    SOME "output the merged project settings as <file>"),
+              ("saveParsetree", ONE ("<file>", Compiler.setSaveParsetree),
+                    SOME "output the parsed source as <file>"),
+              ("saveC", ONE ("<file>", Compiler.setSaveC),
+                    SOME "output the generated C as <file>"),
               ("path", TWO ("<name>", "<path>", Compiler.addPath),
                     SOME ("set path variable <name> to <path> for use in "^
                           ".urp files")),
