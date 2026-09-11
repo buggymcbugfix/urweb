@@ -20,6 +20,7 @@
 #   hello.snapshot/
 #   |-- args                        extra flags, if any; the project is implied
 #   `-- expected/
+#       |-- exitcode                the compiler's exit status
 #       |-- stdout.txt              what the compiler wrote to stdout
 #       |-- stderr.txt              ... and to stderr
 #       |-- settings.txt            -saveSettings   the parsed and merged job
@@ -108,10 +109,11 @@ die() {
 # for says so rather than quietly comparing an empty file, so a reordering in
 # the compiler is loud here.  The assumption would go away if the compiler
 # could be told to stop once it has written everything it was asked for.
-artifacts='stdout.txt stderr.txt settings.txt parsetree.ur typecheck.urs schema.sql client.js endpoints.json server.c'
+artifacts='exitcode stdout.txt stderr.txt settings.txt parsetree.ur typecheck.urs schema.sql client.js endpoints.json server.c'
 
 artifact_spec() {
     case $1 in
+        exitcode)       echo '0 parseJob -' ;;
         stdout.txt)     echo '0 parseJob -' ;;
         stderr.txt)     echo '0 parseJob -' ;;
         settings.txt)   echo '1 parseJob -saveSettings' ;;
@@ -384,6 +386,7 @@ run_case() {
         > "$work/stdout.txt" 2> "$work/stderr.txt"
     status=$?
     elapsed=$(( $(tenths) - t0 ))
+    echo "$status" > "$work/exitcode"
 
     # What was asked for and not written.  After a failed run that is to be
     # expected, and the result line names them so that an empty artifact
