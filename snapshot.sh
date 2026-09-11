@@ -49,6 +49,7 @@
 #
 #   snapshot.sh [PATH...]                     update the snapshots below the given projects
 #   snapshot.sh --check [PATH...]             fail on a diff (you want this in CI)
+#   snapshot.sh --list [PATH...]              list the snapshot cases matching for the given path(s)
 #   snapshot.sh --create [PROJECT] [CASE...]  create a new snapshot set for the given project
 #
 # PATH is a project (demo/alert[.urp]), a snapshot directory (shop.snapshot/sqlite)
@@ -151,34 +152,36 @@ normalise() {
 
 # ------------------------------------------------------------------ arguments
 
-check='' create=''
+check='' create='' list=''
 while [ $# -gt 0 ]; do
     case $1 in
         --check|-k) check=1; shift ;;
         --create|-c) create=1; shift; break ;;
+        --list|-l) list=1; shift ;;
         --help|-h)
             sed -n '3,/^$/p' "$0" | sed -e 's/^# \{0,1\}//' -e 's/^#$//'
             exit 0 ;;
         --) shift; break ;;
         -*) die "unrecognised option '$1'" \
-                "usage: $me [--check] [PATH...]" \
+                "usage: $me [--check|--list] [PATH...]" \
                 "       $me --create [PROJECT] [CASE...]" ;;
         *) break ;;
     esac
 done
 
-[ -z "$check" ] || [ -z "$create" ] || die "--check and --create do not go together"
+[ -z "$create" ] || [ -z "$check$list" ] || die "--create goes with neither --check nor --list"
 
 # The compiler: beside this script by default, since that is where the build
 # leaves it.  Made absolute, because the project is named relative to the
 # directory we were invoked from and that is where the compiler runs.
+# Listing the cases takes no compiler.
 here=$(cd "$(dirname "$0")" && pwd -P) || exit 2
 urweb=${URWEB:-$here/bin/urweb}
 case $urweb in
     /*) ;;
     *) urweb=$(pwd -P)/$urweb ;;
 esac
-[ -x "$urweb" ] || die "no compiler at $urweb" \
+[ -n "$list" ] || [ -x "$urweb" ] || die "no compiler at $urweb" \
     "build one with 'make', or set URWEB to name another"
 
 # An in-tree compiler needs -boot to find the library in the source tree; an
@@ -310,7 +313,22 @@ show_diff() {
 
 # -------------------------------------------------------------------- running
 
+# Wall-clock time, in tenths of a second, for saying how long a run took.
+# date's %N is a GNU extension; where it is missing, whole seconds have to do.
+case $(date +%s%N 2>/dev/null) in
+    *[!0-9]*|'') tenths() { echo $(( $(date +%s) * 10 )); } ;;
+    *) tenths() { echo $(( $(date +%s%N) / 100000000 )); } ;;
+esac
+
+# "1.2s" for the result line, or nothing when the run was quick.
+took() {
+    [ "$1" -gt 10 ] || return 0
+    printf ' %s%d.%ds%s' "$dim" $(( $1 / 10 )) $(( $1 % 10 )) "$reset"
+}
+
 failed=0
+n_cases=0 n_ok=0 n_bad=0 n_changed=0 n_skipped=0 n_nonzero=0
+started=$(tenths)
 work=$tmp/work
 
 run_case() {
@@ -346,8 +364,10 @@ run_case() {
 
     if [ ! -s "$tmp/want" ]; then
         warn "$want_dir asks for nothing; '$me --create' shows what there is to ask for"
+        n_skipped=$((n_skipped + 1))
         return 0
     fi
+    n_cases=$((n_cases + 1))
 
     extra=''
     [ ! -f "$case_dir/args" ] || extra=$(cat "$case_dir/args")
@@ -358,24 +378,38 @@ run_case() {
         *) flags="$flags -stopQuiet $stop" ;;
     esac
 
+    t0=$(tenths)
     # shellcheck disable=SC2086 # the flags and the case's own args are lists
     "$urweb" $urweb_flags $flags $extra "$project" \
         > "$work/stdout.txt" 2> "$work/stderr.txt"
     status=$?
+    elapsed=$(( $(tenths) - t0 ))
 
-    # If the compiler was content and still did not write something it was
-    # asked for, the fault is here rather than in the program under test.
-    if [ "$status" -eq 0 ]; then
-        while read -r a; do
-            spec=$(artifact_spec "$a")
-            rest=${spec#* }
-            [ "${rest#* }" != - ] || continue
-            [ ! -f "$work/$a" ] || continue
-            die "urweb was asked for $a, exited 0, and wrote no such file" \
-                "it was stopped after '$stop', which this runner takes to be late enough" \
-                "if the compiler's phases have moved, artifact_spec in $me needs to know"
-        done < "$tmp/want"
+    # What was asked for and not written.  After a failed run that is to be
+    # expected, and the result line names them so that an empty artifact
+    # can be told from one the compiler never got to.  If the compiler was
+    # content and still did not write something, the fault is here rather
+    # than in the program under test.
+    missing=''
+    while read -r a; do
+        spec=$(artifact_spec "$a")
+        rest=${spec#* }
+        [ "${rest#* }" != - ] || continue
+        [ ! -f "$work/$a" ] || continue
+        [ "$status" -ne 0 ] || die "urweb was asked for $a, exited 0, and wrote no such file" \
+            "it was stopped after '$stop', which this runner takes to be late enough" \
+            "if the compiler's phases have moved, artifact_spec in $me needs to know"
+        missing="${missing:+$missing, }$a"
+    done < "$tmp/want"
+
+    # The compiler's exit status and how long it took, after the verdict.
+    note=''
+    if [ "$status" -ne 0 ]; then
+        n_nonzero=$((n_nonzero + 1))
+        note=" ${yellow}exit $status$reset"
+        [ -z "$missing" ] || note="$note, not written: $missing"
     fi
+    note="$note$(took "$elapsed")"
 
     bad='' changed=''
     while read -r a; do
@@ -393,15 +427,41 @@ run_case() {
 
     if [ -n "$check" ]; then
         if [ -z "$bad" ]; then
-            say "$green" 'ok' "$case_dir" ''
+            say "$green" 'ok' "$case_dir" "$note"
+            n_ok=$((n_ok + 1))
         else
-            say "$red" 'FAIL' "$case_dir" " ($bad)"
+            say "$red" 'FAIL' "$case_dir" " ($bad)$note"
+            n_bad=$((n_bad + 1))
             failed=1
         fi
     elif [ -n "$changed" ]; then
-        say "$yellow" 'UPDATED' "$case_dir" " ($changed)"
+        say "$yellow" 'UPDATED' "$case_dir" " ($changed)$note"
+        n_changed=$((n_changed + 1))
     else
-        say "$green" 'ok' "$case_dir" ''
+        say "$green" 'ok' "$case_dir" "$note"
+        n_ok=$((n_ok + 1))
+    fi
+}
+
+# One line for all of it, once the last case has had its say.
+summary() {
+    s=''
+    [ "$n_ok" -eq 0 ] || s="${s:+$s, }$green$n_ok ok$reset"
+    [ "$n_bad" -eq 0 ] || s="${s:+$s, }$red$n_bad FAIL$reset"
+    [ "$n_changed" -eq 0 ] || s="${s:+$s, }$yellow$n_changed updated$reset"
+    [ "$n_skipped" -eq 0 ] || s="${s:+$s, }$n_skipped asking for nothing"
+    [ "$n_nonzero" -eq 0 ] || s="$s; $n_nonzero with non-zero exit"
+    elapsed=$(( $(tenths) - started ))
+    printf '%s%d case%s%s: %s, in %d.%ds\n' "$bold" "$n_cases" "$([ "$n_cases" -eq 1 ] || echo s)" "$reset" \
+        "$s" $(( elapsed / 10 )) $(( elapsed % 10 ))
+}
+
+# With --list, a case is named and left alone.
+do_case() {
+    if [ -n "$list" ]; then
+        echo "$1"
+    else
+        run_case "$1" "$2"
     fi
 }
 
@@ -431,12 +491,12 @@ while read -r snap; do
         [ ! -s "$tmp/subdirs" ] || die "$snap has an expected of its own and case directories too" \
             "cases: $(tr '\n' ' ' < "$tmp/subdirs")" \
             "a project's snapshots all nest, or none of them do"
-        run_case "$snap" "$project"
+        do_case "$snap" "$project"
     elif [ -s "$tmp/subdirs" ]; then
         while read -r c; do
             [ -d "$c/expected" ] || die "$c has no expected directory" \
                 "every case under $snap needs one; '$me --create' makes them"
-            run_case "$c" "$project"
+            do_case "$c" "$project"
         done < "$tmp/subdirs"
     else
         die "$snap holds no snapshots" \
@@ -445,4 +505,5 @@ while read -r snap; do
     fi
 done < "$tmp/snapshots"
 
+[ -n "$list" ] || summary
 exit $failed
