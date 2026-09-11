@@ -16,7 +16,7 @@ local
 				++ nl
 				++ nl
 				++ text "To compile an Ur/Web project "
-				++ sttyle [underline, fg blue] (text "tests/alert.ur")
+				++ sttyle [underline, fg blue] (text "tests/alert.urp")
 				++ text ", run"
 				++ nl
 				++ text "  "
