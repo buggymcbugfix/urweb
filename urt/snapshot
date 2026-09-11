@@ -7,7 +7,7 @@
 # so that a change to the compiler shows up as a diff.
 # Think of them as a _contrast agent_ that alerts us to changes.
 #
-# DISCLAIMER: This is a mostly vibe-coded prototype. THIS MAY EAT UR
+# DISCLAIMER: This is a mostly vibe-coded prototype. NOTHING COULD POSSIBLY GO WRONG.
 #
 #
 # DESCRIPTION
@@ -73,30 +73,110 @@ me=${0##*/}
 
 # ---------------------------------------------------------------- reporting
 
+# The palette, and the styles made from it.  Everything this script prints
+# goes through one of the styles, so this is the place to change the look.
+#
+# Verdicts and the prefix of a warning or an error are badges: a pale tone
+# on a dark shade of it, which stands out without shouting and reads on a
+# dark or a light background alike.  Paths, commands and flags each get a
+# colour of their own inside a message, in the medium tones that read on
+# either background too, and the explanation under a message is grey rather
+# than dim, which too many terminals render as unreadable.  Body text is the
+# terminal's own.
+#
+# The tones are from the 256-colour palette.  A terminal with fewer gets the
+# eight basic ones and bold for the badges; a pipe, NO_COLOR or TERM=dumb
+# gets no styling at all.
+colour='' badges=''
 if [ -t 1 ] && [ -z "${NO_COLOR-}" ] && [ "${TERM-dumb}" != dumb ]; then
+    colour=1
     esc=$(printf '\033')
-    red=$esc'[31m' green=$esc'[32m' yellow=$esc'[33m'
-    blue=$esc'[34m' bold=$esc'[1m' dim=$esc'[2m' reset=$esc'[0m'
+    sgr() { printf '%s[%sm' "$esc" "$1"; }
+    if [ "$(tput colors 2>/dev/null || echo 8)" -ge 256 ]; then
+        badges=1
+        green=$(sgr '38;5;71')  red=$(sgr '38;5;167')  amber=$(sgr '38;5;172')
+        grey=$(sgr '38;5;245')  steel=$(sgr '38;5;67') tan=$(sgr '38;5;137')
+        lilac=$(sgr '38;5;140')
+        green_badge=$(sgr '38;5;114;48;5;22') red_badge=$(sgr '38;5;210;48;5;52')
+        amber_badge=$(sgr '38;5;221;48;5;58') blue_badge=$(sgr '38;5;111;48;5;24')
+    else
+        green=$(sgr 32) red=$(sgr 31) amber=$(sgr 33)
+        grey=$(sgr 37) steel=$(sgr 36) tan=$(sgr 33) lilac=$(sgr 35)
+        green_badge=$(sgr '1;32') red_badge=$(sgr '1;31')
+        amber_badge=$(sgr '1;33') blue_badge=$(sgr '1;34')
+    fi
+    bold=$(sgr 1) reset=$(sgr 0)
 else
-    red='' green='' yellow='' blue='' bold='' dim='' reset=''
+    green='' red='' amber='' grey='' steel='' tan='' lilac=''
+    green_badge='' red_badge='' amber_badge='' blue_badge='' bold='' reset=''
 fi
 
-# A result line: a coloured verdict, the case, and anything worth adding.
+s_ok=$green_badge           # a verdict that is fine: ok
+s_bad=$red_badge            # FAIL, and the prefix of an error
+s_warn=$amber_badge         # UPDATED, and the prefix of a warning
+s_new=$blue_badge           # CREATED
+s_info=$grey                # the explanation under a message; timings
+s_path=$steel               # a file or directory
+s_cmd=$tan                  # a command line to run
+s_key=$lilac                # an option or flag
+s_strong=$bold              # the count in the summary
+
+# A word in a badge, or merely coloured, or on its own, as the terminal allows.
+badge() {
+    if [ -n "$badges" ]; then
+        printf '%s %s %s' "$1" "$2" "$reset"
+    else
+        printf '%s%s%s' "$1" "$2" "$reset"
+    fi
+}
+
+# This script's name in front of a message, as a badge or as "name:".
+prefix() {
+    if [ -n "$badges" ]; then
+        badge "$1" "$me"
+    else
+        badge "$1" "$me:"
+    fi
+}
+
+# Wrap a fragment of a message in a style: "no project at $(path "$p")".
+path() { printf '%s%s%s' "$s_path" "$1" "$reset"; }
+cmd()  { printf '%s%s%s' "$s_cmd" "$1" "$reset"; }
+key()  { printf '%s%s%s' "$s_key" "$1" "$reset"; }
+
+# An explanation is grey throughout: a path or command inside it ends with
+# a reset, and grey resumes after each.
+info() {
+    if [ -z "$colour" ]; then
+        printf '%s' "$1"
+        return
+    fi
+    rest=$1
+    printf '%s' "$s_info"
+    while [ "${rest%%"$reset"*}" != "$rest" ]; do
+        printf '%s%s%s' "${rest%%"$reset"*}" "$reset" "$s_info"
+        rest=${rest#*"$reset"}
+    done
+    printf '%s%s' "$rest" "$reset"
+}
+
+# A result line: a verdict, the case, and anything worth adding.
 say() {
-    printf '%s%s%s %s%s\n' "$1" "$2" "$reset" "$3" "$4"
+    printf '%s %s%s\n' "$(badge "$1" "$2")" "$3" "$4"
 }
 
 warn() {
-    printf '%s%s:%s %s\n' "$yellow" "$me" "$reset" "$*" >&2
+    printf '%s %s\n' "$(prefix "$s_warn")" "$*" >&2
 }
 
 # Something is wrong with the tests themselves rather than with the compiler:
-# say so and stop, since carrying on would only bury it.
+# say so and stop, since carrying on would only bury it.  The first line is
+# the message; the rest explain, under it.
 die() {
-    printf '%s%s:%s %s\n' "$red$bold" "$me" "$reset" "$1" >&2
+    printf '%s %s\n' "$(prefix "$s_bad")" "$1" >&2
     shift
     for line in "$@"; do
-        printf '  %s%s%s\n' "$dim" "$line" "$reset" >&2
+        printf '%s\n' "$(info "$line")" >&2
     done
     exit 2
 }
@@ -167,14 +247,14 @@ while [ $# -gt 0 ]; do
             sed -n '3,/^$/p' "$0" | sed -e 's/^# \{0,1\}//' -e 's/^#$//'
             exit 0 ;;
         --) shift; break ;;
-        -*) die "unrecognised option '$1'" \
-                "usage: $me [--whine|-w | --list|-l] [PATH...]" \
-                "       $me (--create|-c) [PROJECT] [CASE...]" ;;
+        -*) die "unrecognised option $(key "$1")" \
+                "usage: $(cmd "$me [--whine|-w | --list|-l] [PATH...]")" \
+                "       $(cmd "$me (--create|-c) [PROJECT] [CASE...]")" ;;
         *) break ;;
     esac
 done
 
-[ -z "$create" ] || [ -z "$check$list" ] || die "--create goes with neither --whine nor --list"
+[ -z "$create" ] || [ -z "$check$list" ] || die "$(key --create) goes with neither $(key --whine) nor $(key --list)"
 
 # The compiler: beside this script by default, since that is where the build
 # leaves it.  Made absolute, because the project is named relative to the
@@ -186,8 +266,8 @@ case $urweb in
     /*) ;;
     *) urweb=$(pwd -P)/$urweb ;;
 esac
-[ -n "$list$create" ] || [ -x "$urweb" ] || die "no compiler at $urweb" \
-    "build one with 'make', or set URWEB to name another"
+[ -n "$list$create" ] || [ -x "$urweb" ] || die "no compiler at $(path "$urweb")" \
+    "build one with $(cmd make), or set $(key URWEB) to name another"
 
 # An in-tree compiler needs -boot to find the library in the source tree; an
 # installed one (URWEB set) must not get it.
@@ -223,10 +303,10 @@ if [ -n "$create" ]; then
             found=${f#./}
             count=$((count + 1))
         done
-        [ "$count" -ne 0 ] || die "no .urp file in $(pwd -P)" \
-            "name the project: $me --create PROJECT"
-        [ "$count" -eq 1 ] || die "$count .urp files in $(pwd -P)" \
-            "name the one you mean: $me --create PROJECT"
+        [ "$count" -ne 0 ] || die "no .urp file in $(path "$(pwd -P)")" \
+            "name the project: $(cmd "$me --create PROJECT")"
+        [ "$count" -eq 1 ] || die "$count .urp files in $(path "$(pwd -P)")" \
+            "name the one you mean: $(cmd "$me --create PROJECT")"
         project=${found%.urp}
     fi
     project=${project%/}
@@ -234,21 +314,21 @@ if [ -n "$create" ]; then
     project=${project%.urp}
 
     [ -f "$project.urp" ] || [ -f "$project.ur" ] || die \
-        "no project called '$project'" \
-        "expected $project.urp or $project.ur to be there"
+        "no project called $(path "$project")" \
+        "expected $(path "$project.urp") or $(path "$project.ur") to be there"
 
     snap=$project.snapshot
 
     # A snapshot directory that exists is fine when it nests and we are
     # adding cases to it; anything else would be overwritten, so stop.
     if [ $# -eq 0 ]; then
-        [ ! -e "$snap" ] || die "$snap is in the way" \
+        [ ! -e "$snap" ] || die "$(path "$snap") is in the way" \
             "delete it first if you meant to start again," \
-            "or name a case to add one to it: $me --create $project CASE"
+            "or name a case to add one to it: $(cmd "$me --create $project CASE")"
         cases=$snap
     else
-        [ ! -e "$snap" ] || [ -d "$snap" ] || die "$snap is in the way, and it is not a directory"
-        [ ! -d "$snap/expected" ] || die "$snap has no cases to add to" \
+        [ ! -e "$snap" ] || [ -d "$snap" ] || die "$(path "$snap") is in the way, and it is not a directory"
+        [ ! -d "$snap/expected" ] || die "$(path "$snap") has no cases to add to" \
             "it holds the flat form, one snapshot straight under it" \
             "move that into a case directory of its own first"
         cases=''
@@ -257,9 +337,9 @@ if [ -n "$create" ]; then
             case $c in
                 ''|*/*|.|..|expected|args|project)
                     die "'$c' cannot name a case" \
-                        "a case is one directory under $snap, not called expected, args or project" ;;
+                        "a case is one directory under $(path "$snap"), not called expected, args or project" ;;
             esac
-            [ ! -e "$snap/$c" ] || die "$snap/$c is in the way" \
+            [ ! -e "$snap/$c" ] || die "$(path "$snap/$c") is in the way" \
                 "delete it first if you meant to start again"
             cases="$cases $snap/$c"
         done
@@ -271,10 +351,9 @@ if [ -n "$create" ]; then
         for a in $artifacts; do
             : > "$d/expected/$a"
         done
-        say "$blue" CREATED "$d" " (args, and $(echo "$artifacts" | wc -w) empty artifacts under expected/)"
+        say "$s_new" CREATED "$d" "$(info " (args, and $(echo "$artifacts" | wc -w) empty artifacts under expected/)")"
     done
-    printf '%sdelete what this project has no opinion about, then run %s to fill in the rest%s\n' \
-        "$dim" "$me" "$reset"
+    printf '%s\n' "$(info "delete what this project has no opinion about, then run $(cmd "$me") to fill in the rest")"
     exit 0
 fi
 
@@ -314,13 +393,13 @@ for p in "$@"; do
             found=1
         fi
     fi
-    [ -n "$found" ] || die "nothing to test at '$p'" \
-        "expected a project ($p.urp), a snapshot directory ($p.snapshot)," \
-        "a case in one ($p.snapshot/CASE), or a directory to search for snapshots"
+    [ -n "$found" ] || die "nothing to test at $(path "$p")" \
+        "expected a project ($(path "$p.urp")), a snapshot directory ($(path "$p.snapshot"))," \
+        "a case in one ($(path "$p.snapshot/CASE")), or a directory to search for snapshots"
 done
 
 if [ ! -s "$tmp/snapshots" ]; then
-    warn "no snapshot directories under $*"
+    warn "no snapshot directories under $(path "$*")"
     exit 0
 fi
 
@@ -352,7 +431,7 @@ esac
 # "1.2s" for the result line, or nothing when the run was quick.
 took() {
     [ "$1" -gt 10 ] || return 0
-    printf ' %s%d.%ds%s' "$dim" $(( $1 / 10 )) $(( $1 % 10 )) "$reset"
+    printf ' %s' "$(info "$(( $1 / 10 )).$(( $1 % 10 ))s")"
 }
 
 failed=0
@@ -376,7 +455,7 @@ run_case() {
     while read -r a; do
         [ -n "$a" ] || continue
         spec=$(artifact_spec "$a")
-        [ -n "$spec" ] || die "$want_dir/$a is not something the compiler produces" \
+        [ -n "$spec" ] || die "$(path "$want_dir/$a") is not something the compiler produces" \
             "the artifacts are: $artifacts" \
             "delete that file, or correct its name"
         rank=${spec%% *}
@@ -392,7 +471,7 @@ run_case() {
     done < "$tmp/entries"
 
     if [ ! -s "$tmp/want" ]; then
-        warn "$want_dir asks for nothing; '$me --create' shows what there is to ask for"
+        warn "$(path "$want_dir") asks for nothing; $(cmd "$me --create") shows what there is to ask for"
         n_skipped=$((n_skipped + 1))
         return 0
     fi
@@ -427,8 +506,8 @@ run_case() {
         [ "${rest#* }" != - ] || continue
         [ ! -f "$work/$a" ] || continue
         [ "$status" -ne 0 ] || die "urweb was asked for $a, exited 0, and wrote no such file" \
-            "it was stopped after '$stop', which this runner takes to be late enough" \
-            "if the compiler's phases have moved, artifact_spec in $me needs to know"
+            "it was stopped after $(key "$stop"), which this runner takes to be late enough" \
+            "if the compiler's phases have moved, artifact_spec in $(path "$me") needs to know"
         missing="${missing:+$missing, }$a"
     done < "$tmp/want"
 
@@ -436,7 +515,7 @@ run_case() {
     note=''
     if [ "$status" -ne 0 ]; then
         n_nonzero=$((n_nonzero + 1))
-        note=" ${yellow}exit $status$reset"
+        note=" ${amber}exit $status$reset"
         [ -z "$missing" ] || note="$note, not written: $missing"
     fi
     note="$note$(took "$elapsed")"
@@ -457,18 +536,18 @@ run_case() {
 
     if [ -n "$check" ]; then
         if [ -z "$bad" ]; then
-            say "$green" 'ok' "$case_dir" "$note"
+            say "$s_ok" 'ok' "$case_dir" "$note"
             n_ok=$((n_ok + 1))
         else
-            say "$red" 'FAIL' "$case_dir" " ($bad)$note"
+            say "$s_bad" 'FAIL' "$case_dir" " ($bad)$note"
             n_bad=$((n_bad + 1))
             failed=1
         fi
     elif [ -n "$changed" ]; then
-        say "$yellow" 'UPDATED' "$case_dir" " ($changed)$note"
+        say "$s_warn" 'UPDATED' "$case_dir" " ($changed)$note"
         n_changed=$((n_changed + 1))
     else
-        say "$green" 'ok' "$case_dir" "$note"
+        say "$s_ok" 'ok' "$case_dir" "$note"
         n_ok=$((n_ok + 1))
     fi
 }
@@ -478,11 +557,11 @@ summary() {
     s=''
     [ "$n_ok" -eq 0 ] || s="${s:+$s, }$green$n_ok ok$reset"
     [ "$n_bad" -eq 0 ] || s="${s:+$s, }$red$n_bad FAIL$reset"
-    [ "$n_changed" -eq 0 ] || s="${s:+$s, }$yellow$n_changed updated$reset"
+    [ "$n_changed" -eq 0 ] || s="${s:+$s, }$amber$n_changed updated$reset"
     [ "$n_skipped" -eq 0 ] || s="${s:+$s, }$n_skipped asking for nothing"
     [ "$n_nonzero" -eq 0 ] || s="$s; $n_nonzero with non-zero exit"
     elapsed=$(( $(tenths) - started ))
-    printf '%s%d case%s%s: %s, in %d.%ds\n' "$bold" "$n_cases" "$([ "$n_cases" -eq 1 ] || echo s)" "$reset" \
+    printf '%s%d case%s%s: %s, in %d.%ds\n' "$s_strong" "$n_cases" "$([ "$n_cases" -eq 1 ] || echo s)" "$reset" \
         "$s" $(( elapsed / 10 )) $(( elapsed % 10 ))
 }
 
@@ -503,7 +582,7 @@ redundant() {
         { cases = cases ", " $2; n++ }
         END { flush() }' > "$tmp/redundant"
     while IFS="$(printf '\t')" read -r a cases; do
-        warn "$1: cases $cases pass the same args (${a:-none}); one case would do"
+        warn "$(path "$1"): cases $cases pass the same args (${a:-none}); one case would do"
     done < "$tmp/redundant"
 }
 
@@ -536,9 +615,9 @@ while read -r snap; do
     else
         project=$base
         [ -f "$base.urp" ] || [ -f "$base.ur" ] || die \
-            "$snap is named for a project '${base##*/}' that is not beside it" \
-            "expected $base.urp or $base.ur" \
-            "write the project's name in $snap/project if it goes by another"
+            "$(path "$snap") is named for a project '${base##*/}' that is not beside it" \
+            "expected $(path "$base.urp") or $(path "$base.ur")" \
+            "write the project's name in $(path "$snap/project") if it goes by another"
     fi
 
     # Flat or nested, decided by whether the snapshot directory has an
@@ -546,22 +625,22 @@ while read -r snap; do
     find "$snap" -mindepth 1 -maxdepth 1 -type d ! -name expected \
         | LC_ALL=C sort > "$tmp/subdirs"
     if [ -d "$snap/expected" ]; then
-        [ ! -s "$tmp/subdirs" ] || die "$snap has an expected of its own and case directories too" \
-            "cases: $(tr '\n' ' ' < "$tmp/subdirs")" \
+        [ ! -s "$tmp/subdirs" ] || die "$(path "$snap") has an expected of its own and case directories too" \
+            "cases: $(path "$(tr '\n' ' ' < "$tmp/subdirs")")" \
             "a project's snapshots all nest, or none of them do"
         do_case "$snap" "$project"
     elif [ -s "$tmp/subdirs" ]; then
         redundant "$snap"
         while read -r c; do
             [ -z "$only" ] || [ "$c" = "$only" ] || continue
-            [ -d "$c/expected" ] || die "$c has no expected directory" \
-                "every case under $snap needs one; '$me --create' makes them"
+            [ -d "$c/expected" ] || die "$(path "$c") has no expected directory" \
+                "every case under $(path "$snap") needs one; $(cmd "$me --create") makes them"
             do_case "$c" "$project"
         done < "$tmp/subdirs"
     else
-        die "$snap holds no snapshots" \
-            "expected $snap/expected, or case directories with one each" \
-            "'$me --create' makes them"
+        die "$(path "$snap") holds no snapshots" \
+            "expected $(path "$snap/expected"), or case directories with one each" \
+            "$(cmd "$me --create") makes them"
     fi
 done < "$tmp/snapshots"
 
