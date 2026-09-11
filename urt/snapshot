@@ -58,9 +58,11 @@
 # It defaults to the current directory.
 #
 # With '--create', this script sets up the snapshot directory for a project,
-# containing an empty 'args' file and an 'expected' directory of empty artifacts. is 
-# and runs nothing; fill them in with a plain run, having first deleted the artifacts the project has no opinion about.  With no PROJECT it takes the only .urp in the
-# current directory.  Name CASEs to get the nested form.
+# containing an empty 'args' file and an 'expected' directory of empty
+# artifacts, and runs nothing; fill them in with a plain run, having first
+# deleted the artifacts the project has no opinion about.  With no PROJECT it
+# takes the only .urp in the current directory.  Name CASEs to get the nested
+# form, or to add cases to a nested snapshot that is already there.
 #
 # The compiler is ../bin/urweb unless URWEB names another, and is given
 # URWEB_FLAGS if that is set.
@@ -177,14 +179,14 @@ done
 # The compiler: beside this script by default, since that is where the build
 # leaves it.  Made absolute, because the project is named relative to the
 # directory we were invoked from and that is where the compiler runs.
-# Listing the cases takes no compiler.
+# Listing and creating cases takes no compiler.
 here=$(cd "$(dirname "$0")" && pwd -P) || exit 2
 urweb=${URWEB:-$here/../bin/urweb}
 case $urweb in
     /*) ;;
     *) urweb=$(pwd -P)/$urweb ;;
 esac
-[ -n "$list" ] || [ -x "$urweb" ] || die "no compiler at $urweb" \
+[ -n "$list$create" ] || [ -x "$urweb" ] || die "no compiler at $urweb" \
     "build one with 'make', or set URWEB to name another"
 
 # An in-tree compiler needs -boot to find the library in the source tree; an
@@ -236,14 +238,29 @@ if [ -n "$create" ]; then
         "expected $project.urp or $project.ur to be there"
 
     snap=$project.snapshot
-    [ ! -e "$snap" ] || die "$snap is in the way" \
-        "delete it first if you meant to start again"
 
+    # A snapshot directory that exists is fine when it nests and we are
+    # adding cases to it; anything else would be overwritten, so stop.
     if [ $# -eq 0 ]; then
+        [ ! -e "$snap" ] || die "$snap is in the way" \
+            "delete it first if you meant to start again," \
+            "or name a case to add one to it: $me --create $project CASE"
         cases=$snap
     else
+        [ ! -e "$snap" ] || [ -d "$snap" ] || die "$snap is in the way, and it is not a directory"
+        [ ! -d "$snap/expected" ] || die "$snap has no cases to add to" \
+            "it holds the flat form, one snapshot straight under it" \
+            "move that into a case directory of its own first"
         cases=''
         for c in "$@"; do
+            c=${c%/}
+            case $c in
+                ''|*/*|.|..|expected|args|project)
+                    die "'$c' cannot name a case" \
+                        "a case is one directory under $snap, not called expected, args or project" ;;
+            esac
+            [ ! -e "$snap/$c" ] || die "$snap/$c is in the way" \
+                "delete it first if you meant to start again"
             cases="$cases $snap/$c"
         done
     fi
