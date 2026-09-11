@@ -486,6 +486,27 @@ summary() {
         "$s" $(( elapsed / 10 )) $(( elapsed % 10 ))
 }
 
+# Two cases of one project that give the compiler the same args snapshot the
+# same run; the artifacts they ask for could be asked for by one case.  Say
+# so.  Args are compared with their whitespace folded, so a trailing newline
+# or a second space does not tell them apart.
+redundant() {
+    : > "$tmp/args"
+    while read -r c; do
+        a=''
+        [ ! -f "$c/args" ] || a=$(tr -s '[:space:]' ' ' < "$c/args" | sed 's/^ //; s/ $//')
+        printf '%s\t%s\n' "$a" "${c#"$1/"}" >> "$tmp/args"
+    done < "$tmp/subdirs"
+    LC_ALL=C sort "$tmp/args" | awk -F '\t' '
+        function flush() { if (n > 1) print prev "\t" cases }
+        NR == 1 || $1 != prev { flush(); prev = $1; cases = $2; n = 1; next }
+        { cases = cases ", " $2; n++ }
+        END { flush() }' > "$tmp/redundant"
+    while IFS="$(printf '\t')" read -r a cases; do
+        warn "$1: cases $cases pass the same args (${a:-none}); one case would do"
+    done < "$tmp/redundant"
+}
+
 # With --list, a case is named and left alone.
 do_case() {
     if [ -n "$list" ]; then
@@ -530,6 +551,7 @@ while read -r snap; do
             "a project's snapshots all nest, or none of them do"
         do_case "$snap" "$project"
     elif [ -s "$tmp/subdirs" ]; then
+        redundant "$snap"
         while read -r c; do
             [ -z "$only" ] || [ "$c" = "$only" ] || continue
             [ -d "$c/expected" ] || die "$c has no expected directory" \
