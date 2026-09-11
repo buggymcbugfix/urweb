@@ -293,7 +293,7 @@ for p in "$@"; do
             echo "$stripped.snapshot" >> "$tmp/snapshots"
             found=1
         elif [ -d "$p" ]; then
-            find "$p" -type d -name '*.snapshot' | LC_ALL=C sort >> "$tmp/snapshots"
+            find "$p" -type d -name '*.snapshot' | sed 's|^\./||' | LC_ALL=C sort >> "$tmp/snapshots"
             found=1
         fi
     fi
