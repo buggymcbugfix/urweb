@@ -31,7 +31,7 @@
 #       |-- endpoints.json          -endpoints      the URLs the app serves
 #       `-- server.c                -saveC          the generated C
 #
-# One project can have several snapshots (the same program under three database backends, say)
+# One project (urp) can have several snapshots (the same program under three database backends, say)
 # by putting each in a case directory of its own:
 #
 #   shop.snapshot/
@@ -42,27 +42,27 @@
 #   |-- postgres/
 #   |   `-- ...
 #   `-- sqlite/
-#   |   `-- ...
+#       `-- ...
 #
 #
 # USAGE
 # -----
 #
-#   snapshot.sh [PATH...]                     update the snapshots below the given projects
-#   snapshot.sh --check [PATH...]             fail on a diff (you want this in CI)
-#   snapshot.sh --list [PATH...]              list the snapshot cases matching for the given path(s)
-#   snapshot.sh --create [PROJECT] [CASE...]  create a new snapshot set for the given project
+#   urt/snapshot [PATH...]                     update the snapshots below the given projects
+#   urt/snapshot --whine [PATH...]             fail on a diff (you want this in CI)
+#   urt/snapshot --list [PATH...]              list the snapshot cases matching for the given path(s)
+#   urt/snapshot --create [PROJECT] [CASE...]  create a new snapshot set for the given project
 #
 # PATH is a project (demo/alert[.urp]), a snapshot directory (shop.snapshot),
 # one case of it (shop.snapshot/sqlite) or a directory to search for snapshots.
 # It defaults to the current directory.
 #
-# With '--create', the directory, an empty 'args' and an 'expected' of empty
-# artifacts, and runs nothing; fill them in with a plain run, having first
-# deleted the artifacts the project has no opinion about.  With no PROJECT it takes the only .urp in the
+# With '--create', this script sets up the snapshot directory for a project,
+# containing an empty 'args' file and an 'expected' directory of empty artifacts. is 
+# and runs nothing; fill them in with a plain run, having first deleted the artifacts the project has no opinion about.  With no PROJECT it takes the only .urp in the
 # current directory.  Name CASEs to get the nested form.
 #
-# The compiler is bin/urweb unless URWEB names another, and is given
+# The compiler is ../bin/urweb unless URWEB names another, and is given
 # URWEB_FLAGS if that is set.
 
 set -u
@@ -158,7 +158,7 @@ normalise() {
 check='' create='' list=''
 while [ $# -gt 0 ]; do
     case $1 in
-        --check|-k) check=1; shift ;;
+        --whine|-w) check=1; shift ;;
         --create|-c) create=1; shift; break ;;
         --list|-l) list=1; shift ;;
         --help|-h)
@@ -166,20 +166,20 @@ while [ $# -gt 0 ]; do
             exit 0 ;;
         --) shift; break ;;
         -*) die "unrecognised option '$1'" \
-                "usage: $me [--check|--list] [PATH...]" \
-                "       $me --create [PROJECT] [CASE...]" ;;
+                "usage: $me [--whine|-w | --list|-l] [PATH...]" \
+                "       $me (--create|-c) [PROJECT] [CASE...]" ;;
         *) break ;;
     esac
 done
 
-[ -z "$create" ] || [ -z "$check$list" ] || die "--create goes with neither --check nor --list"
+[ -z "$create" ] || [ -z "$check$list" ] || die "--create goes with neither --whine nor --list"
 
 # The compiler: beside this script by default, since that is where the build
 # leaves it.  Made absolute, because the project is named relative to the
 # directory we were invoked from and that is where the compiler runs.
 # Listing the cases takes no compiler.
 here=$(cd "$(dirname "$0")" && pwd -P) || exit 2
-urweb=${URWEB:-$here/bin/urweb}
+urweb=${URWEB:-$here/../bin/urweb}
 case $urweb in
     /*) ;;
     *) urweb=$(pwd -P)/$urweb ;;
