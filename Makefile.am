@@ -140,14 +140,14 @@ TEST_PRELUDE = set -e; \
 	echo "Compiling demo.exe."; \
 	bin/urweb -boot -noEmacs -dbms sqlite -db $$dbfile -demo /Demo demo
 
-# Snapshot tests (see ./snapshot.sh).  Always from here, since a
+# Snapshot tests (see urt/snapshot).  Always from here, since a
 # snapshot records the file names the compiler printed and those are
 # relative to the directory it ran in.
 check-snapshot: bin/urweb
-	@./snapshot.sh --check .
+	@urt/snapshot --whine .
 
 update-snapshot: bin/urweb
-	@./snapshot.sh .
+	@urt/snapshot .
 
 check-local: check-snapshot bin/urweb
 	@$(TEST_PRELUDE); \
