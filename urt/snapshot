@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env bash
 #
 # SNAPSHOT TESTS
 # ==============
@@ -43,6 +43,10 @@
 #   |   `-- ...
 #   `-- sqlite/
 #       `-- ...
+#
+# Nothing else may be in there, bar a README.md beside the snapshot or a
+# case, and a 'project' file naming the project when the directory does not:
+# a file this script would not read is refused rather than left to rot.
 #
 #
 # USAGE
@@ -179,6 +183,15 @@ die() {
         printf '%s\n' "$(info "$line")" >&2
     done
     exit 2
+}
+
+dieLater() {
+    failed=1
+    say "$s_bad" ERROR "$1" "" >&2
+    shift
+    for line in "$@"; do
+        printf '%s\n' "$(info "$line")" >&2
+    done
 }
 
 # -------------------------------------------------------------- the artifacts
@@ -455,9 +468,6 @@ run_case() {
     while read -r a; do
         [ -n "$a" ] || continue
         spec=$(artifact_spec "$a")
-        [ -n "$spec" ] || die "$(path "$want_dir/$a") is not something the compiler produces" \
-            "the artifacts are: $artifacts" \
-            "delete that file, or correct its name"
         rank=${spec%% *}
         rest=${spec#* }
         phase=${rest%% *}
@@ -505,7 +515,7 @@ run_case() {
         rest=${spec#* }
         [ "${rest#* }" != - ] || continue
         [ ! -f "$work/$a" ] || continue
-        [ "$status" -ne 0 ] || die "urweb was asked for $a, exited 0, and wrote no such file" \
+        [ "$status" -ne 0 ] || dieLater "urweb was asked for $a, exited 0, and wrote no such file" \
             "it was stopped after $(key "$stop"), which this runner takes to be late enough" \
             "if the compiler's phases have moved, artifact_spec in $(path "$me") needs to know"
         missing="${missing:+$missing, }$a"
@@ -559,7 +569,7 @@ summary() {
     [ "$n_bad" -eq 0 ] || s="${s:+$s, }$red$n_bad FAIL$reset"
     [ "$n_changed" -eq 0 ] || s="${s:+$s, }$amber$n_changed updated$reset"
     [ "$n_skipped" -eq 0 ] || s="${s:+$s, }$n_skipped asking for nothing"
-    [ "$n_nonzero" -eq 0 ] || s="$s; $n_nonzero with non-zero exit"
+    [ "$n_nonzero" -eq 0 ] || s="$s, $n_nonzero with non-zero exit"
     elapsed=$(( $(tenths) - started ))
     printf '%s%d case%s%s: %s, in %d.%ds\n' "$s_strong" "$n_cases" "$([ "$n_cases" -eq 1 ] || echo s)" "$reset" \
         "$s" $(( elapsed / 10 )) $(( elapsed % 10 ))
@@ -584,6 +594,45 @@ redundant() {
     while IFS="$(printf '\t')" read -r a cases; do
         warn "$(path "$1"): cases $cases pass the same args (${a:-none}); one case would do"
     done < "$tmp/redundant"
+}
+
+# Everything under a snapshot directory is read by this script, or it is a
+# mistake -- a file left over from an older layout, a typo for args, an
+# artifact written beside expected/ instead of in it -- and it would sit
+# there unnoticed, so it is refused.  README.md is the one thing allowed
+# through, beside the snapshot or beside a case.
+#
+# The tree is walked in sorted order, so a directory is judged before what
+# it holds, and a stray one is reported once, by its own name.
+layout() {
+    dir=$1 form=$2
+    find "$dir" -mindepth 1 | sed "s|^$dir/||" | LC_ALL=C sort > "$tmp/tree"
+    while read -r rel; do
+        e=$dir/$rel
+        case $form:$rel in
+            *:README.md|*:project|flat:args|nested:*/README.md|nested:*/args)
+                [ -f "$e" ] || dieLater "$(path "$e") should be a file" ;;
+            flat:expected|nested:*/expected)
+                [ -d "$e" ] || dieLater "$(path "$e") should be a directory" ;;
+            flat:expected/*|nested:*/expected/*)
+                [ -f "$e" ] && [ -n "$(artifact_spec "${rel##*/}")" ] || dieLater \
+                    "$(path "$e") is not something the compiler produces" \
+                    "the artifacts are: $artifacts" \
+                    "delete that, or correct its name" ;;
+            nested:*/*)
+                dieLater "$(path "$e") does not belong in a case" \
+                    "a case holds args, README.md and expected/, nothing else" \
+                    "delete it, or move it where it goes" ;;
+            nested:*)
+                [ -d "$e" ] || dieLater "$(path "$e") does not belong in a nested snapshot" \
+                    "beside the case directories there can be project and README.md, nothing else" \
+                    "delete it, or move it where it goes" ;;
+            *)
+                dieLater "$(path "$e") does not belong in a snapshot" \
+                    "a snapshot holds args, project, README.md and expected/, nothing else" \
+                    "delete it, or move it where it goes" ;;
+        esac
+    done < "$tmp/tree"
 }
 
 # With --list, a case is named and left alone.
@@ -614,7 +663,7 @@ while read -r snap; do
         project=${snap%/*}/$named
     else
         project=$base
-        [ -f "$base.urp" ] || [ -f "$base.ur" ] || die \
+        [ -f "$base.urp" ] || [ -f "$base.ur" ] || dieLater \
             "$(path "$snap") is named for a project '${base##*/}' that is not beside it" \
             "expected $(path "$base.urp") or $(path "$base.ur")" \
             "write the project's name in $(path "$snap/project") if it goes by another"
@@ -625,20 +674,22 @@ while read -r snap; do
     find "$snap" -mindepth 1 -maxdepth 1 -type d ! -name expected \
         | LC_ALL=C sort > "$tmp/subdirs"
     if [ -d "$snap/expected" ]; then
-        [ ! -s "$tmp/subdirs" ] || die "$(path "$snap") has an expected of its own and case directories too" \
+        [ ! -s "$tmp/subdirs" ] || dieLater "$(path "$snap") has an expected of its own and case directories too" \
             "cases: $(path "$(tr '\n' ' ' < "$tmp/subdirs")")" \
             "a project's snapshots all nest, or none of them do"
+        layout "$snap" flat
         do_case "$snap" "$project"
     elif [ -s "$tmp/subdirs" ]; then
+        layout "$snap" nested
         redundant "$snap"
         while read -r c; do
             [ -z "$only" ] || [ "$c" = "$only" ] || continue
-            [ -d "$c/expected" ] || die "$(path "$c") has no expected directory" \
+            [ -d "$c/expected" ] || dieLater "$(path "$c") has no expected directory" \
                 "every case under $(path "$snap") needs one; $(cmd "$me --create") makes them"
             do_case "$c" "$project"
         done < "$tmp/subdirs"
     else
-        die "$(path "$snap") holds no snapshots" \
+        dieLater "$(path "$snap") holds no snapshots" \
             "expected $(path "$snap/expected"), or case directories with one each" \
             "$(cmd "$me --create") makes them"
     fi
