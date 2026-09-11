@@ -53,8 +53,9 @@
 #   snapshot.sh --list [PATH...]              list the snapshot cases matching for the given path(s)
 #   snapshot.sh --create [PROJECT] [CASE...]  create a new snapshot set for the given project
 #
-# PATH is a project (demo/alert[.urp]), a snapshot directory (shop.snapshot/sqlite)
-# or a directory to search for snapshots. It defaults to the current directory.
+# PATH is a project (demo/alert[.urp]), a snapshot directory (shop.snapshot),
+# one case of it (shop.snapshot/sqlite) or a directory to search for snapshots.
+# It defaults to the current directory.
 #
 # With '--create', the directory, an empty 'args' and an 'expected' of empty
 # artifacts, and runs nothing; fill them in with a plain run, having first
@@ -276,6 +277,15 @@ for p in "$@"; do
                 echo "$p" >> "$tmp/snapshots"
                 found=1
             fi ;;
+        *.snapshot/*)
+            # One case of a nested snapshot, named by its directory.
+            case ${p%/*} in
+                *.snapshot)
+                    if [ "${p##*/}" != expected ] && [ -d "$p/expected" ]; then
+                        echo "$p" >> "$tmp/snapshots"
+                        found=1
+                    fi ;;
+            esac ;;
     esac
     if [ -z "$found" ]; then
         stripped=${p%.urp}
@@ -289,7 +299,7 @@ for p in "$@"; do
     fi
     [ -n "$found" ] || die "nothing to test at '$p'" \
         "expected a project ($p.urp), a snapshot directory ($p.snapshot)," \
-        "or a directory to search for snapshots"
+        "a case in one ($p.snapshot/CASE), or a directory to search for snapshots"
 done
 
 if [ ! -s "$tmp/snapshots" ]; then
@@ -471,6 +481,13 @@ do_case() {
 while read -r snap; do
     [ -n "$snap" ] || continue
 
+    # A single case was asked for: its snapshot directory is checked like
+    # any other, and then only that case runs.
+    case $snap in
+        *.snapshot) only='' ;;
+        *) only=$snap; snap=${snap%/*} ;;
+    esac
+
     # The project is the snapshot directory without its suffix, unless the
     # case says otherwise -- which it must when the compiler is given a
     # directory rather than a project, as in -demo mode.
@@ -497,6 +514,7 @@ while read -r snap; do
         do_case "$snap" "$project"
     elif [ -s "$tmp/subdirs" ]; then
         while read -r c; do
+            [ -z "$only" ] || [ "$c" = "$only" ] || continue
             [ -d "$c/expected" ] || die "$c has no expected directory" \
                 "every case under $snap needs one; '$me --create' makes them"
             do_case "$c" "$project"
