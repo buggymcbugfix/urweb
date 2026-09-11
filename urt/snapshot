@@ -348,10 +348,12 @@ if [ -n "$create" ]; then
         for c in "$@"; do
             c=${c%/}
             case $c in
-                ''|*/*|.|..|expected|args|project)
+                ''|*[!A-Za-z0-9_-]*)
                     die "'$c' cannot name a case" \
-                        "a case is one directory under $(path "$snap"), not called expected, args or project" ;;
-            esac
+                        "a case name is letters, digits, _ and -, and nothing else" ;;
+                expected|args|project|README.md)
+                    die "'$c' cannot name a case" \
+                        "$(path "$snap/$c") is part of the layout; call the case something else" ;;            esac
             [ ! -e "$snap/$c" ] || die "$(path "$snap/$c") is in the way" \
                 "delete it first if you meant to start again"
             cases="$cases $snap/$c"
@@ -626,7 +628,12 @@ layout() {
             nested:*)
                 [ -d "$e" ] || dieLater "$(path "$e") does not belong in a nested snapshot" \
                     "beside the case directories there can be project and README.md, nothing else" \
-                    "delete it, or move it where it goes" ;;
+                    "delete it, or move it where it goes"
+                case $rel in
+                    *[!A-Za-z0-9_-]*) die "$(path "$e") is not a case name" \
+                        "a case name is letters, digits, _ and -, and nothing else" \
+                        "rename it" ;;
+                esac ;;
             *)
                 dieLater "$(path "$e") does not belong in a snapshot" \
                     "a snapshot holds args, project, README.md and expected/, nothing else" \
