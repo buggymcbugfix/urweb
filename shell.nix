@@ -1,6 +1,7 @@
 { pkgs ? import ./nixpkgs.nix }:
 let
   urweb = pkgs.callPackage ./derivation.nix { };
+  urt = pkgs.callPackage ./urt/derivation.nix { };
   # Same derivation minus the sources: its outPath changes iff a reconfigure is needed.
   toolchainId = builtins.unsafeDiscardStringContext (urweb.overrideAttrs (_: { src = null; })).outPath;
 in
@@ -11,6 +12,7 @@ pkgs.mkShell {
     rlwrap
     smlnj
     sqlite
+    urt
   ];
 
   shellHook = ''

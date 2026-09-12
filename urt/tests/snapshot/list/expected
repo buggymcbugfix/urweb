@@ -1,0 +1,69 @@
+$ urt snapshot -l .
+ERROR broken/empty.urt/snapshot holds no cases
+urt snapshot --create broken/empty makes one
+broken/fails.urt/snapshot/1
+ERROR broken/flat.urt/snapshot/args is not in a case
+every snapshot is a named case now: move args and expected/ into one
+such as broken/flat.urt/snapshot/1
+ERROR broken/flat.urt/snapshot/expected is not in a case
+every snapshot is a named case now: move args and expected/ into one
+such as broken/flat.urt/snapshot/1
+WARN broken/nocase.urt/snapshot: cases a, b pass the same args (none); one case would do
+broken/nocase.urt/snapshot/a
+ERROR broken/nocase.urt/snapshot/b has no expected directory
+every case under broken/nocase.urt/snapshot needs one; urt snapshot --create makes them
+broken/noexit.urt/snapshot/1
+broken/nothing.urt/snapshot/1
+broken/stopper.urt/snapshot/1
+ERROR broken/stray.urt/stray.txt does not belong in an urt directory
+beside snapshot/ there can be README.md and project, and other tools' directories
+delete it, or move it where it goes
+ERROR broken/stray.urt/snapshot/1/expected/bogus.txt is not something the compiler produces
+the artifacts are: exitcode stdout.txt stderr.txt settings.txt parsetree.ur typecheck.urs schema.sql client.js endpoints.json server.c
+delete that, or correct its name
+ERROR broken/stray.urt/snapshot/1/expected/sub is not something the compiler produces
+the artifacts are: exitcode stdout.txt stderr.txt settings.txt parsetree.ur typecheck.urs schema.sql client.js endpoints.json server.c
+delete that, or correct its name
+ERROR broken/stray.urt/snapshot/notes.txt does not belong in a snapshot
+beside the case directories there can be a README.md, nothing else
+delete it, or move it where it goes
+WARN broken/twins.urt/snapshot: cases four, three pass the same args (none); one case would do
+WARN broken/twins.urt/snapshot: cases one, two pass the same args (-dbms sqlite); one case would do
+broken/twins.urt/snapshot/four
+broken/twins.urt/snapshot/one
+broken/twins.urt/snapshot/three
+broken/twins.urt/snapshot/two
+hello.urt/snapshot/1
+shop.urt/snapshot/mysql
+shop.urt/snapshot/postgres
+shop.urt/snapshot/sqlite
+sub/deep.urt/snapshot/1
+sub/demo/merging.urt/snapshot/1
+ERROR sub/orphan.urt/snapshot is named for a project 'orphan' that is not beside it
+expected sub/orphan.urp or sub/orphan.ur
+write the project's name in sub/orphan.urt/project if it goes by another
+ERROR zz/badname.urt/snapshot/c.d is not a case name
+a case name is letters, digits, _ and -, and nothing else
+rename it
+exit 2
+$ urt snapshot -l sub
+sub/deep.urt/snapshot/1
+sub/demo/merging.urt/snapshot/1
+ERROR sub/orphan.urt/snapshot is named for a project 'orphan' that is not beside it
+expected sub/orphan.urp or sub/orphan.ur
+write the project's name in sub/orphan.urt/project if it goes by another
+exit 1
+$ urt snapshot -l shop.urt/snapshot/sqlite hello.urp sub/deep.urt
+shop.urt/snapshot/sqlite
+hello.urt/snapshot/1
+sub/deep.urt/snapshot/1
+exit 0
+$ urt snapshot --list hello
+hello.urt/snapshot/1
+exit 0
+$ urt snapshot -l shop.urt/snapshot
+shop.urt/snapshot/mysql
+shop.urt/snapshot/postgres
+shop.urt/snapshot/sqlite
+exit 0
+$ changes

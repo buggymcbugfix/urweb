@@ -1,0 +1,314 @@
+$ TUI_KEYS='a down space down space enter enter' urt snapshot -c lonely
+
+Defining the tracked set of lonely.urt/snapshot/1.
+
+  > [x] exitcode
+    [x] stdout.txt
+    [x] stderr.txt
+    [x] settings.txt
+    [x] parsetree.ur
+    [x] typecheck.urs
+    [x] schema.sql
+    [x] client.js
+    [x] endpoints.json
+    [x] server.c
+
+↑/↓ scroll · space deselect · ⏎ save · esc quit · a deselect all
+--
+
+Defining the tracked set of lonely.urt/snapshot/1.
+
+  > [ ] exitcode
+    [ ] stdout.txt
+    [ ] stderr.txt
+    [ ] settings.txt
+    [ ] parsetree.ur
+    [ ] typecheck.urs
+    [ ] schema.sql
+    [ ] client.js
+    [ ] endpoints.json
+    [ ] server.c
+
+↑/↓ scroll · space select · ⏎ save · esc quit · a select all
+--
+
+Defining the tracked set of lonely.urt/snapshot/1.
+
+    [ ] exitcode
+  > [ ] stdout.txt
+    [ ] stderr.txt
+    [ ] settings.txt
+    [ ] parsetree.ur
+    [ ] typecheck.urs
+    [ ] schema.sql
+    [ ] client.js
+    [ ] endpoints.json
+    [ ] server.c
+
+↑/↓ scroll · space select · ⏎ save · esc quit · a select all
+--
+
+Defining the tracked set of lonely.urt/snapshot/1.
+
+    [ ] exitcode
+  > [x] stdout.txt
+    [ ] stderr.txt
+    [ ] settings.txt
+    [ ] parsetree.ur
+    [ ] typecheck.urs
+    [ ] schema.sql
+    [ ] client.js
+    [ ] endpoints.json
+    [ ] server.c
+
+↑/↓ scroll · space deselect · ⏎ save · esc quit · a select all
+--
+
+Defining the tracked set of lonely.urt/snapshot/1.
+
+    [ ] exitcode
+    [x] stdout.txt
+  > [ ] stderr.txt
+    [ ] settings.txt
+    [ ] parsetree.ur
+    [ ] typecheck.urs
+    [ ] schema.sql
+    [ ] client.js
+    [ ] endpoints.json
+    [ ] server.c
+
+↑/↓ scroll · space select · ⏎ save · esc quit · a select all
+--
+
+Defining the tracked set of lonely.urt/snapshot/1.
+
+    [ ] exitcode
+    [x] stdout.txt
+  > [x] stderr.txt
+    [ ] settings.txt
+    [ ] parsetree.ur
+    [ ] typecheck.urs
+    [ ] schema.sql
+    [ ] client.js
+    [ ] endpoints.json
+    [ ] server.c
+
+↑/↓ scroll · space deselect · ⏎ save · esc quit · a select all
+--
+CREATED lonely.urt/snapshot/1 (args, and 2 empty artifacts under expected/)
+
+Run urt snapshot lonely.urt/snapshot/1 now, to fill in what is tracked?
+
+  > yes
+    no, later
+
+↑/↓ scroll · ⏎ choose · esc no
+--
+UPDATED lonely.urt/snapshot/1 (stdout.txt)
+1 case: 1 updated, in T
+exit 0
+$ TUI_KEYS='enter esc esc' urt snapshot -c shop p q
+
+Defining the tracked set of shop.urt/snapshot/p.
+
+  > [x] exitcode
+    [x] stdout.txt
+    [x] stderr.txt
+    [x] settings.txt
+    [x] parsetree.ur
+    [x] typecheck.urs
+    [x] schema.sql
+    [x] client.js
+    [x] endpoints.json
+    [x] server.c
+
+↑/↓ scroll · space deselect · ⏎ save · esc quit · a deselect all
+--
+
+Defining the tracked set of shop.urt/snapshot/q.
+
+  > [x] exitcode
+    [x] stdout.txt
+    [x] stderr.txt
+    [x] settings.txt
+    [x] parsetree.ur
+    [x] typecheck.urs
+    [x] schema.sql
+    [x] client.js
+    [x] endpoints.json
+    [x] server.c
+
+↑/↓ scroll · space deselect · ⏎ save · esc back · a deselect all
+--
+
+Defining the tracked set of shop.urt/snapshot/p.
+
+  > [x] exitcode
+    [x] stdout.txt
+    [x] stderr.txt
+    [x] settings.txt
+    [x] parsetree.ur
+    [x] typecheck.urs
+    [x] schema.sql
+    [x] client.js
+    [x] endpoints.json
+    [x] server.c
+
+↑/↓ scroll · space deselect · ⏎ save · esc quit · a deselect all
+--
+nothing created
+exit 0
+$ TUI_KEYS='enter enter down enter' urt snapshot -c shop p q
+
+Defining the tracked set of shop.urt/snapshot/p.
+
+  > [x] exitcode
+    [x] stdout.txt
+    [x] stderr.txt
+    [x] settings.txt
+    [x] parsetree.ur
+    [x] typecheck.urs
+    [x] schema.sql
+    [x] client.js
+    [x] endpoints.json
+    [x] server.c
+
+↑/↓ scroll · space deselect · ⏎ save · esc quit · a deselect all
+--
+
+Defining the tracked set of shop.urt/snapshot/q.
+
+  > [x] exitcode
+    [x] stdout.txt
+    [x] stderr.txt
+    [x] settings.txt
+    [x] parsetree.ur
+    [x] typecheck.urs
+    [x] schema.sql
+    [x] client.js
+    [x] endpoints.json
+    [x] server.c
+
+↑/↓ scroll · space deselect · ⏎ save · esc back · a deselect all
+--
+CREATED shop.urt/snapshot/p (args, and 10 empty artifacts under expected/)
+CREATED shop.urt/snapshot/q (args, and 10 empty artifacts under expected/)
+
+Run urt snapshot shop.urt/snapshot/p shop.urt/snapshot/q now, to fill in what is tracked?
+
+  > yes
+    no, later
+
+↑/↓ scroll · ⏎ choose · esc no
+--
+
+Run urt snapshot shop.urt/snapshot/p shop.urt/snapshot/q now, to fill in what is tracked?
+
+    yes
+  > no, later
+
+↑/↓ scroll · ⏎ choose · esc no
+--
+what is newly tracked starts empty; run urt snapshot shop.urt/snapshot/p shop.urt/snapshot/q to fill it in
+exit 0
+$ TUI_KEYS='enter' urt snapshot -c lonely
+
+Defining the tracked set of lonely.urt/snapshot/2.
+
+  > [x] exitcode
+    [x] stdout.txt
+    [x] stderr.txt
+    [x] settings.txt
+    [x] parsetree.ur
+    [x] typecheck.urs
+    [x] schema.sql
+    [x] client.js
+    [x] endpoints.json
+    [x] server.c
+
+↑/↓ scroll · space deselect · ⏎ save · esc quit · a deselect all
+--
+CREATED lonely.urt/snapshot/2 (args, and 10 empty artifacts under expected/)
+
+Run urt snapshot lonely.urt/snapshot/2 now, to fill in what is tracked?
+
+  > yes
+    no, later
+
+↑/↓ scroll · ⏎ choose · esc no
+--
+what is newly tracked starts empty; run urt snapshot lonely.urt/snapshot/2 to fill it in
+exit 0
+$ TUI_KEYS='a enter esc' urt snapshot -c shop empty-set
+
+Defining the tracked set of shop.urt/snapshot/empty-set.
+
+  > [x] exitcode
+    [x] stdout.txt
+    [x] stderr.txt
+    [x] settings.txt
+    [x] parsetree.ur
+    [x] typecheck.urs
+    [x] schema.sql
+    [x] client.js
+    [x] endpoints.json
+    [x] server.c
+
+↑/↓ scroll · space deselect · ⏎ save · esc quit · a deselect all
+--
+
+Defining the tracked set of shop.urt/snapshot/empty-set.
+
+  > [ ] exitcode
+    [ ] stdout.txt
+    [ ] stderr.txt
+    [ ] settings.txt
+    [ ] parsetree.ur
+    [ ] typecheck.urs
+    [ ] schema.sql
+    [ ] client.js
+    [ ] endpoints.json
+    [ ] server.c
+
+↑/↓ scroll · space select · ⏎ save · esc quit · a select all
+--
+CREATED shop.urt/snapshot/empty-set (args, and an empty expected/)
+exit 0
+$ changes
+added (0 bytes): ./lonely.urt/snapshot/1/args
+added (0 bytes): ./lonely.urt/snapshot/1/expected/stderr.txt
+added (41 bytes): ./lonely.urt/snapshot/1/expected/stdout.txt
+added (0 bytes): ./lonely.urt/snapshot/2/args
+added (0 bytes): ./lonely.urt/snapshot/2/expected/client.js
+added (0 bytes): ./lonely.urt/snapshot/2/expected/endpoints.json
+added (0 bytes): ./lonely.urt/snapshot/2/expected/exitcode
+added (0 bytes): ./lonely.urt/snapshot/2/expected/parsetree.ur
+added (0 bytes): ./lonely.urt/snapshot/2/expected/schema.sql
+added (0 bytes): ./lonely.urt/snapshot/2/expected/server.c
+added (0 bytes): ./lonely.urt/snapshot/2/expected/settings.txt
+added (0 bytes): ./lonely.urt/snapshot/2/expected/stderr.txt
+added (0 bytes): ./lonely.urt/snapshot/2/expected/stdout.txt
+added (0 bytes): ./lonely.urt/snapshot/2/expected/typecheck.urs
+added (0 bytes): ./shop.urt/snapshot/empty-set/args
+added (0 bytes): ./shop.urt/snapshot/p/args
+added (0 bytes): ./shop.urt/snapshot/p/expected/client.js
+added (0 bytes): ./shop.urt/snapshot/p/expected/endpoints.json
+added (0 bytes): ./shop.urt/snapshot/p/expected/exitcode
+added (0 bytes): ./shop.urt/snapshot/p/expected/parsetree.ur
+added (0 bytes): ./shop.urt/snapshot/p/expected/schema.sql
+added (0 bytes): ./shop.urt/snapshot/p/expected/server.c
+added (0 bytes): ./shop.urt/snapshot/p/expected/settings.txt
+added (0 bytes): ./shop.urt/snapshot/p/expected/stderr.txt
+added (0 bytes): ./shop.urt/snapshot/p/expected/stdout.txt
+added (0 bytes): ./shop.urt/snapshot/p/expected/typecheck.urs
+added (0 bytes): ./shop.urt/snapshot/q/args
+added (0 bytes): ./shop.urt/snapshot/q/expected/client.js
+added (0 bytes): ./shop.urt/snapshot/q/expected/endpoints.json
+added (0 bytes): ./shop.urt/snapshot/q/expected/exitcode
+added (0 bytes): ./shop.urt/snapshot/q/expected/parsetree.ur
+added (0 bytes): ./shop.urt/snapshot/q/expected/schema.sql
+added (0 bytes): ./shop.urt/snapshot/q/expected/server.c
+added (0 bytes): ./shop.urt/snapshot/q/expected/settings.txt
+added (0 bytes): ./shop.urt/snapshot/q/expected/stderr.txt
+added (0 bytes): ./shop.urt/snapshot/q/expected/stdout.txt
+added (0 bytes): ./shop.urt/snapshot/q/expected/typecheck.urs

@@ -1,0 +1,8 @@
+$ urt snapshot hello
+ERROR no compiler at /nonexistent/urweb
+build one with make, or set URWEB to name another
+exit 2
+$ urt snapshot -l hello
+hello.urt/snapshot/1
+exit 0
+$ changes

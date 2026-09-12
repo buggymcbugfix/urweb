@@ -1,0 +1,530 @@
+$ TUI_KEYS='down space down down space enter enter' urt snapshot -e shop.urt/snapshot/mysql
+
+Editing the tracked set of shop.urt/snapshot/mysql.
+
+  > [x] exitcode
+    [ ] stdout.txt
+    [ ] stderr.txt
+    [ ] settings.txt
+    [ ] parsetree.ur
+    [ ] typecheck.urs
+    [x] schema.sql
+    [ ] client.js
+    [ ] endpoints.json
+    [ ] server.c
+
+↑/↓ scroll · space deselect · ⏎ save · esc quit · a select all
+--
+
+Editing the tracked set of shop.urt/snapshot/mysql.
+
+    [x] exitcode
+  > [ ] stdout.txt
+    [ ] stderr.txt
+    [ ] settings.txt
+    [ ] parsetree.ur
+    [ ] typecheck.urs
+    [x] schema.sql
+    [ ] client.js
+    [ ] endpoints.json
+    [ ] server.c
+
+↑/↓ scroll · space select · ⏎ save · esc quit · a select all
+--
+
+Editing the tracked set of shop.urt/snapshot/mysql.
+
+    [x] exitcode
+  > [x] stdout.txt
+    [ ] stderr.txt
+    [ ] settings.txt
+    [ ] parsetree.ur
+    [ ] typecheck.urs
+    [x] schema.sql
+    [ ] client.js
+    [ ] endpoints.json
+    [ ] server.c
+
+↑/↓ scroll · space deselect · ⏎ save · esc quit · a select all
+--
+
+Editing the tracked set of shop.urt/snapshot/mysql.
+
+    [x] exitcode
+    [x] stdout.txt
+  > [ ] stderr.txt
+    [ ] settings.txt
+    [ ] parsetree.ur
+    [ ] typecheck.urs
+    [x] schema.sql
+    [ ] client.js
+    [ ] endpoints.json
+    [ ] server.c
+
+↑/↓ scroll · space select · ⏎ save · esc quit · a select all
+--
+
+Editing the tracked set of shop.urt/snapshot/mysql.
+
+    [x] exitcode
+    [x] stdout.txt
+    [ ] stderr.txt
+  > [ ] settings.txt
+    [ ] parsetree.ur
+    [ ] typecheck.urs
+    [x] schema.sql
+    [ ] client.js
+    [ ] endpoints.json
+    [ ] server.c
+
+↑/↓ scroll · space select · ⏎ save · esc quit · a select all
+--
+
+Editing the tracked set of shop.urt/snapshot/mysql.
+
+    [x] exitcode
+    [x] stdout.txt
+    [ ] stderr.txt
+  > [x] settings.txt
+    [ ] parsetree.ur
+    [ ] typecheck.urs
+    [x] schema.sql
+    [ ] client.js
+    [ ] endpoints.json
+    [ ] server.c
+
+↑/↓ scroll · space deselect · ⏎ save · esc quit · a select all
+--
+EDITED shop.urt/snapshot/mysql (+stdout.txt, +settings.txt)
+
+Run urt snapshot shop.urt/snapshot/mysql now, to fill in what is tracked?
+
+  > yes
+    no, later
+
+↑/↓ scroll · ⏎ choose · esc no
+--
+UPDATED shop.urt/snapshot/mysql (exitcode, schema.sql, settings.txt, stdout.txt)
+1 case: 1 updated, in T
+exit 0
+$ TUI_KEYS='space enter' urt snapshot -e shop.urt/snapshot/mysql
+
+Editing the tracked set of shop.urt/snapshot/mysql.
+
+  > [x] exitcode
+    [x] stdout.txt
+    [ ] stderr.txt
+    [x] settings.txt
+    [ ] parsetree.ur
+    [ ] typecheck.urs
+    [x] schema.sql
+    [ ] client.js
+    [ ] endpoints.json
+    [ ] server.c
+
+↑/↓ scroll · space deselect · ⏎ save · esc quit · a select all
+--
+
+Editing the tracked set of shop.urt/snapshot/mysql.
+
+  > [ ] exitcode
+    [x] stdout.txt
+    [ ] stderr.txt
+    [x] settings.txt
+    [ ] parsetree.ur
+    [ ] typecheck.urs
+    [x] schema.sql
+    [ ] client.js
+    [ ] endpoints.json
+    [ ] server.c
+
+↑/↓ scroll · space select · ⏎ save · esc quit · a select all
+--
+EDITED shop.urt/snapshot/mysql (-exitcode)
+exit 0
+$ TUI_KEYS='enter' urt snapshot -e hello
+
+Editing the tracked set of hello.urt/snapshot/1.
+
+  > [x] exitcode
+    [x] stdout.txt
+    [x] stderr.txt
+    [x] settings.txt
+    [ ] parsetree.ur
+    [ ] typecheck.urs
+    [ ] schema.sql
+    [ ] client.js
+    [ ] endpoints.json
+    [ ] server.c
+
+↑/↓ scroll · space deselect · ⏎ save · esc quit · a select all
+--
+OK hello.urt/snapshot/1 (the tracked set is as it was)
+exit 0
+$ TUI_KEYS='a a a esc' urt snapshot -e hello
+
+Editing the tracked set of hello.urt/snapshot/1.
+
+  > [x] exitcode
+    [x] stdout.txt
+    [x] stderr.txt
+    [x] settings.txt
+    [ ] parsetree.ur
+    [ ] typecheck.urs
+    [ ] schema.sql
+    [ ] client.js
+    [ ] endpoints.json
+    [ ] server.c
+
+↑/↓ scroll · space deselect · ⏎ save · esc quit · a select all
+--
+
+Editing the tracked set of hello.urt/snapshot/1.
+
+  > [x] exitcode
+    [x] stdout.txt
+    [x] stderr.txt
+    [x] settings.txt
+    [x] parsetree.ur
+    [x] typecheck.urs
+    [x] schema.sql
+    [x] client.js
+    [x] endpoints.json
+    [x] server.c
+
+↑/↓ scroll · space deselect · ⏎ save · esc quit · a deselect all
+--
+
+Editing the tracked set of hello.urt/snapshot/1.
+
+  > [ ] exitcode
+    [ ] stdout.txt
+    [ ] stderr.txt
+    [ ] settings.txt
+    [ ] parsetree.ur
+    [ ] typecheck.urs
+    [ ] schema.sql
+    [ ] client.js
+    [ ] endpoints.json
+    [ ] server.c
+
+↑/↓ scroll · space select · ⏎ save · esc quit · a restore selection
+--
+
+Editing the tracked set of hello.urt/snapshot/1.
+
+  > [x] exitcode
+    [x] stdout.txt
+    [x] stderr.txt
+    [x] settings.txt
+    [ ] parsetree.ur
+    [ ] typecheck.urs
+    [ ] schema.sql
+    [ ] client.js
+    [ ] endpoints.json
+    [ ] server.c
+
+↑/↓ scroll · space deselect · ⏎ save · esc quit · a select all
+--
+nothing changed
+exit 0
+$ TUI_KEYS='down space enter down enter' urt snapshot -e hello
+
+Editing the tracked set of hello.urt/snapshot/1.
+
+  > [x] exitcode
+    [x] stdout.txt
+    [x] stderr.txt
+    [x] settings.txt
+    [ ] parsetree.ur
+    [ ] typecheck.urs
+    [ ] schema.sql
+    [ ] client.js
+    [ ] endpoints.json
+    [ ] server.c
+
+↑/↓ scroll · space deselect · ⏎ save · esc quit · a select all
+--
+
+Editing the tracked set of hello.urt/snapshot/1.
+
+    [x] exitcode
+  > [x] stdout.txt
+    [x] stderr.txt
+    [x] settings.txt
+    [ ] parsetree.ur
+    [ ] typecheck.urs
+    [ ] schema.sql
+    [ ] client.js
+    [ ] endpoints.json
+    [ ] server.c
+
+↑/↓ scroll · space deselect · ⏎ save · esc quit · a select all
+--
+
+Editing the tracked set of hello.urt/snapshot/1.
+
+    [x] exitcode
+  > [ ] stdout.txt
+    [x] stderr.txt
+    [x] settings.txt
+    [ ] parsetree.ur
+    [ ] typecheck.urs
+    [ ] schema.sql
+    [ ] client.js
+    [ ] endpoints.json
+    [ ] server.c
+
+↑/↓ scroll · space select · ⏎ save · esc quit · a select all
+--
+EDITED hello.urt/snapshot/1 (-stdout.txt)
+exit 0
+$ TUI_KEYS='down down space enter esc' urt snapshot -e hello
+
+Editing the tracked set of hello.urt/snapshot/1.
+
+  > [x] exitcode
+    [ ] stdout.txt
+    [x] stderr.txt
+    [x] settings.txt
+    [ ] parsetree.ur
+    [ ] typecheck.urs
+    [ ] schema.sql
+    [ ] client.js
+    [ ] endpoints.json
+    [ ] server.c
+
+↑/↓ scroll · space deselect · ⏎ save · esc quit · a select all
+--
+
+Editing the tracked set of hello.urt/snapshot/1.
+
+    [x] exitcode
+  > [ ] stdout.txt
+    [x] stderr.txt
+    [x] settings.txt
+    [ ] parsetree.ur
+    [ ] typecheck.urs
+    [ ] schema.sql
+    [ ] client.js
+    [ ] endpoints.json
+    [ ] server.c
+
+↑/↓ scroll · space select · ⏎ save · esc quit · a select all
+--
+
+Editing the tracked set of hello.urt/snapshot/1.
+
+    [x] exitcode
+    [ ] stdout.txt
+  > [x] stderr.txt
+    [x] settings.txt
+    [ ] parsetree.ur
+    [ ] typecheck.urs
+    [ ] schema.sql
+    [ ] client.js
+    [ ] endpoints.json
+    [ ] server.c
+
+↑/↓ scroll · space deselect · ⏎ save · esc quit · a select all
+--
+
+Editing the tracked set of hello.urt/snapshot/1.
+
+    [x] exitcode
+    [ ] stdout.txt
+  > [ ] stderr.txt
+    [x] settings.txt
+    [ ] parsetree.ur
+    [ ] typecheck.urs
+    [ ] schema.sql
+    [ ] client.js
+    [ ] endpoints.json
+    [ ] server.c
+
+↑/↓ scroll · space select · ⏎ save · esc quit · a select all
+--
+EDITED hello.urt/snapshot/1 (-stderr.txt)
+exit 0
+$ urt snapshot -e shop.urt/snapshot/sqlite exitcode stdout.txt
+EDITED shop.urt/snapshot/sqlite (+stdout.txt, -schema.sql)
+what is newly tracked starts empty; run urt snapshot shop.urt/snapshot/sqlite to fill it in
+exit 0
+$ urt snapshot -e shop.urt/snapshot/sqlite bogus
+ERROR bogus is not something the compiler produces
+the artifacts are: exitcode stdout.txt stderr.txt settings.txt parsetree.ur typecheck.urs schema.sql client.js endpoints.json server.c
+exit 2
+$ urt snapshot -e shop exitcode
+ERROR shop holds 3 tests; name the one to edit
+exit 2
+$ TUI_KEYS='down enter space enter' urt snapshot -e shop
+
+Which test would you like to edit?
+
+  > shop.urt/snapshot/mysql       3 of 10 tracked
+    shop.urt/snapshot/postgres    2 of 10 tracked
+    shop.urt/snapshot/sqlite      2 of 10 tracked
+
+↑/↓ scroll · ⏎ edit · esc quit
+--
+
+Which test would you like to edit?
+
+    shop.urt/snapshot/mysql       3 of 10 tracked
+  > shop.urt/snapshot/postgres    2 of 10 tracked
+    shop.urt/snapshot/sqlite      2 of 10 tracked
+
+↑/↓ scroll · ⏎ edit · esc quit
+--
+
+Editing the tracked set of shop.urt/snapshot/postgres.
+
+  > [x] exitcode
+    [ ] stdout.txt
+    [ ] stderr.txt
+    [ ] settings.txt
+    [ ] parsetree.ur
+    [ ] typecheck.urs
+    [x] schema.sql
+    [ ] client.js
+    [ ] endpoints.json
+    [ ] server.c
+
+↑/↓ scroll · space deselect · ⏎ save · esc back · a select all
+--
+
+Editing the tracked set of shop.urt/snapshot/postgres.
+
+  > [ ] exitcode
+    [ ] stdout.txt
+    [ ] stderr.txt
+    [ ] settings.txt
+    [ ] parsetree.ur
+    [ ] typecheck.urs
+    [x] schema.sql
+    [ ] client.js
+    [ ] endpoints.json
+    [ ] server.c
+
+↑/↓ scroll · space select · ⏎ save · esc back · a select all
+--
+EDITED shop.urt/snapshot/postgres (-exitcode)
+exit 0
+$ TUI_KEYS='esc' urt snapshot -e shop
+
+Which test would you like to edit?
+
+  > shop.urt/snapshot/mysql       3 of 10 tracked
+    shop.urt/snapshot/postgres    1 of 10 tracked
+    shop.urt/snapshot/sqlite      2 of 10 tracked
+
+↑/↓ scroll · ⏎ edit · esc quit
+--
+nothing changed
+exit 0
+$ TUI_KEYS='enter esc esc' urt snapshot -e shop
+
+Which test would you like to edit?
+
+  > shop.urt/snapshot/mysql       3 of 10 tracked
+    shop.urt/snapshot/postgres    1 of 10 tracked
+    shop.urt/snapshot/sqlite      2 of 10 tracked
+
+↑/↓ scroll · ⏎ edit · esc quit
+--
+
+Editing the tracked set of shop.urt/snapshot/mysql.
+
+  > [ ] exitcode
+    [x] stdout.txt
+    [ ] stderr.txt
+    [x] settings.txt
+    [ ] parsetree.ur
+    [ ] typecheck.urs
+    [x] schema.sql
+    [ ] client.js
+    [ ] endpoints.json
+    [ ] server.c
+
+↑/↓ scroll · space select · ⏎ save · esc back · a select all
+--
+
+Which test would you like to edit?
+
+  > shop.urt/snapshot/mysql       3 of 10 tracked
+    shop.urt/snapshot/postgres    1 of 10 tracked
+    shop.urt/snapshot/sqlite      2 of 10 tracked
+
+↑/↓ scroll · ⏎ edit · esc quit
+--
+nothing changed
+exit 0
+$ urt snapshot -e broken/stray
+ERROR broken/stray.urt/stray.txt does not belong in an urt directory
+beside snapshot/ there can be README.md and project, and other tools' directories
+delete it, or move it where it goes
+ERROR broken/stray.urt/snapshot/1/expected/bogus.txt is not something the compiler produces
+the artifacts are: exitcode stdout.txt stderr.txt settings.txt parsetree.ur typecheck.urs schema.sql client.js endpoints.json server.c
+delete that, or correct its name
+ERROR broken/stray.urt/snapshot/1/expected/sub is not something the compiler produces
+the artifacts are: exitcode stdout.txt stderr.txt settings.txt parsetree.ur typecheck.urs schema.sql client.js endpoints.json server.c
+delete that, or correct its name
+ERROR broken/stray.urt/snapshot/notes.txt does not belong in a snapshot
+beside the case directories there can be a README.md, nothing else
+delete it, or move it where it goes
+exit 1
+$ urt snapshot -e nope
+ERROR nothing to test at nope
+expected a project (nope.urp), its snapshots (nope.urt/snapshot),
+one case (nope.urt/snapshot/CASE), or a directory to search for snapshots
+exit 2
+$ urt snapshot -e hello
+ERROR --edit needs a terminal
+or the artifacts named outright: urt snapshot --edit TEST ARTIFACT...
+exit 2
+$ urt snapshot -w -e hello
+ERROR --edit goes with neither --whine nor --list
+exit 2
+$ urt snapshot -e
+ERROR broken/empty.urt/snapshot holds no cases
+urt snapshot --create broken/empty makes one
+ERROR broken/flat.urt/snapshot/args is not in a case
+every snapshot is a named case now: move args and expected/ into one
+such as broken/flat.urt/snapshot/1
+ERROR broken/flat.urt/snapshot/expected is not in a case
+every snapshot is a named case now: move args and expected/ into one
+such as broken/flat.urt/snapshot/1
+WARN broken/nocase.urt/snapshot: cases a, b pass the same args (none); one case would do
+ERROR broken/nocase.urt/snapshot/b has no expected directory
+every case under broken/nocase.urt/snapshot needs one; urt snapshot --create makes them
+ERROR broken/stray.urt/stray.txt does not belong in an urt directory
+beside snapshot/ there can be README.md and project, and other tools' directories
+delete it, or move it where it goes
+ERROR broken/stray.urt/snapshot/1/expected/bogus.txt is not something the compiler produces
+the artifacts are: exitcode stdout.txt stderr.txt settings.txt parsetree.ur typecheck.urs schema.sql client.js endpoints.json server.c
+delete that, or correct its name
+ERROR broken/stray.urt/snapshot/1/expected/sub is not something the compiler produces
+the artifacts are: exitcode stdout.txt stderr.txt settings.txt parsetree.ur typecheck.urs schema.sql client.js endpoints.json server.c
+delete that, or correct its name
+ERROR broken/stray.urt/snapshot/notes.txt does not belong in a snapshot
+beside the case directories there can be a README.md, nothing else
+delete it, or move it where it goes
+WARN broken/twins.urt/snapshot: cases four, three pass the same args (none); one case would do
+WARN broken/twins.urt/snapshot: cases one, two pass the same args (-dbms sqlite); one case would do
+ERROR sub/orphan.urt/snapshot is named for a project 'orphan' that is not beside it
+expected sub/orphan.urp or sub/orphan.ur
+write the project's name in sub/orphan.urt/project if it goes by another
+ERROR zz/badname.urt/snapshot/c.d is not a case name
+a case name is letters, digits, _ and -, and nothing else
+rename it
+exit 2
+$ changes
+removed: ./hello.urt/snapshot/1/expected/stderr.txt
+removed: ./hello.urt/snapshot/1/expected/stdout.txt
+removed: ./shop.urt/snapshot/mysql/expected/exitcode
+changed (38 bytes): ./shop.urt/snapshot/mysql/expected/schema.sql
+added (75 bytes): ./shop.urt/snapshot/mysql/expected/settings.txt
+added (92 bytes): ./shop.urt/snapshot/mysql/expected/stdout.txt
+removed: ./shop.urt/snapshot/postgres/expected/exitcode
+removed: ./shop.urt/snapshot/sqlite/expected/schema.sql
+added (0 bytes): ./shop.urt/snapshot/sqlite/expected/stdout.txt

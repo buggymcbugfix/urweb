@@ -1,0 +1,68 @@
+#!/bin/sh
+#
+# A stand-in for the compiler, for urt/snapshot-check: says what it was
+# asked on stdout, writes what it was asked for, and fails on request.
+#
+#   -dbms bogus            complain on stderr and exit 1 before writing
+#   a project *noexit*     exit 0 without writing parsetree.ur
+#
+# The settings dump names the files it was asked for, canonicalised as
+# the compiler's OS.Path.mkCanonical would (a doubled slash becomes one),
+# and the generated C carries the other things the runner normalises:
+# absolute include paths, the two script literals, and the directory it
+# was written to.
+
+echo "urweb $*"
+echo "epoch=${SOURCE_DATE_EPOCH-unset}"
+
+files='' dbms='' project=''
+while [ $# -gt 0 ]; do
+    case $1 in
+        -saveSettings|-saveParsetree|-saveTypecheck|-sql|-saveJs|-endpoints|-saveC)
+            files="$files $1=$2"; shift 2 ;;
+        -dbms) dbms=$2; shift 2 ;;
+        -stop|-stopQuiet|-demo|-prefix|-db|-output|-sigfile) shift 2 ;;
+        -*) shift ;;
+        *) project=$1; shift ;;
+    esac
+done
+
+if [ "$dbms" = bogus ]; then
+    echo "urweb: no such dbms: bogus" >&2
+    exit 1
+fi
+
+for f in $files; do
+    flag=${f%%=*}
+    out=${f#*=}
+    dir=${out%/*}
+    case $flag in
+        -saveSettings)
+            printf 'Project: %s\nDatabase: %s\n' "$project" "${dbms:-(none)}" > "$out"
+            for g in $files; do
+                printf '%s: %s\n' "${g%%=*}" "${g#*=}" | tr -s / >> "$out"
+            done ;;
+        -saveParsetree)
+            case $project in
+                *noexit*) ;;
+                *) printf '(* parse tree of %s *)\n' "$project" > "$out" ;;
+            esac ;;
+        -saveTypecheck) printf 'val main : unit -> transaction page\n' > "$out" ;;
+        -sql) printf 'CREATE TABLE t (id INTEGER); -- %s\n' "${dbms:-default}" > "$out" ;;
+        -saveJs) printf 'function main() { return 0; }\n' > "$out" ;;
+        -endpoints) printf '[{"url": "/main"}]\n' > "$out" ;;
+        -saveC) cat > "$out" <<END
+#include "/build/prefix/include/urweb/config.h"
+ #include </build/prefix/include/urweb/urweb.h>
+ #include <stdio.h>
+#include "include/urweb/types.h"
+ static char jslib[] = "the whole runtime";
+ static char jsapp[] = "the whole program";
+ static char jsapp[] = "";
+// from $dir/$project.c
+int main(void) { return 0; }
+END
+        ;;
+    esac
+done
+exit 0

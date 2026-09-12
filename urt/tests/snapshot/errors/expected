@@ -1,0 +1,115 @@
+$ urt snapshot --bogus
+ERROR unrecognised option --bogus
+usage: urt snapshot [--whine|-w | --list|-l] [PATH...]
+       urt snapshot (--create|-c) [PROJECT] [CASE...]
+       urt snapshot (--edit|-e) [PATH] [ARTIFACT...]
+exit 2
+$ urt snapshot -c -w
+ERROR no project called -w
+expected -w.urp or -w.ur to be there
+exit 2
+$ urt snapshot -w -c x
+ERROR --create goes with neither --whine nor --list
+exit 2
+$ urt snapshot nope
+ERROR nothing to test at nope
+expected a project (nope.urp), its snapshots (nope.urt/snapshot),
+one case (nope.urt/snapshot/CASE), or a directory to search for snapshots
+exit 2
+$ urt snapshot -l empty
+WARN no snapshots under empty
+exit 0
+$ urt snapshot --help
+SNAPSHOT TESTS
+==============
+
+Run the compiler on a project and keep its output as well as some intermediate state in files,
+so that a change to the compiler shows up as a diff.
+Think of them as a _contrast agent_ that alerts us to changes.
+
+
+DESCRIPTION
+-----------
+
+A project's snapshots live beside it, under its urt directory: next to
+`hello.urp` is `hello.urt`, and the snapshots are `hello.urt/snapshot`.  Each
+case there is a run of the compiler, with the flags it was given and what it
+wrote:
+
+  hello.ur
+  hello.urp
+  hello.urt/
+  `-- snapshot/
+      `-- 1/                      a case; named, by a number unless told otherwise
+          |-- args                extra flags, if any; the project is implied
+          `-- expected/
+              |-- exitcode        the compiler's exit status
+              |-- stdout.txt      what the compiler wrote to stdout
+              |-- stderr.txt      ... and to stderr
+              |-- settings.txt    -saveSettings   the parsed and merged job
+              |-- parsetree.ur    -saveParsetree  the program as parsed
+              |-- typecheck.urs   -saveTypecheck  the signatures inferred
+              |-- schema.sql      -sql            the database schema
+              |-- client.js       -saveJs         the client-side script
+              |-- endpoints.json  -endpoints      the URLs the app serves
+              `-- server.c        -saveC          the generated C
+
+One project can have several cases (the same program under three database
+backends, say), each with its own args and the artifacts it tracks:
+
+  shop.urt/
+  `-- snapshot/
+      |-- mysql/
+      |   |-- args                -dbms mysql
+      |   `-- expected/
+      |       `-- schema.sql
+      |-- postgres/
+      |   `-- ...
+      `-- sqlite/
+          `-- ...
+
+Nothing else may be under snapshot/, bar a README.md beside the cases or in
+one: a file this program would not read is refused rather than left to rot.
+The urt directory itself may hold a README.md, and a 'project' file naming
+the project when the directory's name does not; other tools keep their own
+directories there.
+
+
+USAGE
+-----
+
+  urt snapshot [PATH...]                     update the snapshots below the given projects
+  urt snapshot --whine [PATH...]             fail on a diff (you want this in CI)
+  urt snapshot --list [PATH...]              list the cases matching the given path(s)
+  urt snapshot --create [PROJECT] [CASE...]  create cases for the given project
+  urt snapshot --edit [PATH] [ARTIFACT...]   edit the tracked set of a case
+
+PATH is a project (demo/alert[.urp]), its urt directory (demo/alert.urt), its
+snapshots (demo/alert.urt/snapshot), one case (demo/alert.urt/snapshot/1) or a
+directory to search for snapshots.  It defaults to the current directory.
+
+With '--create', cases are set up for a project, named as given or by the
+next number: an empty 'args' file and an 'expected' directory of empty
+artifacts each.  On a terminal the artifacts to track are ticked in a
+checklist and a run is offered to fill them in; otherwise all of them are
+made, to be pruned by hand and filled in by a plain run.  With no PROJECT it
+takes the only .urp in the current directory.
+
+With '--edit', the artifacts a case tracks are ticked in a checklist.  PATH
+names the case, or a project or directory holding several, to choose from;
+the current directory otherwise.  A newly tracked artifact starts empty, and
+a run is offered to fill it in.  Named outright, the ARTIFACTs become the
+tracked set without asking, for scripts.
+
+The compiler is the one URWEB names, or else bin/urweb under the current
+directory or beside this program -- an in-tree build, which is run with
+-boot -noEmacs -- or else urweb on the PATH.  URWEB_FLAGS, if set, replaces
+the flags it is given.
+
+exit 0
+$ urt snapshot -- -l
+ERROR nothing to test at -l
+expected a project (-l.urp), its snapshots (-l.urt/snapshot),
+one case (-l.urt/snapshot/CASE), or a directory to search for snapshots
+exit 2
+$ changes

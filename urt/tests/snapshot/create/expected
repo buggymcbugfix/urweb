@@ -1,0 +1,158 @@
+$ urt snapshot -c lonely
+CREATED lonely.urt/snapshot/1 (args, and 10 empty artifacts under expected/)
+delete what this project has no opinion about, then run urt snapshot to fill in the rest
+exit 0
+$ urt snapshot -l lonely
+lonely.urt/snapshot/1
+exit 0
+$ urt snapshot -c lonely
+CREATED lonely.urt/snapshot/2 (args, and 10 empty artifacts under expected/)
+delete what this project has no opinion about, then run urt snapshot to fill in the rest
+exit 0
+$ urt snapshot -c shop x-1 y_2
+CREATED shop.urt/snapshot/x-1 (args, and 10 empty artifacts under expected/)
+CREATED shop.urt/snapshot/y_2 (args, and 10 empty artifacts under expected/)
+delete what this project has no opinion about, then run urt snapshot to fill in the rest
+exit 0
+$ urt snapshot -l shop.urt
+WARN shop.urt/snapshot: cases x-1, y_2 pass the same args (none); one case would do
+shop.urt/snapshot/mysql
+shop.urt/snapshot/postgres
+shop.urt/snapshot/sqlite
+shop.urt/snapshot/x-1
+shop.urt/snapshot/y_2
+exit 0
+$ urt snapshot -c shop x-1
+ERROR shop.urt/snapshot/x-1 is in the way
+delete it first if you meant to start again
+exit 2
+$ urt snapshot -c shop a.b
+ERROR 'a.b' cannot name a case
+a case name is letters, digits, _ and -, and nothing else
+exit 2
+$ urt snapshot -c shop expected
+ERROR 'expected' cannot name a case
+shop.urt/snapshot/expected is part of the layout; call the case something else
+exit 2
+$ urt snapshot -c nope
+ERROR no project called nope
+expected nope.urp or nope.ur to be there
+exit 2
+$ urt snapshot -c hello.urt
+CREATED hello.urt/snapshot/2 (args, and 10 empty artifacts under expected/)
+delete what this project has no opinion about, then run urt snapshot to fill in the rest
+exit 0
+$ urt snapshot -c hello.urt/snapshot
+CREATED hello.urt/snapshot/3 (args, and 10 empty artifacts under expected/)
+delete what this project has no opinion about, then run urt snapshot to fill in the rest
+exit 0
+$ urt snapshot -c broken/flat
+ERROR broken/flat.urt/snapshot/expected is not in a case
+every snapshot is a named case now: move args and expected/ into one
+such as broken/flat.urt/snapshot/1
+exit 2
+$ cd sub && urt snapshot -c
+CREATED deep.urt/snapshot/2 (args, and 10 empty artifacts under expected/)
+delete what this project has no opinion about, then run urt snapshot to fill in the rest
+exit 0
+$ cd sub/demo && urt snapshot -c
+ERROR 2 .urp files in TREE/sub/demo
+name the one you mean: urt snapshot --create PROJECT
+exit 2
+$ cd empty && urt snapshot -c
+ERROR no .urp file in TREE/empty
+name the project: urt snapshot --create PROJECT
+exit 2
+$ cd sub && urt snapshot --create deep.urp 7
+CREATED deep.urt/snapshot/7 (args, and 10 empty artifacts under expected/)
+delete what this project has no opinion about, then run urt snapshot to fill in the rest
+exit 0
+$ changes
+added (0 bytes): ./hello.urt/snapshot/2/args
+added (0 bytes): ./hello.urt/snapshot/2/expected/client.js
+added (0 bytes): ./hello.urt/snapshot/2/expected/endpoints.json
+added (0 bytes): ./hello.urt/snapshot/2/expected/exitcode
+added (0 bytes): ./hello.urt/snapshot/2/expected/parsetree.ur
+added (0 bytes): ./hello.urt/snapshot/2/expected/schema.sql
+added (0 bytes): ./hello.urt/snapshot/2/expected/server.c
+added (0 bytes): ./hello.urt/snapshot/2/expected/settings.txt
+added (0 bytes): ./hello.urt/snapshot/2/expected/stderr.txt
+added (0 bytes): ./hello.urt/snapshot/2/expected/stdout.txt
+added (0 bytes): ./hello.urt/snapshot/2/expected/typecheck.urs
+added (0 bytes): ./hello.urt/snapshot/3/args
+added (0 bytes): ./hello.urt/snapshot/3/expected/client.js
+added (0 bytes): ./hello.urt/snapshot/3/expected/endpoints.json
+added (0 bytes): ./hello.urt/snapshot/3/expected/exitcode
+added (0 bytes): ./hello.urt/snapshot/3/expected/parsetree.ur
+added (0 bytes): ./hello.urt/snapshot/3/expected/schema.sql
+added (0 bytes): ./hello.urt/snapshot/3/expected/server.c
+added (0 bytes): ./hello.urt/snapshot/3/expected/settings.txt
+added (0 bytes): ./hello.urt/snapshot/3/expected/stderr.txt
+added (0 bytes): ./hello.urt/snapshot/3/expected/stdout.txt
+added (0 bytes): ./hello.urt/snapshot/3/expected/typecheck.urs
+added (0 bytes): ./lonely.urt/snapshot/1/args
+added (0 bytes): ./lonely.urt/snapshot/1/expected/client.js
+added (0 bytes): ./lonely.urt/snapshot/1/expected/endpoints.json
+added (0 bytes): ./lonely.urt/snapshot/1/expected/exitcode
+added (0 bytes): ./lonely.urt/snapshot/1/expected/parsetree.ur
+added (0 bytes): ./lonely.urt/snapshot/1/expected/schema.sql
+added (0 bytes): ./lonely.urt/snapshot/1/expected/server.c
+added (0 bytes): ./lonely.urt/snapshot/1/expected/settings.txt
+added (0 bytes): ./lonely.urt/snapshot/1/expected/stderr.txt
+added (0 bytes): ./lonely.urt/snapshot/1/expected/stdout.txt
+added (0 bytes): ./lonely.urt/snapshot/1/expected/typecheck.urs
+added (0 bytes): ./lonely.urt/snapshot/2/args
+added (0 bytes): ./lonely.urt/snapshot/2/expected/client.js
+added (0 bytes): ./lonely.urt/snapshot/2/expected/endpoints.json
+added (0 bytes): ./lonely.urt/snapshot/2/expected/exitcode
+added (0 bytes): ./lonely.urt/snapshot/2/expected/parsetree.ur
+added (0 bytes): ./lonely.urt/snapshot/2/expected/schema.sql
+added (0 bytes): ./lonely.urt/snapshot/2/expected/server.c
+added (0 bytes): ./lonely.urt/snapshot/2/expected/settings.txt
+added (0 bytes): ./lonely.urt/snapshot/2/expected/stderr.txt
+added (0 bytes): ./lonely.urt/snapshot/2/expected/stdout.txt
+added (0 bytes): ./lonely.urt/snapshot/2/expected/typecheck.urs
+added (0 bytes): ./shop.urt/snapshot/x-1/args
+added (0 bytes): ./shop.urt/snapshot/x-1/expected/client.js
+added (0 bytes): ./shop.urt/snapshot/x-1/expected/endpoints.json
+added (0 bytes): ./shop.urt/snapshot/x-1/expected/exitcode
+added (0 bytes): ./shop.urt/snapshot/x-1/expected/parsetree.ur
+added (0 bytes): ./shop.urt/snapshot/x-1/expected/schema.sql
+added (0 bytes): ./shop.urt/snapshot/x-1/expected/server.c
+added (0 bytes): ./shop.urt/snapshot/x-1/expected/settings.txt
+added (0 bytes): ./shop.urt/snapshot/x-1/expected/stderr.txt
+added (0 bytes): ./shop.urt/snapshot/x-1/expected/stdout.txt
+added (0 bytes): ./shop.urt/snapshot/x-1/expected/typecheck.urs
+added (0 bytes): ./shop.urt/snapshot/y_2/args
+added (0 bytes): ./shop.urt/snapshot/y_2/expected/client.js
+added (0 bytes): ./shop.urt/snapshot/y_2/expected/endpoints.json
+added (0 bytes): ./shop.urt/snapshot/y_2/expected/exitcode
+added (0 bytes): ./shop.urt/snapshot/y_2/expected/parsetree.ur
+added (0 bytes): ./shop.urt/snapshot/y_2/expected/schema.sql
+added (0 bytes): ./shop.urt/snapshot/y_2/expected/server.c
+added (0 bytes): ./shop.urt/snapshot/y_2/expected/settings.txt
+added (0 bytes): ./shop.urt/snapshot/y_2/expected/stderr.txt
+added (0 bytes): ./shop.urt/snapshot/y_2/expected/stdout.txt
+added (0 bytes): ./shop.urt/snapshot/y_2/expected/typecheck.urs
+added (0 bytes): ./sub/deep.urt/snapshot/2/args
+added (0 bytes): ./sub/deep.urt/snapshot/2/expected/client.js
+added (0 bytes): ./sub/deep.urt/snapshot/2/expected/endpoints.json
+added (0 bytes): ./sub/deep.urt/snapshot/2/expected/exitcode
+added (0 bytes): ./sub/deep.urt/snapshot/2/expected/parsetree.ur
+added (0 bytes): ./sub/deep.urt/snapshot/2/expected/schema.sql
+added (0 bytes): ./sub/deep.urt/snapshot/2/expected/server.c
+added (0 bytes): ./sub/deep.urt/snapshot/2/expected/settings.txt
+added (0 bytes): ./sub/deep.urt/snapshot/2/expected/stderr.txt
+added (0 bytes): ./sub/deep.urt/snapshot/2/expected/stdout.txt
+added (0 bytes): ./sub/deep.urt/snapshot/2/expected/typecheck.urs
+added (0 bytes): ./sub/deep.urt/snapshot/7/args
+added (0 bytes): ./sub/deep.urt/snapshot/7/expected/client.js
+added (0 bytes): ./sub/deep.urt/snapshot/7/expected/endpoints.json
+added (0 bytes): ./sub/deep.urt/snapshot/7/expected/exitcode
+added (0 bytes): ./sub/deep.urt/snapshot/7/expected/parsetree.ur
+added (0 bytes): ./sub/deep.urt/snapshot/7/expected/schema.sql
+added (0 bytes): ./sub/deep.urt/snapshot/7/expected/server.c
+added (0 bytes): ./sub/deep.urt/snapshot/7/expected/settings.txt
+added (0 bytes): ./sub/deep.urt/snapshot/7/expected/stderr.txt
+added (0 bytes): ./sub/deep.urt/snapshot/7/expected/stdout.txt
+added (0 bytes): ./sub/deep.urt/snapshot/7/expected/typecheck.urs

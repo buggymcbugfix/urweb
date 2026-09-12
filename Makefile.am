@@ -15,7 +15,7 @@ all-local: smlnj mlton
 
 SUBDIRS = src/c
 
-.PHONY: smlnj mlton mlton-tc test check-local check-snapshot update-snapshot
+.PHONY: smlnj mlton mlton-tc test check-local check-urt check-snapshot update-snapshot
 
 smlnj: src/urweb.cm xml/entities.sml
 mlton: bin/urweb
@@ -26,6 +26,7 @@ clean-local:
 		src/urweb.cm src/urweb.mlb xml/parse xml/entities.sml
 	rm -f demo/demo.exe
 	rm -rf .cm src/.cm
+	rm -f urt/urt
 
 src/urweb.cm: src/prefix.cm src/sources
 	cat $^ | sed -e 's/$$(SRC)\///g' > $@
@@ -140,16 +141,24 @@ TEST_PRELUDE = set -e; \
 	echo "Compiling demo.exe."; \
 	bin/urweb -boot -noEmacs -dbms sqlite -db $$dbfile -demo /Demo demo
 
-# Snapshot tests (see urt/snapshot).  Always from here, since a
-# snapshot records the file names the compiler printed and those are
+# The Ur/Web toolbox (see urt/README.md), built from the C beside it,
+# and the checks of the toolbox itself.
+urt/urt: urt/urt.c urt/snapshot.c urt/report.c urt/fs.c urt/tui.c urt/commands.h urt/report.h urt/fs.h urt/tui.h
+	$(MAKE) -C urt urt CC="$(CC)"
+
+check-urt: urt/urt
+	@urt/check
+
+# Snapshot tests (see urt/urt snapshot --help).  Always from here, since
+# a snapshot records the file names the compiler printed and those are
 # relative to the directory it ran in.
-check-snapshot: bin/urweb
-	@urt/snapshot --whine .
+check-snapshot: bin/urweb urt/urt
+	@urt/urt snapshot --whine .
 
-update-snapshot: bin/urweb
-	@urt/snapshot .
+update-snapshot: bin/urweb urt/urt
+	@urt/urt snapshot .
 
-check-local: check-snapshot bin/urweb
+check-local: check-urt check-snapshot bin/urweb
 	@$(TEST_PRELUDE); \
 	\
 	echo "Running IPv4 test."; \

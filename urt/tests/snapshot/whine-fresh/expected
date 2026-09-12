@@ -1,0 +1,61 @@
+$ urt snapshot -w hello sub/deep
+
+FAIL hello.urt/snapshot/1 (exitcode, settings.txt, stdout.txt)
+    --- hello.urt/snapshot/1/expected/exitcode
+    +++ hello.urt/snapshot/1/expected/exitcode (now)
+    @@ -0,0 +1 @@
+    +0
+    --- hello.urt/snapshot/1/expected/settings.txt
+    +++ hello.urt/snapshot/1/expected/settings.txt (now)
+    @@ -0,0 +1,3 @@
+    +Project: hello
+    +Database: (none)
+    +-saveSettings: settings.txt
+    --- hello.urt/snapshot/1/expected/stdout.txt
+    +++ hello.urt/snapshot/1/expected/stdout.txt (now)
+    @@ -0,0 +1,2 @@
+    +urweb -saveSettings settings.txt -stopQuiet parseJob hello
+    +epoch=0
+
+FAIL sub/deep.urt/snapshot/1 (client.js, endpoints.json, exitcode, parsetree.ur, server.c, stdout.txt, typecheck.urs)
+    --- sub/deep.urt/snapshot/1/expected/client.js
+    +++ sub/deep.urt/snapshot/1/expected/client.js (now)
+    @@ -0,0 +1 @@
+    +function main() { return 0; }
+    --- sub/deep.urt/snapshot/1/expected/endpoints.json
+    +++ sub/deep.urt/snapshot/1/expected/endpoints.json (now)
+    @@ -0,0 +1 @@
+    +[{"url": "/main"}]
+    --- sub/deep.urt/snapshot/1/expected/exitcode
+    +++ sub/deep.urt/snapshot/1/expected/exitcode (now)
+    @@ -0,0 +1 @@
+    +0
+    --- sub/deep.urt/snapshot/1/expected/parsetree.ur
+    +++ sub/deep.urt/snapshot/1/expected/parsetree.ur (now)
+    @@ -0,0 +1 @@
+    +(* parse tree of sub/deep *)
+    --- sub/deep.urt/snapshot/1/expected/server.c
+    +++ sub/deep.urt/snapshot/1/expected/server.c (now)
+    @@ -0,0 +1,9 @@
+    +#include "include/urweb/config.h"
+    + #include <urweb.h>
+    + #include <stdio.h>
+    +#include "include/urweb/types.h"
+    + static char jslib[] = "*runtime elided*";
+    + static char jsapp[] = "*script elided*";
+    + static char jsapp[] = "";
+    +// from sub/deep.c
+    +int main(void) { return 0; }
+    --- sub/deep.urt/snapshot/1/expected/stdout.txt
+    +++ sub/deep.urt/snapshot/1/expected/stdout.txt (now)
+    @@ -0,0 +1,2 @@
+    +urweb -saveJs client.js -endpoints endpoints.json -saveParsetree parsetree.ur -saveC server.c -saveTypecheck typecheck.urs -stopQuiet checknest sub/deep
+    +epoch=0
+    --- sub/deep.urt/snapshot/1/expected/typecheck.urs
+    +++ sub/deep.urt/snapshot/1/expected/typecheck.urs (now)
+    @@ -0,0 +1 @@
+    +val main : unit -> transaction page
+
+2 cases: 2 FAIL, in T
+exit 1
+$ changes

@@ -1,0 +1,4 @@
+urt snapshot hello shop sub/deep sub/demo/merging.urt broken/stopper
+urt snapshot -w hello shop sub/deep sub/demo/merging.urt broken/stopper
+urt snapshot -w shop.urt/snapshot/mysql
+cat sub/deep.urt/snapshot/1/expected/server.c sub/deep.urt/snapshot/1/expected/stdout.txt

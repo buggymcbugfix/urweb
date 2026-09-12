@@ -1,0 +1,17 @@
+TUI_KEYS='down space down down space enter enter' urt snapshot -e shop.urt/snapshot/mysql
+TUI_KEYS='space enter' urt snapshot -e shop.urt/snapshot/mysql
+TUI_KEYS='enter' urt snapshot -e hello
+TUI_KEYS='a a a esc' urt snapshot -e hello
+TUI_KEYS='down space enter down enter' urt snapshot -e hello
+TUI_KEYS='down down space enter esc' urt snapshot -e hello
+urt snapshot -e shop.urt/snapshot/sqlite exitcode stdout.txt
+urt snapshot -e shop.urt/snapshot/sqlite bogus
+urt snapshot -e shop exitcode
+TUI_KEYS='down enter space enter' urt snapshot -e shop
+TUI_KEYS='esc' urt snapshot -e shop
+TUI_KEYS='enter esc esc' urt snapshot -e shop
+urt snapshot -e broken/stray
+urt snapshot -e nope
+urt snapshot -e hello
+urt snapshot -w -e hello
+urt snapshot -e

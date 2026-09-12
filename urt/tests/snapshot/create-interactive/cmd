@@ -1,0 +1,5 @@
+TUI_KEYS='a down space down space enter enter' urt snapshot -c lonely
+TUI_KEYS='enter esc esc' urt snapshot -c shop p q
+TUI_KEYS='enter enter down enter' urt snapshot -c shop p q
+TUI_KEYS='enter' urt snapshot -c lonely
+TUI_KEYS='a enter esc' urt snapshot -c shop empty-set

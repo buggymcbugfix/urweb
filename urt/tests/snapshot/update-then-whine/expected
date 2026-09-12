@@ -1,0 +1,58 @@
+$ urt snapshot hello shop sub/deep sub/demo/merging.urt broken/stopper
+UPDATED hello.urt/snapshot/1 (exitcode, settings.txt, stdout.txt)
+UPDATED shop.urt/snapshot/mysql (exitcode, schema.sql)
+UPDATED shop.urt/snapshot/postgres (exitcode, schema.sql)
+UPDATED shop.urt/snapshot/sqlite (exitcode, schema.sql)
+UPDATED sub/deep.urt/snapshot/1 (client.js, endpoints.json, exitcode, parsetree.ur, server.c, stdout.txt, typecheck.urs)
+UPDATED sub/demo/merging.urt/snapshot/1 (exitcode, stdout.txt)
+UPDATED broken/stopper.urt/snapshot/1 (exitcode, stdout.txt)
+7 cases: 7 updated, in T
+exit 0
+$ urt snapshot -w hello shop sub/deep sub/demo/merging.urt broken/stopper
+OK hello.urt/snapshot/1
+OK shop.urt/snapshot/mysql
+OK shop.urt/snapshot/postgres
+OK shop.urt/snapshot/sqlite
+OK sub/deep.urt/snapshot/1
+OK sub/demo/merging.urt/snapshot/1
+OK broken/stopper.urt/snapshot/1
+7 cases: 7 OK, in T
+exit 0
+$ urt snapshot -w shop.urt/snapshot/mysql
+OK shop.urt/snapshot/mysql
+1 case: 1 OK, in T
+exit 0
+$ cat sub/deep.urt/snapshot/1/expected/server.c sub/deep.urt/snapshot/1/expected/stdout.txt
+#include "include/urweb/config.h"
+ #include <urweb.h>
+ #include <stdio.h>
+#include "include/urweb/types.h"
+ static char jslib[] = "*runtime elided*";
+ static char jsapp[] = "*script elided*";
+ static char jsapp[] = "";
+// from sub/deep.c
+int main(void) { return 0; }
+urweb -saveJs client.js -endpoints endpoints.json -saveParsetree parsetree.ur -saveC server.c -saveTypecheck typecheck.urs -stopQuiet checknest sub/deep
+epoch=0
+exit 0
+$ changes
+changed (2 bytes): ./broken/stopper.urt/snapshot/1/expected/exitcode
+changed (41 bytes): ./broken/stopper.urt/snapshot/1/expected/stdout.txt
+changed (2 bytes): ./hello.urt/snapshot/1/expected/exitcode
+changed (60 bytes): ./hello.urt/snapshot/1/expected/settings.txt
+changed (67 bytes): ./hello.urt/snapshot/1/expected/stdout.txt
+changed (2 bytes): ./shop.urt/snapshot/mysql/expected/exitcode
+changed (38 bytes): ./shop.urt/snapshot/mysql/expected/schema.sql
+changed (2 bytes): ./shop.urt/snapshot/postgres/expected/exitcode
+changed (41 bytes): ./shop.urt/snapshot/postgres/expected/schema.sql
+changed (2 bytes): ./shop.urt/snapshot/sqlite/expected/exitcode
+changed (39 bytes): ./shop.urt/snapshot/sqlite/expected/schema.sql
+changed (30 bytes): ./sub/deep.urt/snapshot/1/expected/client.js
+changed (19 bytes): ./sub/deep.urt/snapshot/1/expected/endpoints.json
+changed (2 bytes): ./sub/deep.urt/snapshot/1/expected/exitcode
+changed (29 bytes): ./sub/deep.urt/snapshot/1/expected/parsetree.ur
+changed (267 bytes): ./sub/deep.urt/snapshot/1/expected/server.c
+changed (161 bytes): ./sub/deep.urt/snapshot/1/expected/stdout.txt
+changed (36 bytes): ./sub/deep.urt/snapshot/1/expected/typecheck.urs
+changed (2 bytes): ./sub/demo/merging.urt/snapshot/1/expected/exitcode
+changed (60 bytes): ./sub/demo/merging.urt/snapshot/1/expected/stdout.txt

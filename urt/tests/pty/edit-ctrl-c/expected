@@ -1,0 +1,58 @@
+$ urt snapshot -e hello
+start
++------------------------------------------------------------+
+|                                                            |
+|Editing the tracked set of hello.urt/snapshot/1.            |
+|                                                            |
+|  > [x] exitcode                                            |
+|    [x] stdout.txt                                          |
+|    [x] stderr.txt                                          |
+|    [x] settings.txt                                        |
+|    [ ] parsetree.ur                                        |
+|    [ ] typecheck.urs                                       |
+|    [ ] schema.sql                                          |
+|    [ ] client.js                                           |
+|    [ ] endpoints.json                                      |
+|    [ ] server.c                                            |
+|                                                            |
+|↑/↓ scroll · space deselect · ⏎ save · esc quit · a select a|
++------------------------------------------------------------+
+space
++------------------------------------------------------------+
+|                                                            |
+|Editing the tracked set of hello.urt/snapshot/1.            |
+|                                                            |
+|  > [ ] exitcode                                            |
+|    [x] stdout.txt                                          |
+|    [x] stderr.txt                                          |
+|    [x] settings.txt                                        |
+|    [ ] parsetree.ur                                        |
+|    [ ] typecheck.urs                                       |
+|    [ ] schema.sql                                          |
+|    [ ] client.js                                           |
+|    [ ] endpoints.json                                      |
+|    [ ] server.c                                            |
+|                                                            |
+|↑/↓ scroll · space select · ⏎ save · esc quit · a select all|
++------------------------------------------------------------+
+ctrlc
++------------------------------------------------------------+
+|                                                            |
+|Editing the tracked set of hello.urt/snapshot/1.            |
+|                                                            |
+|  > [ ] exitcode                                            |
+|    [x] stdout.txt                                          |
+|    [x] stderr.txt                                          |
+|    [x] settings.txt                                        |
+|    [ ] parsetree.ur                                        |
+|    [ ] typecheck.urs                                       |
+|    [ ] schema.sql                                          |
+|    [ ] client.js                                           |
+|    [ ] endpoints.json                                      |
+|    [ ] server.c                                            |
+|                                                            |
+|↑/↓ scroll · space select · ⏎ save · esc quit · a select all|
++------------------------------------------------------------+
+exit: signal 2
+tty restored: echo=True icanon=True
+$ changes
