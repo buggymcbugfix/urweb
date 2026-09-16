@@ -36,8 +36,8 @@ doc/*.out
 *mlmon.out
 
 # A snapshot's files are named after what they hold, so some of them look
-# like build output.  They are the tests.
-!**/*.snapshot/**
+# like build output.  They are the tests, under the projects' urt directories.
+!**/*.urt/**
 
 # TeX
 *.aux
@@ -91,3 +91,8 @@ result
 
 # macos
 .DS_Store
+
+# The Ur/Web toolbox: its Makefile is written by hand, not by autotools,
+# and its program is built from the C beside it.
+!/urt/Makefile
+/urt/urt
