@@ -473,10 +473,10 @@
                                                            uw_Basis_maybe_onunload(ctx,
                                                             "")), 0),
                                     uw_end_region(ctx), ((uw_write(ctx, 
-                                                          ">\n<button onclick='uw_event=event;exec({c:\"a\",f:{c:\"n\",n:1681},x:{c:\"c\",v:null}})'>Check values of 1, 2, and 3</button><br />\n<br />\n<button onclick='uw_event=event;exec("), 0),
+                                                          ">\n<button onclick='uw_event=event;exec({c:\"a\",f:{c:\"n\",n:1},x:{c:\"c\",v:null}})'>Check values of 1, 2, and 3</button><br />\n<br />\n<button onclick='uw_event=event;exec("), 0),
                                                          (uw_begin_region(ctx),
                                                            ((uw_write(ctx, 
-                                                             "{c:\"a\",f:{c:\"a\",f:{c:\"a\",f:{c:\"n\",n:1682},x:{c:\"c\",v:"), 0),
+                                                             "{c:\"a\",f:{c:\"a\",f:{c:\"a\",f:{c:\"n\",n:3},x:{c:\"c\",v:"), 0),
                                                             (uw_begin_region(ctx),
                                                               uw_Basis_htmlifySource_w(ctx,
                                                                __uwr_idAdd_2
@@ -522,7 +522,7 @@
                                                                    "));</script><br />\n<br />\n<button onclick='uw_event=event;exec("), 0),
                                                                   (uw_begin_region(ctx),
                                                                     ((uw_write(ctx, 
-                                                                     "{c:\"a\",f:{c:\"a\",f:{c:\"n\",n:1683},x:{c:\"c\",v:"), 0),
+                                                                     "{c:\"a\",f:{c:\"a\",f:{c:\"n\",n:4},x:{c:\"c\",v:"), 0),
                                                                      (uw_begin_region(ctx),
                                                                      uw_Basis_htmlifySource_w(ctx,
                                                                      __uwr_idDel_4
@@ -606,7 +606,7 @@
    }
   
   
-  if (!strcmp(request, "/app.4DB01C160361B2DD85B19792629910CE7B56CB0F.js")) {
+  if (!strcmp(request, "/app.AF12FE3F8A945C94435097C69C0F4FE2AF8BD483.js")) {
    uw_write_header(ctx, "Content-Type: text/javascript\r\n");
     uw_write_header(ctx, "Last-Modified: Thu, 01 Jan 1970 00:00:00 GMT\r\n");
     uw_write_header(ctx, "Cache-Control: max-age=31536000, public\r\n");
@@ -622,7 +622,7 @@
    uw_write_header(ctx, "Content-script-type: text/javascript\r\n");
     uw_write(ctx, uw_begin_html5);
    uw_mayReturnIndirectly(ctx);
-   uw_set_script_header(ctx, "<script type=\"text/javascript\" src=\"/runtime.678742345B8E282393A78F7E3E4433E00FABF9F2.js\"></script>\n<script type=\"text/javascript\" src=\"/app.4DB01C160361B2DD85B19792629910CE7B56CB0F.js\"></script>\n");
+   uw_set_script_header(ctx, "<script type=\"text/javascript\" src=\"/runtime.678742345B8E282393A78F7E3E4433E00FABF9F2.js\"></script>\n<script type=\"text/javascript\" src=\"/app.AF12FE3F8A945C94435097C69C0F4FE2AF8BD483.js\"></script>\n");
    uw_set_could_write_db(ctx, 0);
   uw_set_at_most_one_query(ctx, 0);
   uw_set_needs_push(ctx, 0);
