@@ -1,0 +1,86 @@
+$ urt snapshot -e shop.urt/snapshot/mysql
+start
++------------------------------------------------------------+
+|                                                            |
+|Editing the tracked set of shop.urt/snapshot/mysql.         |
+|                                                            |
+|  > [x] exitcode                                            |
+|    [ ] stdout.txt                                          |
+|    [ ] stderr.txt                                          |
+|    ↓ 7 more ...                                            |
+|                                                            |
+|↑/↓ scroll · space deselect · ⏎ save · esc quit · a select a|
++------------------------------------------------------------+
+down
++------------------------------------------------------------+
+|                                                            |
+|Editing the tracked set of shop.urt/snapshot/mysql.         |
+|                                                            |
+|    [x] exitcode                                            |
+|  > [ ] stdout.txt                                          |
+|    [ ] stderr.txt                                          |
+|    ↓ 7 more ...                                            |
+|                                                            |
+|↑/↓ scroll · space select · ⏎ save · esc quit · a select all|
++------------------------------------------------------------+
+space
++------------------------------------------------------------+
+|                                                            |
+|Editing the tracked set of shop.urt/snapshot/mysql.         |
+|                                                            |
+|    [x] exitcode                                            |
+|  > [x] stdout.txt                                          |
+|    [ ] stderr.txt                                          |
+|    ↓ 7 more ...                                            |
+|                                                            |
+|↑/↓ scroll · space deselect · ⏎ save · esc quit · a select a|
++------------------------------------------------------------+
+enter
++------------------------------------------------------------+
+|                                                            |
+|Editing the tracked set of shop.urt/snapshot/mysql.         |
+|                                                            |
+|    [x] exitcode                                            |
+|  > [x] stdout.txt                                          |
+|    [ ] stderr.txt                                          |
+|    ↓ 7 more ...                                            |
+|                                                            |
+|↑/↓ scroll · space deselect · ⏎ save · esc quit · a select a|
+|EDITED shop.urt/snapshot/mysql (+stdout.txt)                |
+|                                                            |
+|Run urt snapshot shop.urt/snapshot/mysql now, to fill in wha|
+|                                                            |
+|  > yes                                                     |
+|    no, later                                               |
+|                                                            |
+|↑/↓ scroll · ⏎ choose · esc no                              |
++------------------------------------------------------------+
+enter
++------------------------------------------------------------+
+|                                                            |
+|Editing the tracked set of shop.urt/snapshot/mysql.         |
+|                                                            |
+|    [x] exitcode                                            |
+|  > [x] stdout.txt                                          |
+|    [ ] stderr.txt                                          |
+|    ↓ 7 more ...                                            |
+|                                                            |
+|↑/↓ scroll · space deselect · ⏎ save · esc quit · a select a|
+|EDITED shop.urt/snapshot/mysql (+stdout.txt)                |
+|                                                            |
+|Run urt snapshot shop.urt/snapshot/mysql now, to fill in wha|
+|                                                            |
+|  > yes                                                     |
+|    no, later                                               |
+|                                                            |
+|↑/↓ scroll · ⏎ choose · esc no                              |
+|UPDATED shop.urt/snapshot/mysql (exitcode, schema.sql, stdou|
+|t.txt)                                                      |
+|1 case: 1 updated, in T                                     |
++------------------------------------------------------------+
+exit: status 0
+tty restored: echo=True icanon=True
+$ changes
+changed (2 bytes): ./shop.urt/snapshot/mysql/expected/exitcode
+changed (38 bytes): ./shop.urt/snapshot/mysql/expected/schema.sql
+added (65 bytes): ./shop.urt/snapshot/mysql/expected/stdout.txt

@@ -1,0 +1,4 @@
+urt snapshot -w broken sub/orphan.urt
+urt snapshot broken/twins
+urt snapshot broken/nocase.urt/snapshot/a
+urt snapshot -l zz

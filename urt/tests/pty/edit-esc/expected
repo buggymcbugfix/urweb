@@ -1,0 +1,77 @@
+$ urt snapshot -e hello
+start
++------------------------------------------------------------+
+|                                                            |
+|Editing the tracked set of hello.urt/snapshot/1.            |
+|                                                            |
+|  > [x] exitcode                                            |
+|    [x] stdout.txt                                          |
+|    [x] stderr.txt                                          |
+|    [x] settings.txt                                        |
+|    [ ] parsetree.ur                                        |
+|    [ ] typecheck.urs                                       |
+|    [ ] schema.sql                                          |
+|    [ ] client.js                                           |
+|    [ ] endpoints.json                                      |
+|    [ ] server.c                                            |
+|                                                            |
+|↑/↓ scroll · space deselect · ⏎ save · esc quit · a select a|
++------------------------------------------------------------+
+a
++------------------------------------------------------------+
+|                                                            |
+|Editing the tracked set of hello.urt/snapshot/1.            |
+|                                                            |
+|  > [x] exitcode                                            |
+|    [x] stdout.txt                                          |
+|    [x] stderr.txt                                          |
+|    [x] settings.txt                                        |
+|    [x] parsetree.ur                                        |
+|    [x] typecheck.urs                                       |
+|    [x] schema.sql                                          |
+|    [x] client.js                                           |
+|    [x] endpoints.json                                      |
+|    [x] server.c                                            |
+|                                                            |
+|↑/↓ scroll · space deselect · ⏎ save · esc quit · a deselect|
++------------------------------------------------------------+
+a
++------------------------------------------------------------+
+|                                                            |
+|Editing the tracked set of hello.urt/snapshot/1.            |
+|                                                            |
+|  > [ ] exitcode                                            |
+|    [ ] stdout.txt                                          |
+|    [ ] stderr.txt                                          |
+|    [ ] settings.txt                                        |
+|    [ ] parsetree.ur                                        |
+|    [ ] typecheck.urs                                       |
+|    [ ] schema.sql                                          |
+|    [ ] client.js                                           |
+|    [ ] endpoints.json                                      |
+|    [ ] server.c                                            |
+|                                                            |
+|↑/↓ scroll · space select · ⏎ save · esc quit · a restore se|
++------------------------------------------------------------+
+esc
++------------------------------------------------------------+
+|                                                            |
+|Editing the tracked set of hello.urt/snapshot/1.            |
+|                                                            |
+|  > [ ] exitcode                                            |
+|    [ ] stdout.txt                                          |
+|    [ ] stderr.txt                                          |
+|    [ ] settings.txt                                        |
+|    [ ] parsetree.ur                                        |
+|    [ ] typecheck.urs                                       |
+|    [ ] schema.sql                                          |
+|    [ ] client.js                                           |
+|    [ ] endpoints.json                                      |
+|    [ ] server.c                                            |
+|                                                            |
+|↑/↓ scroll · space select · ⏎ save · esc quit · a restore se|
+|nothing changed                                             |
++------------------------------------------------------------+
+exit: status 0
+tty restored: echo=True icanon=True
+$ changes
