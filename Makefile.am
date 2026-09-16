@@ -111,7 +111,8 @@ uninstall-local-main:
 		$(DESTDIR)$(LIB_UR)/option.ur $(DESTDIR)$(LIB_UR)/string.ur $(DESTDIR)$(LIB_UR)/top.ur $(DESTDIR)$(LIB_JS)/urweb.js		\
 		$(DESTDIR)$(INCLUDE)/config.h $(DESTDIR)$(INCLUDE)/queue.h $(DESTDIR)$(INCLUDE)/request.h $(DESTDIR)$(INCLUDE)/types.h		\
 		$(DESTDIR)$(INCLUDE)/urweb.h $(DESTDIR)$(INCLUDE)/types_cpp.h $(DESTDIR)$(INCLUDE)/urweb_cpp.h \
-		$(DESTDIR)$(LIB_UR)/result.ur $(DESTDIR)$(LIB_UR)/result.urs $(DESTDIR)$(LIB_UR)/hex.ur $(DESTDIR)$(LIB_UR)/hex.urs
+		$(DESTDIR)$(LIB_UR)/result.ur $(DESTDIR)$(LIB_UR)/result.urs $(DESTDIR)$(LIB_UR)/hex.ur $(DESTDIR)$(LIB_UR)/hex.urs \
+		$(DESTDIR)$(LIB_UR)/nonEmpty.ur $(DESTDIR)$(LIB_UR)/nonEmpty.urs
 
 uninstall-local: uninstall-local-main uninstall-emacs
 
