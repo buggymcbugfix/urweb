@@ -66,9 +66,9 @@ fun inString {needle, haystack} = String.isSubstring needle haystack
 fun process (file : file) =
     let
         val (someTs, nameds) =
-            foldl (fn ((DVal (_, n, t, e, _), _), (someTs, nameds)) => (someTs, IM.insert (nameds, n, e))
+            foldl (fn ((DVal (x, n, t, e, _), _), (someTs, nameds)) => (someTs, IM.insert (nameds, n, (x, e)))
                     | ((DValRec vis, _), (someTs, nameds)) =>
-                      (someTs, foldl (fn ((_, n, _, e, _), nameds) => IM.insert (nameds, n, e))
+                      (someTs, foldl (fn ((x, n, _, e, _), nameds) => IM.insert (nameds, n, (x, e)))
                                      nameds vis)
                     | ((DDatatype dts, _), state as (someTs, nameds)) =>
                       (foldl (fn ((_, _, cs), someTs) =>
@@ -80,6 +80,29 @@ fun process (file : file) =
                        nameds)
                     | (_, state) => state)
                   (IM.empty, IM.empty) (#1 file)
+
+        (* The compiler names every top-level binding with an index counted from
+         * the start of elaboration, so a function's number answers to what was
+         * compiled before it, the standard library included.  Numbering the
+         * script's own functions instead keeps it to itself: the same program
+         * compiles to the same JavaScript, whatever the library gained since,
+         * and it is served from the same URL, since that names the script's
+         * hash.  The number is claimed before the body is compiled, so that a
+         * function that calls itself finds one. *)
+        val jsNums : int IM.map ref = ref IM.empty
+        val jsNumsNext = ref 0
+
+        fun jsNum n =
+            case IM.find (!jsNums, n) of
+                SOME k => k
+              | NONE =>
+                let
+                    val k = !jsNumsNext + 1
+                in
+                    jsNumsNext := k;
+                    jsNums := IM.insert (!jsNums, n, k);
+                    k
+                end
 
         fun str loc s = (EPrim (Prim.String (Prim.Normal, s)), loc)
 
@@ -558,7 +581,7 @@ fun process (file : file) =
                                     else
                                         case IM.find (nameds, n) of
                                             NONE => raise Fail "Jscomp: Unbound ENamed"
-                                          | SOME e =>
+                                          | SOME (x, e) =>
                                             let
                                                 val st = {decls = #decls st,
                                                           script = #script st,
@@ -568,6 +591,7 @@ fun process (file : file) =
                                                           decoders = #decoders st,
                                                           maxName = #maxName st}
 
+                                                val k = jsNum n
                                                 val old = e
                                                 val (e, st) = jsExp mode [] (e, st)
                                                 val e = deStrcat 0 e
@@ -575,7 +599,19 @@ fun process (file : file) =
                                                                            | #"\\" => "\\\\"
                                                                            | ch => String.str ch) e
 
-                                                val sc = "urfuncs[" ^ Int.toString n ^ "] = {c:\"t\",f:'"
+                                                (* Say where the function came from, since the
+                                                 * name is one name_js made up and the number is
+                                                 * ours; a span survives both. *)
+                                                val from =
+                                                    let
+                                                        val span = #2 old
+                                                    in
+                                                        if #line (#first span) = 0 then x
+                                                        else ErrorMsg.spanToString span
+                                                    end
+
+                                                val sc = "// " ^ from ^ "\n"
+                                                         ^ "urfuncs[" ^ Int.toString k ^ "] = {c:\"t\",f:'"
                                                          ^ e ^ "'};\n"
                                             in
                                                 (*Print.prefaces "jsify'" [("old", MonoPrint.p_exp MonoEnv.empty old),
@@ -589,7 +625,7 @@ fun process (file : file) =
                                                  maxName = #maxName st}
                                             end
                             in
-                                (str ("{c:\"n\",n:" ^ Int.toString n ^ "}"), st)
+                                (str ("{c:\"n\",n:" ^ Int.toString (jsNum n) ^ "}"), st)
                             end
 
                           | ECon (Option, _, NONE) => (str "{c:\"c\",v:null}", st)
