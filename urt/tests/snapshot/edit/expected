@@ -159,7 +159,7 @@ Editing the tracked set of hello.urt/snapshot/1.
 
 ↑/↓ scroll · space deselect · ⏎ save · esc quit · a select all
 --
-OK hello.urt/snapshot/1 (the tracked set is as it was)
+INFO hello.urt/snapshot/1 (the tracked set remains unchanged)
 exit 0
 $ TUI_KEYS='a a a esc' urt snapshot -e hello
 

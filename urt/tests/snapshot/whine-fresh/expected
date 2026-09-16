@@ -56,6 +56,6 @@ FAIL sub/deep.urt/snapshot/1 (client.js, endpoints.json, exitcode, parsetree.ur,
     @@ -0,0 +1 @@
     +val main : unit -> transaction page
 
-2 cases: 2 FAIL, in T
+2 cases: 2 failed, in T
 exit 1
 $ changes

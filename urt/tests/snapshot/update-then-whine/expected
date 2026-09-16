@@ -16,11 +16,11 @@ OK shop.urt/snapshot/sqlite
 OK sub/deep.urt/snapshot/1
 OK sub/demo/merging.urt/snapshot/1
 OK broken/stopper.urt/snapshot/1
-7 cases: 7 OK, in T
+7 cases: 7 ok, in T
 exit 0
 $ urt snapshot -w shop.urt/snapshot/mysql
 OK shop.urt/snapshot/mysql
-1 case: 1 OK, in T
+1 case: 1 ok, in T
 exit 0
 $ cat sub/deep.urt/snapshot/1/expected/server.c sub/deep.urt/snapshot/1/expected/stdout.txt
 #include "include/urweb/config.h"
