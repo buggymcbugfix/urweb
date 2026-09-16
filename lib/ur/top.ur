@@ -51,6 +51,18 @@ end
 
 fun not b = if b then False else True
 
+(* A computation that either produced a value or failed with something to show
+the user.  In Top so that the constructors need no qualification, the way
+option's do; the operations live in $/result. *)
+datatype result r = Success of r | Failure of xbody
+
+val result_monad = mkMonad
+    {Return = @@Success,
+     Bind = fn [a] [b] (m1 : result a) (m2 : a -> result b) =>
+               case m1 of
+                   Failure e => Failure e
+                 | Success v => m2 v}
+
 con ident = K ==> fn t :: K => t
 con record (t :: {Type}) = $t
 con fst = K1 ==> K2 ==> fn t :: (K1 * K2) => t.1
