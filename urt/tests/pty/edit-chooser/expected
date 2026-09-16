@@ -1,0 +1,141 @@
+$ urt snapshot -e broken/twins
+start
++------------------------------------------------------------+
+|WARN broken/twins.urt/snapshot: cases four, three pass the s|
+|ame args (none); one case would do                          |
+|WARN broken/twins.urt/snapshot: cases one, two pass the same|
+| args (-dbms sqlite); one case would do                     |
+|                                                            |
+|Which test would you like to edit?                          |
+|                                                            |
+|  > broken/twins.urt/snapshot/four     1 of 10 tracked      |
+|    broken/twins.urt/snapshot/one      1 of 10 tracked      |
+|    ↓ 2 more ...                                            |
+|                                                            |
+|↑/↓ scroll · ⏎ edit · esc quit                              |
++------------------------------------------------------------+
+down
++------------------------------------------------------------+
+|WARN broken/twins.urt/snapshot: cases four, three pass the s|
+|ame args (none); one case would do                          |
+|WARN broken/twins.urt/snapshot: cases one, two pass the same|
+| args (-dbms sqlite); one case would do                     |
+|                                                            |
+|Which test would you like to edit?                          |
+|                                                            |
+|    broken/twins.urt/snapshot/four     1 of 10 tracked      |
+|  > broken/twins.urt/snapshot/one      1 of 10 tracked      |
+|    ↓ 2 more ...                                            |
+|                                                            |
+|↑/↓ scroll · ⏎ edit · esc quit                              |
++------------------------------------------------------------+
+down
++------------------------------------------------------------+
+|WARN broken/twins.urt/snapshot: cases four, three pass the s|
+|ame args (none); one case would do                          |
+|WARN broken/twins.urt/snapshot: cases one, two pass the same|
+| args (-dbms sqlite); one case would do                     |
+|                                                            |
+|Which test would you like to edit?                          |
+|                                                            |
+|    ↑ 2 more ...                                            |
+|  > broken/twins.urt/snapshot/three    1 of 10 tracked      |
+|    broken/twins.urt/snapshot/two      1 of 10 tracked      |
+|                                                            |
+|↑/↓ scroll · ⏎ edit · esc quit                              |
++------------------------------------------------------------+
+down
++------------------------------------------------------------+
+|WARN broken/twins.urt/snapshot: cases four, three pass the s|
+|ame args (none); one case would do                          |
+|WARN broken/twins.urt/snapshot: cases one, two pass the same|
+| args (-dbms sqlite); one case would do                     |
+|                                                            |
+|Which test would you like to edit?                          |
+|                                                            |
+|    ↑ 2 more ...                                            |
+|    broken/twins.urt/snapshot/three    1 of 10 tracked      |
+|  > broken/twins.urt/snapshot/two      1 of 10 tracked      |
+|                                                            |
+|↑/↓ scroll · ⏎ edit · esc quit                              |
++------------------------------------------------------------+
+down
++------------------------------------------------------------+
+|WARN broken/twins.urt/snapshot: cases four, three pass the s|
+|ame args (none); one case would do                          |
+|WARN broken/twins.urt/snapshot: cases one, two pass the same|
+| args (-dbms sqlite); one case would do                     |
+|                                                            |
+|Which test would you like to edit?                          |
+|                                                            |
+|    ↑ 2 more ...                                            |
+|    broken/twins.urt/snapshot/three    1 of 10 tracked      |
+|  > broken/twins.urt/snapshot/two      1 of 10 tracked      |
+|                                                            |
+|↑/↓ scroll · ⏎ edit · esc quit                              |
++------------------------------------------------------------+
+up
++------------------------------------------------------------+
+|WARN broken/twins.urt/snapshot: cases four, three pass the s|
+|ame args (none); one case would do                          |
+|WARN broken/twins.urt/snapshot: cases one, two pass the same|
+| args (-dbms sqlite); one case would do                     |
+|                                                            |
+|Which test would you like to edit?                          |
+|                                                            |
+|    ↑ 2 more ...                                            |
+|  > broken/twins.urt/snapshot/three    1 of 10 tracked      |
+|    broken/twins.urt/snapshot/two      1 of 10 tracked      |
+|                                                            |
+|↑/↓ scroll · ⏎ edit · esc quit                              |
++------------------------------------------------------------+
+enter
++------------------------------------------------------------+
+|WARN broken/twins.urt/snapshot: cases four, three pass the s|
+|ame args (none); one case would do                          |
+|WARN broken/twins.urt/snapshot: cases one, two pass the same|
+| args (-dbms sqlite); one case would do                     |
+|                                                            |
+|Editing the tracked set of broken/twins.urt/snapshot/three. |
+|                                                            |
+|  > [x] exitcode                                            |
+|    [ ] stdout.txt                                          |
+|    ↓ 8 more ...                                            |
+|                                                            |
+|↑/↓ scroll · space deselect · ⏎ save · esc back · a select a|
++------------------------------------------------------------+
+space
++------------------------------------------------------------+
+|WARN broken/twins.urt/snapshot: cases four, three pass the s|
+|ame args (none); one case would do                          |
+|WARN broken/twins.urt/snapshot: cases one, two pass the same|
+| args (-dbms sqlite); one case would do                     |
+|                                                            |
+|Editing the tracked set of broken/twins.urt/snapshot/three. |
+|                                                            |
+|  > [ ] exitcode                                            |
+|    [ ] stdout.txt                                          |
+|    ↓ 8 more ...                                            |
+|                                                            |
+|↑/↓ scroll · space select · ⏎ save · esc back · a select all|
++------------------------------------------------------------+
+enter
++------------------------------------------------------------+
+|WARN broken/twins.urt/snapshot: cases four, three pass the s|
+|ame args (none); one case would do                          |
+|WARN broken/twins.urt/snapshot: cases one, two pass the same|
+| args (-dbms sqlite); one case would do                     |
+|                                                            |
+|Editing the tracked set of broken/twins.urt/snapshot/three. |
+|                                                            |
+|  > [ ] exitcode                                            |
+|    [ ] stdout.txt                                          |
+|    ↓ 8 more ...                                            |
+|                                                            |
+|↑/↓ scroll · space select · ⏎ save · esc back · a select all|
+|EDITED broken/twins.urt/snapshot/three (-exitcode)          |
++------------------------------------------------------------+
+exit: status 0
+tty restored: echo=True icanon=True
+$ changes
+removed: ./broken/twins.urt/snapshot/three/expected/exitcode

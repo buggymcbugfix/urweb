@@ -1,0 +1,16 @@
+urt snapshot -c lonely
+urt snapshot -l lonely
+urt snapshot -c lonely
+urt snapshot -c shop x-1 y_2
+urt snapshot -l shop.urt
+urt snapshot -c shop x-1
+urt snapshot -c shop a.b
+urt snapshot -c shop expected
+urt snapshot -c nope
+urt snapshot -c hello.urt
+urt snapshot -c hello.urt/snapshot
+urt snapshot -c broken/flat
+cd sub && urt snapshot -c
+cd sub/demo && urt snapshot -c
+cd empty && urt snapshot -c
+cd sub && urt snapshot --create deep.urp 7

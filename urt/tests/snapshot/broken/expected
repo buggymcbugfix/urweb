@@ -1,0 +1,118 @@
+$ urt snapshot -w broken sub/orphan.urt
+ERROR broken/empty.urt/snapshot holds no cases
+urt snapshot --create broken/empty makes one
+
+FAIL broken/fails.urt/snapshot/1 (exitcode, stderr.txt) exit 1, not written: schema.sql
+    --- broken/fails.urt/snapshot/1/expected/exitcode
+    +++ broken/fails.urt/snapshot/1/expected/exitcode (now)
+    @@ -0,0 +1 @@
+    +1
+    --- broken/fails.urt/snapshot/1/expected/stderr.txt
+    +++ broken/fails.urt/snapshot/1/expected/stderr.txt (now)
+    @@ -0,0 +1 @@
+    +urweb: no such dbms: bogus
+
+ERROR broken/flat.urt/snapshot/args is not in a case
+every snapshot is a named case now: move args and expected/ into one
+such as broken/flat.urt/snapshot/1
+ERROR broken/flat.urt/snapshot/expected is not in a case
+every snapshot is a named case now: move args and expected/ into one
+such as broken/flat.urt/snapshot/1
+WARN broken/nocase.urt/snapshot: cases a, b pass the same args (none); one case would do
+FAIL broken/nocase.urt/snapshot/a (exitcode)
+    --- broken/nocase.urt/snapshot/a/expected/exitcode
+    +++ broken/nocase.urt/snapshot/a/expected/exitcode (now)
+    @@ -0,0 +1 @@
+    +0
+
+ERROR broken/nocase.urt/snapshot/b has no expected directory
+every case under broken/nocase.urt/snapshot needs one; urt snapshot --create makes them
+ERROR urweb was asked for parsetree.ur, exited 0, and wrote no such file
+it was stopped after parse, which this runner takes to be late enough
+if the compiler's phases have moved, the artifact table in urt snapshot needs to know
+FAIL broken/noexit.urt/snapshot/1 (exitcode)
+    --- broken/noexit.urt/snapshot/1/expected/exitcode
+    +++ broken/noexit.urt/snapshot/1/expected/exitcode (now)
+    @@ -0,0 +1 @@
+    +0
+
+WARN broken/nothing.urt/snapshot/1/expected asks for nothing; urt snapshot --edit broken/nothing.urt/snapshot/1 says what there is to ask for
+FAIL broken/stopper.urt/snapshot/1 (exitcode, stdout.txt)
+    --- broken/stopper.urt/snapshot/1/expected/exitcode
+    +++ broken/stopper.urt/snapshot/1/expected/exitcode (now)
+    @@ -0,0 +1 @@
+    +0
+    --- broken/stopper.urt/snapshot/1/expected/stdout.txt
+    +++ broken/stopper.urt/snapshot/1/expected/stdout.txt (now)
+    @@ -0,0 +1,2 @@
+    +urweb -stop parse broken/stopper
+    +epoch=0
+
+ERROR broken/stray.urt/stray.txt does not belong in an urt directory
+beside snapshot/ there can be README.md and project, and other tools' directories
+delete it, or move it where it goes
+ERROR broken/stray.urt/snapshot/1/expected/bogus.txt is not something the compiler produces
+the artifacts are: exitcode stdout.txt stderr.txt settings.txt parsetree.ur typecheck.urs schema.sql client.js endpoints.json server.c
+delete that, or correct its name
+ERROR broken/stray.urt/snapshot/1/expected/sub is not something the compiler produces
+the artifacts are: exitcode stdout.txt stderr.txt settings.txt parsetree.ur typecheck.urs schema.sql client.js endpoints.json server.c
+delete that, or correct its name
+ERROR broken/stray.urt/snapshot/notes.txt does not belong in a snapshot
+beside the case directories there can be a README.md, nothing else
+delete it, or move it where it goes
+WARN broken/twins.urt/snapshot: cases four, three pass the same args (none); one case would do
+WARN broken/twins.urt/snapshot: cases one, two pass the same args (-dbms sqlite); one case would do
+FAIL broken/twins.urt/snapshot/four (exitcode)
+    --- broken/twins.urt/snapshot/four/expected/exitcode
+    +++ broken/twins.urt/snapshot/four/expected/exitcode (now)
+    @@ -0,0 +1 @@
+    +0
+
+FAIL broken/twins.urt/snapshot/one (exitcode)
+    --- broken/twins.urt/snapshot/one/expected/exitcode
+    +++ broken/twins.urt/snapshot/one/expected/exitcode (now)
+    @@ -0,0 +1 @@
+    +0
+
+FAIL broken/twins.urt/snapshot/three (exitcode)
+    --- broken/twins.urt/snapshot/three/expected/exitcode
+    +++ broken/twins.urt/snapshot/three/expected/exitcode (now)
+    @@ -0,0 +1 @@
+    +0
+
+FAIL broken/twins.urt/snapshot/two (exitcode)
+    --- broken/twins.urt/snapshot/two/expected/exitcode
+    +++ broken/twins.urt/snapshot/two/expected/exitcode (now)
+    @@ -0,0 +1 @@
+    +0
+
+ERROR sub/orphan.urt/snapshot is named for a project 'orphan' that is not beside it
+expected sub/orphan.urp or sub/orphan.ur
+write the project's name in sub/orphan.urt/project if it goes by another
+8 cases: 8 FAIL, 1 asking for nothing, 1 with non-zero exit, in T
+exit 1
+$ urt snapshot broken/twins
+WARN broken/twins.urt/snapshot: cases four, three pass the same args (none); one case would do
+WARN broken/twins.urt/snapshot: cases one, two pass the same args (-dbms sqlite); one case would do
+UPDATED broken/twins.urt/snapshot/four (exitcode)
+UPDATED broken/twins.urt/snapshot/one (exitcode)
+UPDATED broken/twins.urt/snapshot/three (exitcode)
+UPDATED broken/twins.urt/snapshot/two (exitcode)
+4 cases: 4 updated, in T
+exit 0
+$ urt snapshot broken/nocase.urt/snapshot/a
+WARN broken/nocase.urt/snapshot: cases a, b pass the same args (none); one case would do
+UPDATED broken/nocase.urt/snapshot/a (exitcode)
+1 case: 1 updated, in T
+exit 0
+$ urt snapshot -l zz
+ERROR zz/badname.urt/snapshot/c.d is not a case name
+a case name is letters, digits, _ and -, and nothing else
+rename it
+exit 2
+$ changes
+changed (2 bytes): ./broken/nocase.urt/snapshot/a/expected/exitcode
+changed (2 bytes): ./broken/twins.urt/snapshot/four/expected/exitcode
+changed (2 bytes): ./broken/twins.urt/snapshot/one/expected/exitcode
+changed (2 bytes): ./broken/twins.urt/snapshot/three/expected/exitcode
+changed (2 bytes): ./broken/twins.urt/snapshot/two/expected/exitcode
