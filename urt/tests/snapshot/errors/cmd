@@ -1,0 +1,7 @@
+urt snapshot --bogus
+urt snapshot -c -w
+urt snapshot -w -c x
+urt snapshot nope
+urt snapshot -l empty
+urt snapshot --help
+urt snapshot -- -l

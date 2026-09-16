@@ -1,0 +1,5 @@
+urt snapshot -l .
+urt snapshot -l sub
+urt snapshot -l shop.urt/snapshot/sqlite hello.urp sub/deep.urt
+urt snapshot --list hello
+urt snapshot -l shop.urt/snapshot
