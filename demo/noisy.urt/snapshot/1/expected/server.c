@@ -221,13 +221,13 @@
   static char jslib[] = "*runtime elided*";
    static char jsapp[] = "*script elided*";
   
-  static uw_unit __uwn_initializer_1680(uw_context ctx, uw_unit __uwr___0)
+  static uw_unit __uwn_initializer_1696(uw_context ctx, uw_unit __uwr___0)
    {
    return(0);
    }
   
   static uw_unit
-   __uwn_expunger_1679(uw_context ctx, uw_Basis_client __uwr_cli_0)
+   __uwn_expunger_1695(uw_context ctx, uw_Basis_client __uwr_cli_0)
    {
    return(0);
    }
@@ -236,7 +236,7 @@
    
   
   static uw_unit
-   __uwn_add_1670(uw_context ctx, uw_Basis_int __uwr_id_0, 
+   __uwn_add_1686(uw_context ctx, uw_Basis_int __uwr_id_0, 
                    uw_Basis_string __uwr_s_1, uw_unit __uwr___2)
    {
    return((uw_begin_region(ctx), ({
@@ -287,7 +287,7 @@
    }
   
   static uw_unit
-   __uwn_del_1671(uw_context ctx, uw_Basis_int __uwr_id_0, uw_unit __uwr___1)
+   __uwn_del_1687(uw_context ctx, uw_Basis_int __uwr_id_0, uw_unit __uwr___1)
    {
    return((uw_begin_region(ctx), ({
            uw_Basis_int arg1 = __uwr_id_0;
@@ -335,7 +335,7 @@
    }
   
   static uw_Basis_string
-   __uwn_lookup_1672(uw_context ctx, uw_Basis_int __uwr_id_0, uw_unit __uwr___1)
+   __uwn_lookup_1688(uw_context ctx, uw_Basis_int __uwr_id_0, uw_unit __uwr___1)
    {
    return(({
            struct __uws_2* disc =
@@ -432,7 +432,7 @@
    }
   
   static uw_unit
-   __uwn_wrap_main_1675(uw_context ctx, uw_unit __uwr_x0_0, uw_unit __uwr___1)
+   __uwn_wrap_main_1691(uw_context ctx, uw_unit __uwr_x0_0, uw_unit __uwr___1)
    {
    return(({
            uw_Basis_source __uwr_idAdd_2 =
@@ -618,7 +618,7 @@
   uw_login(ctx);
   {
    uw_unit arg0 = uw_Basis_unurlifyUnit(ctx, &request);
-    __uwn_wrap_main_1675(ctx, arg0, 0);
+    __uwn_wrap_main_1691(ctx, arg0, 0);
    uw_write(ctx, "</html>");
     return;
    }
@@ -641,7 +641,7 @@
    {
     uw_Basis_int arg0 = uw_Basis_unurlifyInt(ctx, &request);
      uw_Basis_string arg1 = uw_Basis_unurlifyString(ctx, &request);
-      uw_unit it0 = __uwn_add_1670(ctx, arg0, arg1, 0);
+      uw_unit it0 = __uwn_add_1686(ctx, arg0, arg1, 0);
     uw_write(ctx, uw_get_real_script(ctx));
      uw_write(ctx, "\n");
      uw_Basis_urlifyString_w(ctx, "");
@@ -665,7 +665,7 @@
    uw_login(ctx);
    {
     uw_Basis_int arg0 = uw_Basis_unurlifyInt(ctx, &request);
-     uw_unit it0 = __uwn_del_1671(ctx, arg0, 0);
+     uw_unit it0 = __uwn_del_1687(ctx, arg0, 0);
     uw_write(ctx, uw_get_real_script(ctx));
      uw_write(ctx, "\n");
      uw_Basis_urlifyString_w(ctx, "");
@@ -689,7 +689,7 @@
    uw_login(ctx);
    {
     uw_Basis_int arg0 = uw_Basis_unurlifyInt(ctx, &request);
-     uw_Basis_string it0 = __uwn_lookup_1672(ctx, arg0, 0);
+     uw_Basis_string it0 = __uwn_lookup_1688(ctx, arg0, 0);
     uw_write(ctx, uw_get_real_script(ctx));
      uw_write(ctx, "\n");
      if (it0) {uw_write(ctx, "Some/");
@@ -707,12 +707,12 @@
  }
  
  static void uw_expunger(uw_context ctx, uw_Basis_client cli) {
-  __uwn_expunger_1679(ctx, cli);
+  __uwn_expunger_1695(ctx, cli);
    }
  static void uw_initializer(uw_context ctx) {
  uw_begin_initializing(ctx);
   uw_end_initializing(ctx);
-  __uwn_initializer_1680(ctx, 0);
+  __uwn_initializer_1696(ctx, 0);
    }
  uw_app uw_application = {1,
                             60,

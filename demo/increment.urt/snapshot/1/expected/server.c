@@ -144,13 +144,13 @@
   static char jslib[] = "*runtime elided*";
    static char jsapp[] = "*script elided*";
   
-  static uw_unit __uwn_initializer_1665(uw_context ctx, uw_unit __uwr___0)
+  static uw_unit __uwn_initializer_1681(uw_context ctx, uw_unit __uwr___0)
    {
    return(0);
    }
   
   static uw_unit
-   __uwn_expunger_1664(uw_context ctx, uw_Basis_client __uwr_cli_0)
+   __uwn_expunger_1680(uw_context ctx, uw_Basis_client __uwr_cli_0)
    {
    return(0);
    }
@@ -159,7 +159,7 @@
    
   
   static uw_Basis_int
-   __uwn_increment_1661(uw_context ctx, uw_unit __uwr_$x_0, uw_unit __uwr___1)
+   __uwn_increment_1677(uw_context ctx, uw_unit __uwr_$x_0, uw_unit __uwr___1)
    {
    return(({
            uw_Basis_int n;
@@ -195,7 +195,7 @@
    }
   
   static uw_unit
-   __uwn_wrap_main_1663(uw_context ctx, uw_unit __uwr_x0_0, uw_unit __uwr___1)
+   __uwn_wrap_main_1679(uw_context ctx, uw_unit __uwr_x0_0, uw_unit __uwr___1)
    {
    return(({
            uw_Basis_source __uwr_src_2 =
@@ -319,7 +319,7 @@
   uw_login(ctx);
   {
    uw_unit arg0 = uw_Basis_unurlifyUnit(ctx, &request);
-    __uwn_wrap_main_1663(ctx, arg0, 0);
+    __uwn_wrap_main_1679(ctx, arg0, 0);
    uw_write(ctx, "</html>");
     return;
    }
@@ -341,7 +341,7 @@
    uw_login(ctx);
    {
     uw_unit arg0 = uw_Basis_unurlifyUnit(ctx, &request);
-     uw_Basis_int it0 = __uwn_increment_1661(ctx, arg0, 0);
+     uw_Basis_int it0 = __uwn_increment_1677(ctx, arg0, 0);
     uw_write(ctx, uw_get_real_script(ctx));
      uw_write(ctx, "\n");
      uw_Basis_urlifyInt_w(ctx, it0);
@@ -355,12 +355,12 @@
  }
  
  static void uw_expunger(uw_context ctx, uw_Basis_client cli) {
-  __uwn_expunger_1664(ctx, cli);
+  __uwn_expunger_1680(ctx, cli);
    }
  static void uw_initializer(uw_context ctx) {
  uw_begin_initializing(ctx);
   uw_end_initializing(ctx);
-  __uwn_initializer_1665(ctx, 0);
+  __uwn_initializer_1681(ctx, 0);
    }
  uw_app uw_application = {1,
                             60,
