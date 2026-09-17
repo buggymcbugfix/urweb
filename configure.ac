@@ -105,10 +105,6 @@ AC_CHECK_HEADERS([unicode/utypes.h],
                  [],
                  [echo "You must install ICU."; exit 1])
 
-if test $WORKING_VERSION = "1"; then
-   VERSION="$VERSION + `git log -1 --format="%H" || echo ?`"
-fi
-
 AC_CHECK_FUNCS_ONCE([memmem])
 
 AC_SUBST(CC)

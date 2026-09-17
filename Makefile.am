@@ -17,13 +17,13 @@ SUBDIRS = src/c
 
 .PHONY: smlnj mlton mlton-tc test check-local check-snapshot update-snapshot
 
-smlnj: src/urweb.cm xml/entities.sml
+smlnj: src/urweb.cm src/version.sml xml/entities.sml
 mlton: bin/urweb
 mlton-tc: bin/urwebtc
 
 clean-local:
 	rm -f bin/urweb bin/urwebtc compiler.du src/urweb.mlton.* \
-		src/urweb.cm src/urweb.mlb xml/parse xml/entities.sml
+		src/urweb.cm src/urweb.mlb src/version.sml xml/parse xml/entities.sml
 	rm -f demo/demo.exe
 	rm -rf .cm src/.cm
 	rm -f urt/urt
@@ -47,6 +47,17 @@ src/urweb.mlton.lex.sml: src/urweb.mlton.lex
 src/urweb.mlton.grm.sig src/urweb.mlton.grm.sml: src/urweb.mlton.grm
 	mlyacc $<
 
+# The commit the compiler was built from, which `urweb -version` names
+# after the release (`<hash>`, or `<hash>-dirty` with uncommitted
+# changes): read from git when built, or taken from URWEB_COMMIT in the
+# environment for a copy of the sources without .git, as the nix package
+# is.  Rewritten only when it changes, so nothing is relinked for nothing.
+src/version.sml: FORCE
+	@commit=$${URWEB_COMMIT:-$$(git -C '$(srcdir)' describe --always --dirty --exclude '*' --abbrev=40 2>/dev/null || echo '?')}; \
+	echo "structure Version = struct val commit = \"$$commit\" end" > $@.tmp; \
+	if cmp -s $@.tmp $@; then rm -f $@.tmp; else mv -f $@.tmp $@; fi
+FORCE:
+
 MLTON = mlton
 
 #ifdef DEBUG
@@ -58,13 +69,13 @@ MLTON = mlton
 #endif
 
 bin/urweb: src/compiler.mlb xml/entities.sml \
-		src/urweb.mlb $(srcdir)/src/*.sig $(srcdir)/src/*.sml src/config.sml \
+		src/urweb.mlb $(srcdir)/src/*.sig $(srcdir)/src/*.sml src/config.sml src/version.sml \
 		src/urweb.mlton.lex.sml \
 		src/urweb.mlton.grm.sig src/urweb.mlton.grm.sml
 	mkdir -p bin
 	$(MLTON) $(MLTONARGS) -mlb-path-var 'SRC $(abs_srcdir)/src' -mlb-path-var 'BUILD $(abs_builddir)/src' -output $@ $<
 bin/urwebtc: src/compiler.mlb xml/entities.sml \
-		src/urweb.mlb $(srcdir)/src/*.sig $(srcdir)/src/*.sml src/config.sml \
+		src/urweb.mlb $(srcdir)/src/*.sig $(srcdir)/src/*.sml src/config.sml src/version.sml \
 		src/urweb.mlton.lex.sml \
 		src/urweb.mlton.grm.sig src/urweb.mlton.grm.sml
 	mkdir -p bin

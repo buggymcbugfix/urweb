@@ -1,3 +1,5 @@
+version.sml
+
 $(SRC)/config.sig
 config.sml
 

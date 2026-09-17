@@ -1,6 +1,9 @@
 { pkgs ? import ./nixpkgs.nix }:
 let
-  urweb = pkgs.callPackage ./derivation.nix { };
+  # The shell takes the compiler's inputs from its package and builds it
+  # in the tree, where make reads the commit itself; the package's is not
+  # read, so that toolchainId does not change with every commit.
+  urweb = pkgs.callPackage ./derivation.nix { rev = "?"; };
   urt = pkgs.callPackage ./urt/derivation.nix { };
   # Same derivation minus the sources: its outPath changes iff a reconfigure is needed.
   toolchainId = builtins.unsafeDiscardStringContext (urweb.overrideAttrs (_: { src = null; })).outPath;
@@ -9,6 +12,7 @@ pkgs.mkShell {
   inputsFrom = [ urweb ];
 
   packages = with pkgs; [
+    git # read by make for `urweb -version`
     rlwrap
     smlnj
     sqlite

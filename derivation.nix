@@ -16,9 +16,26 @@
   sqlite,
   stdenv,
   urweb,
+  # The commit `urweb -version` names, `<hash>` or `<hash>-dirty`.
+  # Read from .git unless given. It can be set here for flakes.
+  rev ? null,
 }:
 
 let
+  commit =
+    if rev != null then
+      rev
+    else if lib.path.hasStorePathPrefix ./. then
+      "?"
+    else
+      let
+        git = builtins.fetchGit {
+          url = ./.;
+          shallow = true;
+        };
+      in
+      git.dirtyRev or git.rev;
+
   configureEnv = prefix: ''
     export SQHEADER="${sqlite.dev}/include/sqlite3.h"
     export PGHEADER="${postgresql.dev}/include/libpq-fe.h"
@@ -77,6 +94,10 @@ stdenv.mkDerivation {
   nativeCheckInputs = [
     curl
   ];
+
+  # What the build writes into src/version.sml (see Makefile.am): the
+  # sandbox has neither git nor .git to read it from
+  env.URWEB_COMMIT = commit;
 
   preConfigure = configureEnv "$out" + ''
     ./autogen.sh

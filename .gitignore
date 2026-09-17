@@ -18,6 +18,7 @@ src/urweb.mlb
 *.mlton.lex
 
 src/config.sml
+src/version.sml
 
 *.exe
 

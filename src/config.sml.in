@@ -31,7 +31,7 @@ val sqheader = "@SQHEADER@"
 val icuIncludes = "@ICU_INCLUDES@"
 val icuLibs = "@ICU_LIBS@"
 
-val versionNumber  = "@VERSION@"
+val versionNumber  = "@VERSION@" ^ " (" ^ Version.commit ^ ")"
 val versionString  = "The Ur/Web compiler, version " ^ versionNumber
 
 val pthreadCflags = "@PTHREAD_CFLAGS@"
