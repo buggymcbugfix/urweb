@@ -84,7 +84,7 @@
   return;
   }
  
- if (!strcmp(request, "/runtime.678742345B8E282393A78F7E3E4433E00FABF9F2.js")) {
+ if (!strcmp(request, "/runtime.C4686B799F7EDBC89BEA6A0726BF1E2E1E9F2890.js")) {
   uw_write_header(ctx, "Content-Type: text/javascript\r\n");
    uw_write_header(ctx, "Last-Modified: Thu, 01 Jan 1970 00:00:00 GMT\r\n");
    uw_write_header(ctx, "Cache-Control: max-age=31536000, public\r\n");
@@ -93,7 +93,7 @@
    }
   
   
-  if (!strcmp(request, "/app.90E65D907F342520616714B775BECBE5DFDEE999.js")) {
+  if (!strcmp(request, "/app.71345F5AB0B483BE747D62D463C48538C0118112.js")) {
    uw_write_header(ctx, "Content-Type: text/javascript\r\n");
     uw_write_header(ctx, "Last-Modified: Thu, 01 Jan 1970 00:00:00 GMT\r\n");
     uw_write_header(ctx, "Cache-Control: max-age=31536000, public\r\n");
@@ -109,7 +109,7 @@
    uw_write_header(ctx, "Content-script-type: text/javascript\r\n");
     uw_write(ctx, uw_begin_html5);
    uw_mayReturnIndirectly(ctx);
-   uw_set_script_header(ctx, "<script type=\"text/javascript\" src=\"/runtime.678742345B8E282393A78F7E3E4433E00FABF9F2.js\"></script>\n<script type=\"text/javascript\" src=\"/app.90E65D907F342520616714B775BECBE5DFDEE999.js\"></script>\n");
+   uw_set_script_header(ctx, "<script type=\"text/javascript\" src=\"/runtime.C4686B799F7EDBC89BEA6A0726BF1E2E1E9F2890.js\"></script>\n<script type=\"text/javascript\" src=\"/app.71345F5AB0B483BE747D62D463C48538C0118112.js\"></script>\n");
    uw_set_could_write_db(ctx, 0);
   uw_set_at_most_one_query(ctx, 0);
   uw_set_needs_push(ctx, 0);
