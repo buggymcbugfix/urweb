@@ -27,7 +27,7 @@ function _u7(v_0,v_1,v_2,v_3){let v_4 = uw_mouseEvent(); let v_5 = sg(v_1); let 
 function _c7(v_0){return function(v_1){return function(v_2){return function(v_3){return _u7(v_0,v_1,v_2,v_3);}}}}
 urfuncs[7] = {c:"c",v:_c7};
 // demo/batchFun.ur:60:20-60:23
-function _u9(v_0){if (v_0 == null) {return "Nil";} else if (v_0 != null) {let v_1 = v_0; return cat("Cons/",cat(uf(v_1._1._A),cat("/",cat(ts(v_1._1._B),cat("/",cat(ts(v_1._1._Id),cat("/",_u9(v_1._2))))))));} else { er("Match failure in compiled Ur code"); }}
+function _u9(a_0){let acc_ = ""; while (true) {let v_0 = a_0; if (v_0 == null) {return cat(acc_,"Nil");} else if (v_0 != null) {let v_1 = v_0; acc_ = cat(acc_,"Cons/"); acc_ = cat(acc_,uf(v_1._1._A)); acc_ = cat(acc_,"/"); acc_ = cat(acc_,ts(v_1._1._B)); acc_ = cat(acc_,"/"); acc_ = cat(acc_,ts(v_1._1._Id)); acc_ = cat(acc_,"/"); a_0 = v_1._2; continue;} else { er("Match failure in compiled Ur code"); }}}
 urfuncs[9] = {c:"c",v:_u9};
 // demo/batchFun.ur:151:18-152:3
 urfuncs[8] = {c:"t",f:'{c:"l",b:{c:"l",b:{c:"=",e1:{c:"f",f:uw_mouseEvent,a:null},e2:{c:"=",e1:{c:"f",f:rc,a:cons({c:"c",v:"/"},cons({c:"f",f:cat,a:cons({c:"c",v:"BatchG/doBatch/"},cons({c:"a",f:{c:"n",n:9},x:{c:"f",f:sg,a:cons({c:"v",n:2},null)}},null))},cons({c:"c",v:function(s){var t=s.split("/");var i=0;return (i++,null)}},cons({c:"K"},cons({c:"c",v:false},null)))))},e2:{c:"f",f:sv,a:cons({c:"v",n:3},cons({c:"c",v:null},null))}}}}}'};
