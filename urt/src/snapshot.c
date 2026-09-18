@@ -4,7 +4,7 @@
  * snapshot --help` prints the layout and the usage; usage_text below is
  * that.
  *
- * Held to the transcripts under urt/tests/snapshot by urt/check.sh.
+ * Held to the transcripts under urt/tests/snapshot by urt/check.
  */
 
 /* POSIX 2008 with the XSI extensions, and on macOS the BSD ones too,

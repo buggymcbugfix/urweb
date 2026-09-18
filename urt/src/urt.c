@@ -1,6 +1,8 @@
 /* urt.c -- the Ur/Web toolbox: one program, a command each for its tools.
  *
  *   urt snapshot ...     snapshot tests of the compiler (snapshot.c)
+ *   urt format ...       the source formatter (format.c, which runs
+ *                        urt-format, built from src/format); fmt for short
  *
  * More to come: a file watcher, migrations.  Each command is a function
  * that takes the arguments after its name, declared in commands.h.
@@ -19,11 +21,14 @@ static const char usage_text[] =
     "The Ur/Web toolbox.  The commands:\n"
     "\n"
     "  snapshot     snapshot tests of the compiler: urt snapshot --help\n"
+    "  format, fmt  format Ur/Web sources: urt format --help\n"
     "\n"
     "  --help, -h   this\n";
 
 static const struct command { const char *name; int (*run)(int argc, char **argv); } commands[] = {
     { "snapshot", snapshot_main },
+    { "format", format_main },
+    { "fmt", format_main },
 };
 
 int main(int argc, char **argv) {

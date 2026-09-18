@@ -1,0 +1,15 @@
+/urt-format
+/urweb/
+/urweb.lex
+/urweb.lex.sml
+/cst.grm
+/cst.grm.sig
+/cst.grm.sml
+/cst.grm.desc
+/gen_grammar
+/ast.grm
+/ast.grm.sig
+/ast.grm.sml
+/ast.grm.desc
+/ast.lex
+/ast.lex.sml

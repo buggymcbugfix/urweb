@@ -1,18 +1,35 @@
-#!/bin/sh
+#!/bin/bash
 #
-# Golden tests of the toolbox, on a fixture tree with a stand-in compiler.
+# The checks of the toolbox, in groups:
 #
-# The tree is built afresh for every case by urt/tests/snapshot/tree.sh
-# (projects, their snapshots, and one of every mistake the runner
-# notices); the compiler is urt/tests/snapshot/urweb, which says what it
-# was asked and writes what it was asked for.  A case is a directory with
+#   snapshot     `urt snapshot` on a fixture tree with a stand-in compiler
+#   pty          the same on a pseudo-terminal (needs python3)
+#   fmt          `urt format` on the cases under tests/format
+#   fmt-demo     `urt format` on the programs under demo/, which are linked
+#                into tests/format/demo
+#   fmt-oracle   every format and demo input through tests/format/oracle.sh,
+#                against the compiler URWEB names (run with the flags in
+#                URWEB_FLAGS if set), or else the in-tree build, bin/urweb: it
+#                must parse the input and the output to the same program,
+#                every comment must survive, and formatting must be idempotent
+#
+#   urt/check [-u] [GROUP...]     all groups unless given; -u rewrites
+#                                    what the cases expect
+#
+# The programs are urt and urt-format beside this script.  Every case
+# counts, and a case that is incomplete fails; a group that lacks what it
+# needs (python3, urt-format, the compiler) is an error.  Exit status: 0
+# every case ok; 1 some failed; 2 could not run.
+#
+# The snapshot and pty cases: a tree is built afresh for every case by
+# tests/snapshot/tree.sh (projects, their snapshots, and one of every mistake
+# the runner notices); the compiler is tests/snapshot/urweb, which says what
+# it was asked and writes what it was asked for.  A case is a directory with
 #
 #   cmd         what to run, as shell lines, from the root of the tree;
 #               `urt` on them is the program under test
 #   env         optional: VAR=value lines
 #   expected    the transcript
-#
-# in one of two families:
 #
 #   tests/snapshot/CASE   each line of cmd is run in turn and its output,
 #                         stdout and stderr together, and its exit status
@@ -21,19 +38,19 @@
 #                         printed in full.
 #
 #   tests/pty/CASE        the one line of cmd runs on a pseudo-terminal
-#                         (urt/tests/terminal.py) and is sent the keys in
+#                         (tests/terminal.py) and is sent the keys in
 #                         `keys`; the transcript is the screen after each,
 #                         boxed, how it ended, and whether the tty was
 #                         restored.
-#                         Needs python3; skipped without it.
 #
 # Either way the transcript ends with what the commands did to the tree:
 # every file added, removed or changed.  Times in summaries and the tree's
 # path are normalised away.
 #
-#   urt/check [-u] [PROGRAM]
-#
-# PROGRAM is urt/urt unless given.  -u rewrites expected.
+# The format and demo cases: NAME.in.ur (or NAME.in.urs) formatted by
+# `urt format` must give NAME.out.ur (NAME.out.urs), and that must format to
+# itself.  The formatter checks every run against the compiler's grammar by
+# itself; the oracle group checks with the compiler.
 
 set -u
 me=${0##*/}
@@ -46,8 +63,8 @@ update=''
 groups=${*:-snapshot pty format demo oracle}
 for g in $groups; do
     case $g in
-        snapshot | pty | format | demo | oracle) ;;
-        *) echo "$me: no group called $g; the groups are snapshot, pty, format, demo, oracle" >&2; exit 2 ;;
+        snapshot | pty | fmt | fmt-demo | fmt-oracle) ;;
+        *) echo "$me: no group called $g; the groups are snapshot, pty, fmt, fmt-demo, fmt-oracle" >&2; exit 2 ;;
     esac
 done
 
@@ -164,19 +181,19 @@ group_snapshot() {
             continue
         fi
         fresh_tree
-    (
-        case_env "$d"
-        NO_COLOR=1
-        export NO_COLOR
-        while IFS= read -r line; do
-            printf '$ %s\n' "$line"
-            (eval "$line") 2>&1
-            echo "exit $?"
-        done < "$d/cmd"
-    ) > "$tmp/out"
+        (
+            case_env "$d"
+            NO_COLOR=1
+            export NO_COLOR
+            while IFS= read -r line; do
+                printf '$ %s\n' "$line"
+                (eval "$line") 2>&1
+                echo "exit $?"
+            done < "$d/cmd"
+        ) > "$tmp/out"
         transcript
-    verdict "$d" "$tmp/transcript"
-done
+        verdict "$d" "$tmp/transcript"
+    done
 }
 
 group_pty() {
@@ -200,6 +217,129 @@ group_pty() {
         verdict "$d" "$tmp/transcript"
     done
 }
+
+# <format>
+
+need_formatter() {
+    [ -x "$here/urt-format" ] || { echo "$me: no urt-format at $here (make builds it)" >&2; exit 2; }
+}
+
+# format FILE: `urt format FILE` into $tmp/formatted; 0 when it succeeded
+format() {
+    (cd "$tmp" && PATH=$here:$PATH urt format "$1" > "$tmp/formatted" 2>&1)
+}
+
+# format_inputs DIR [-maxdepth 1]: the NAME.in.ur and NAME.in.urs files
+# under DIR, or in DIR itself, one per line, sorted
+format_inputs() {
+    dir=$1
+    shift
+    find "$dir" "$@" \( -name '*.in.ur' -o -name '*.in.urs' \) | LC_ALL=C sort
+}
+
+# format_case IN: format IN, compare with (or -u: write) its .out, and
+# see that the .out formats to itself
+format_case() {
+    in=$1
+    name=${in#"$here/tests/"}
+    case $in in
+        *.in.urs) out=${in%.in.urs}.out.urs ;;
+        *) out=${in%.in.ur}.out.ur ;;
+    esac
+    if [ ! -f "$in" ]; then
+        fail "$name" "the input is missing (a dangling link?)"
+        return
+    fi
+    if ! format "$in"; then
+        fail "$name" "the formatter failed"
+        sed 's/^/    /' "$tmp/formatted"
+        return
+    fi
+    if [ -n "$update" ]; then
+        cp "$tmp/formatted" "$out"
+        echo "updated $name"
+    elif [ ! -f "$out" ]; then
+        fail "$name" "no ${out##*/}; $me -u writes one"
+        return
+    elif ! diff -u --label "${out#"$here/tests/"}" --label "$name (now)" "$out" "$tmp/formatted"; then
+        fail "$name"
+        return
+    fi
+    if ! format "$out"; then
+        fail "$name" "the formatter failed on ${out##*/}"
+        sed 's/^/    /' "$tmp/formatted"
+    elif ! cmp -s "$out" "$tmp/formatted"; then
+        fail "$name" "${out##*/} does not format to itself"
+        diff -u --label "${out#"$here/tests/"}" --label "formatted again" "$out" "$tmp/formatted"
+    elif [ -z "$update" ]; then
+        ok "$name"
+    else
+        n=$((n + 1))
+    fi
+}
+
+# format_group DIR [-maxdepth 1]: every input under DIR, plus a failure
+# for every .out without its .in and every other stray file.  The lists
+# are read line by line, on their own descriptor, since a path may hold
+# a space and a command in the loop may read stdin.
+format_group() {
+    need_formatter
+    format_inputs "$@" > "$tmp/inputs"
+    while IFS= read -r in <&3; do
+        format_case "$in"
+    done 3< "$tmp/inputs"
+    dir=$1
+    shift
+    find "$dir" "$@" -type f -o -type l | LC_ALL=C sort > "$tmp/files"
+    while IFS= read -r f <&3; do
+        case ${f##*/} in
+            *.in.ur | *.in.urs) ;;
+            *.out.ur) [ -e "${f%.out.ur}.in.ur" ] || fail "${f#"$here/tests/"}" "no ${f##*/}'s input beside it" ;;
+            *.out.urs) [ -e "${f%.out.urs}.in.urs" ] || fail "${f#"$here/tests/"}" "no ${f##*/}'s input beside it" ;;
+            oracle.sh) ;;
+            *) fail "${f#"$here/tests/"}" "not a case" ;;
+        esac
+    done 3< "$tmp/files"
+}
+
+group_fmt() {
+    format_group "$here/tests/format" -maxdepth 1
+}
+
+# Every program under demo/ and demo/more/ must have its case, a link to
+# it as tests/format/demo/[more/]NAME.in.ur; demo.ur and demo.urs there
+# are what `urweb -demo` writes, not programs.
+group_fmt-demo() {
+    format_group "$here/tests/format/demo"
+    for f in "$here"/../demo/*.ur "$here"/../demo/*.urs "$here"/../demo/more/*.ur "$here"/../demo/more/*.urs; do
+        [ -f "$f" ] || continue
+        rel=${f#"$here/../demo/"}
+        case $rel in
+            demo.ur | demo.urs) continue ;;
+        esac
+        link=$here/tests/format/demo/${rel%.*}.in.${rel##*.}
+        [ -e "$link" ] || fail "format/demo/${rel%.*}.in.${rel##*.}" "no case for demo/$rel: link it there"
+    done
+}
+
+# The compiler is oracle.sh's business, URWEB or the in-tree build; only
+# its absence is caught here, so that it is an error and not a failure.
+group_fmt-oracle() {
+    need_formatter
+    compiler=${URWEB:-$here/../bin/urweb}
+    [ -x "$compiler" ] || { echo "$me: the oracle needs a compiler at $compiler (make builds one; URWEB names another)" >&2; exit 2; }
+    format_inputs "$here/tests/format" > "$tmp/inputs"
+    set --
+    while IFS= read -r in <&3; do
+        set -- "$@" "$in"
+    done 3< "$tmp/inputs"
+    sh "$here/tests/format/oracle.sh" "$@" > "$tmp/oracle" 2>&1
+    sed "s|$here/tests/|oracle/|" "$tmp/oracle" | grep -v '^oracle: [0-9]* files'
+    n=$((n + $(grep -c '^ok \|^FAIL ' "$tmp/oracle")))
+    failed=$((failed + $(grep -c '^FAIL ' "$tmp/oracle")))
+}
+
+# </format>
 
 for g in $groups; do
     "group_$g"

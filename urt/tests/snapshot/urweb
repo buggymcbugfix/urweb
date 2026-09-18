@@ -1,7 +1,7 @@
 #!/bin/sh
 #
-# A stand-in for the compiler, for urt/snapshot-check: says what it was
-# asked on stdout, writes what it was asked for, and fails on request.
+# A stand-in for the compiler, for urt/check: says what it was asked
+# on stdout, writes what it was asked for, and fails on request.
 #
 #   -dbms bogus            complain on stderr and exit 1 before writing
 #   a project *noexit*     exit 0 without writing parsetree.ur

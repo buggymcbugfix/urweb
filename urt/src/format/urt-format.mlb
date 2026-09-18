@@ -1,0 +1,43 @@
+local
+  $(SML_LIB)/basis/basis.mlb
+  $(SML_LIB)/smlnj-lib/Util/smlnj-lib.mlb
+  $(SML_LIB)/mlyacc-lib/mlyacc-lib.mlb
+  $(SML_LIB)/smlnj-lib/PP/pp-lib.mlb
+in
+  (* from the Ur/Web compiler tree, copied at build time *)
+  urweb/errormsg.sig
+  urweb/errormsg.sml
+  urweb/utf8.sig
+  urweb/utf8.sml
+  urweb/entities.sml
+  urweb/search.sig
+  urweb/search.sml
+  urweb/list_util.sig
+  urweb/list_util.sml
+  urweb/print.sig
+  urweb/print.sml
+  urweb/prim.sig
+  urweb/prim.sml
+  urweb/source.sml
+
+  (* the concrete syntax tree: the compiler's grammar with CST actions *)
+  cst.sml
+  cst.grm.sig
+  cst.grm.sml
+  urweb.lex.sml
+  parse.sml
+
+  trivia.sml
+  verbatim.sml
+
+  (* the compiler's own parser, for the semantic check *)
+  ast.grm.sig
+  ast.grm.sml
+  ast.lex.sml
+  source_eq.sml
+  check.sml
+
+  doc.sml
+  format.sml
+  main.sml
+end

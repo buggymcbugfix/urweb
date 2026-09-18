@@ -1,0 +1,22 @@
+# The toolbox's editor settings, on top of the repository's.
+#
+# Ur/Web sources under tests are in the formatter's style (src/format/STYLE.md):
+# indented by tabs, one per nesting level, shown three columns wide, no
+# trailing whitespace, a newline at the end.
+
+[*.{ur,urs}]
+indent_style = tab
+indent_size = 3
+tab_width = 3
+trim_trailing_whitespace = true
+insert_final_newline = true
+
+# The C of urt (README.md: four spaces) and the SML of the formatter.
+[*.{c,h,sml,sig,mlb}]
+indent_style = space
+indent_size = 4
+trim_trailing_whitespace = true
+insert_final_newline = true
+
+[Makefile]
+indent_style = tab

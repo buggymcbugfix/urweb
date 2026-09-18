@@ -6,5 +6,6 @@
 #define URT_COMMANDS_H
 
 int snapshot_main(int argc, char **argv);
+int format_main(int argc, char **argv);
 
 #endif

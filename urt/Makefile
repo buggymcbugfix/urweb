@@ -1,24 +1,58 @@
-# urt/Makefile -- the Ur/Web toolbox: the program and its checks.
-#
-#   make              build urt
-#   make check        run urt/check
-#   make clean
-#
-# The top-level Makefile.am calls in here for the same.
-
 CC = cc
 CFLAGS = -std=c99 -Wall -Wextra -O2
 
-SRC = src/urt.c src/snapshot.c src/report.c src/fs.c src/tui.c
+SRC = src/urt.c src/snapshot.c src/format.c src/report.c src/fs.c src/tui.c
 HDR = src/commands.h src/report.h src/fs.h src/tui.h
+
+all: urt urt-format
 
 urt: $(SRC) $(HDR)
 	$(CC) $(CFLAGS) -o urt $(SRC)
 
-check: urt
+# The formatter is built in its own directory (src/format/Makefile)
+# and copied beside Urt, where `urt format` looks for it.
+urt-format: src/format/urt-format
+	cp src/format/urt-format urt-format
+
+src/format/urt-format:
+	$(MAKE) -C src/format urt-format
+
+check: urt urt-format
 	./check
 
-clean:
-	rm -f urt
+check-snapshot: urt
+	./check snapshot
 
-.PHONY: check clean
+check-pty: urt
+	./check pty
+
+check-format: urt urt-format
+	./check fmt
+
+check-demo: urt urt-format
+	./check fmt-demo
+
+check-oracle: urt urt-format
+	./check fmt-oracle
+
+update: urt urt-format
+	./check -u
+
+update-snapshot: urt
+	./check -u snapshot
+
+update-pty: urt
+	./check -u pty
+
+update-format: urt urt-format
+	./check -u fmt
+
+update-demo: urt urt-format
+	./check -u fmt-demo
+
+clean:
+	$(MAKE) -C src/format clean
+	rm -f urt urt-format
+
+.PHONY: all check check-snapshot check-pty check-fmt check-fmt-demo check-fmt-oracle \
+        update update-snapshot update-pty update-fmt update-fmt-demo clean src/format/urt-format
