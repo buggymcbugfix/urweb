@@ -4,7 +4,6 @@ let
   # in the tree, where make reads the commit itself; the package's is not
   # read, so that toolchainId does not change with every commit.
   urweb = pkgs.callPackage ./derivation.nix { rev = "?"; };
-  urt = pkgs.callPackage ./urt/derivation.nix { };
   # Same derivation minus the sources: its outPath changes iff a reconfigure is needed.
   toolchainId = builtins.unsafeDiscardStringContext (urweb.overrideAttrs (_: { src = null; })).outPath;
 in
@@ -13,15 +12,17 @@ pkgs.mkShell {
 
   packages = with pkgs; [
     git # read by make for `urweb -version`
+    python3 # urt's pty cases
     rlwrap
     smlnj
     sqlite
-    urt
   ];
 
   shellHook = ''
     export DEVPREFIX="$PWD/out"
     ${urweb.configureEnv "$DEVPREFIX"}
+    # The toolbox as built in the tree, by `make -C urt`
+    export PATH="$PWD/urt:$PATH"
 
     _urweb_id="${toolchainId} $DEVPREFIX"
     _urweb_stamp="$DEVPREFIX/.configured-with"

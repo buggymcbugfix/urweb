@@ -15,7 +15,7 @@ all-local: smlnj mlton
 
 SUBDIRS = src/c
 
-.PHONY: smlnj mlton mlton-tc test check-local check-snapshot update-snapshot
+.PHONY: smlnj mlton mlton-tc test check-local urt check-snapshot update-snapshot check-urt
 
 smlnj: src/urweb.cm src/version.sml xml/entities.sml
 mlton: bin/urweb
@@ -26,7 +26,7 @@ clean-local:
 		src/urweb.cm src/urweb.mlb src/version.sml xml/parse xml/entities.sml
 	rm -f demo/demo.exe
 	rm -rf .cm src/.cm
-	rm -f urt/urt
+	if test -d urt; then $(MAKE) -C urt clean; fi
 
 src/urweb.cm: src/prefix.cm src/sources
 	cat $^ | sed -e 's/$$(SRC)\///g' > $@
@@ -152,21 +152,24 @@ TEST_PRELUDE = set -e; \
 	echo "Compiling demo.exe."; \
 	bin/urweb -boot -noEmacs -dbms sqlite -db $$dbfile -demo /Demo demo
 
-# The Ur/Web toolbox (see urt/README.md), plus checks
-urt/urt: urt/src/urt.c urt/src/snapshot.c urt/src/report.c urt/src/fs.c urt/src/tui.c \
-         urt/src/commands.h urt/src/report.h urt/src/fs.h urt/src/tui.h
-	$(MAKE) -C urt urt CC="$(CC)"
+# The Ur/Web toolbox
+urt: bin/urweb
+	$(MAKE) -C urt CC="$(CC)"
 
 # Snapshot tests (see urt/urt snapshot --help).  Always from here, since
 # a snapshot records the file names the compiler printed and those are
 # relative to the directory it ran in.
-check-snapshot: bin/urweb urt/urt
+check-snapshot: urt
 	@urt/urt snapshot --whine .
 
-update-snapshot: bin/urweb urt/urt
+update-snapshot: urt
 	@urt/urt snapshot .
 
-check-local: check-snapshot bin/urweb
+
+check-urt: urt
+	$(MAKE) -C urt check CC="$(CC)"
+
+check-local: bin/urweb
 	@$(TEST_PRELUDE); \
 	\
 	echo "Running IPv4 test."; \

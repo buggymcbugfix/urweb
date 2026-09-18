@@ -41,12 +41,15 @@ here=$(cd "$(dirname "$0")" && pwd -P) || exit 2
 fixture=$here/tests/snapshot
 update=''
 [ "${1-}" != -u ] || { update=1; shift; }
-program=${1:-$here/urt}
-case $program in
-    /*) ;;
-    *) program=$(pwd -P)/$program ;;
-esac
-[ -x "$program" ] || { echo "$me: no program at $program" >&2; exit 2; }
+[ -x "$here/urt" ] || { echo "$me: no urt at $here (make builds it)" >&2; exit 2; }
+
+groups=${*:-snapshot pty format demo oracle}
+for g in $groups; do
+    case $g in
+        snapshot | pty | format | demo | oracle) ;;
+        *) echo "$me: no group called $g; the groups are snapshot, pty, format, demo, oracle" >&2; exit 2 ;;
+    esac
+done
 
 # Resolved, since the program prints real paths and macOS puts temporary
 # directories behind a symlink.
@@ -54,9 +57,21 @@ tmp=$(mktemp -d) || exit 2
 tmp=$(cd "$tmp" && pwd -P) || exit 2
 trap 'rm -rf "$tmp"' EXIT INT TERM
 
-# Whatever it is called, the program answers to `urt` on the PATH.
-mkdir "$tmp/bin"
-ln -s "$program" "$tmp/bin/urt"
+n=0 failed=0
+
+ok() {
+    n=$((n + 1))
+    echo "ok $1"
+}
+
+# fail NAME REASON: one failed case
+fail() {
+    n=$((n + 1))
+    failed=$((failed + 1))
+    echo "FAIL $1${2:+ ($2)}"
+}
+
+# ------------------------------------------------------- snapshot and pty
 
 # Every file under the tree with its checksum and size, by path.
 inventory() {
@@ -75,33 +90,35 @@ changes() {
          }' "$1" "$2" | LC_ALL=C sort | awk -F '\t' '{ print $2 ": " $1 }'
 }
 
-# The environment a case runs in: the tree, the stand-in compiler, a
-# UTF-8 locale so that the frames carry the symbols they would, and a
-# TMPDIR with a trailing slash, as macOS sets it.
+# The environment a case runs in: the tree, `urt` on the PATH, the
+# stand-in compiler with no flags, a UTF-8 locale so that the frames
+# carry the symbols they would, and a TMPDIR with a trailing slash, as
+# macOS sets it.
 case_env() {
     cd "$tmp/tree" || exit 2
-    PATH=$tmp/bin:$PATH
+    PATH=$here:$PATH
     URWEB=$fixture/urweb
+    unset URWEB_FLAGS
     LANG=C.UTF-8
     TMPDIR=$tmp/
     export PATH URWEB LANG TMPDIR
+    # shellcheck source=/dev/null
     [ ! -f "$1/env" ] || { set -a; . "$1/env"; set +a; }
 }
-
-failed=0 n=0
 
 # verdict CASE OUTPUT: update or diff the case's expected against OUTPUT.
 verdict() {
     name=${1#"$here/tests/"}
-    n=$((n + 1))
     if [ -n "$update" ]; then
         cp "$2" "$1/expected"
+        n=$((n + 1))
         echo "updated $name"
+    elif [ ! -f "$1/expected" ]; then
+        fail "$name" "no expected transcript; $me -u writes one"
     elif diff -u --label "$name/expected" --label "$name (now)" "$1/expected" "$2"; then
-        echo "ok $name"
+        ok "$name"
     else
-        echo "FAIL $name"
-        failed=1
+        fail "$name"
     fi
 }
 
@@ -118,12 +135,35 @@ normalise() {
         { print }'
 }
 
-for d in "$fixture"/*/; do
-    d=${d%/}
-    [ -f "$d/cmd" ] || continue
+# fresh_tree: the fixture tree, built anew
+fresh_tree() {
     rm -rf "$tmp/tree"
     sh "$fixture/tree.sh" "$tmp/tree" || exit 2
     inventory > "$tmp/before"
+}
+
+# transcript: the case's output so far plus what it did to the tree,
+# normalised, into $tmp/transcript
+transcript() {
+    inventory > "$tmp/after"
+    changes "$tmp/before" "$tmp/after" >> "$tmp/out"
+    normalise < "$tmp/out" > "$tmp/transcript"
+}
+
+group_snapshot() {
+    for d in "$fixture"/*; do
+        name=${d#"$here/tests/"}
+        case ${d##*/} in
+            tree.sh | urweb) continue ;;
+        esac
+        if [ ! -d "$d" ]; then
+            fail "$name" "not a case directory"
+            continue
+        elif [ ! -f "$d/cmd" ]; then
+            fail "$name" "no cmd"
+            continue
+        fi
+        fresh_tree
     (
         case_env "$d"
         NO_COLOR=1
@@ -134,33 +174,40 @@ for d in "$fixture"/*/; do
             echo "exit $?"
         done < "$d/cmd"
     ) > "$tmp/out"
-    inventory > "$tmp/after"
-    changes "$tmp/before" "$tmp/after" >> "$tmp/out"
-    normalise < "$tmp/out" > "$tmp/transcript"
+        transcript
     verdict "$d" "$tmp/transcript"
 done
+}
 
-if command -v python3 > /dev/null 2>&1; then
-    for d in "$here"/tests/pty/*/; do
-        d=${d%/}
-        [ -f "$d/cmd" ] || continue
-        rm -rf "$tmp/tree"
-        sh "$fixture/tree.sh" "$tmp/tree" || exit 2
-        inventory > "$tmp/before"
+group_pty() {
+    command -v python3 > /dev/null 2>&1 || { echo "$me: the pty cases need python3" >&2; exit 2; }
+    for d in "$here"/tests/pty/*; do
+        name=${d#"$here/tests/"}
+        if [ ! -d "$d" ]; then
+            fail "$name" "not a case directory"
+            continue
+        elif [ ! -f "$d/cmd" ] || [ ! -f "$d/keys" ]; then
+            fail "$name" "no cmd or no keys"
+            continue
+        fi
+        fresh_tree
         (
             case_env "$d"
             printf '$ %s\n' "$(cat "$d/cmd")"
             python3 "$here/tests/terminal.py" "$(cat "$d/keys")" sh -c "$(cat "$d/cmd")" 2>&1
         ) > "$tmp/out"
-        inventory > "$tmp/after"
-        changes "$tmp/before" "$tmp/after" >> "$tmp/out"
-        normalise < "$tmp/out" > "$tmp/transcript"
+        transcript
         verdict "$d" "$tmp/transcript"
     done
-else
-    echo "$me: no python3, skipping the pty cases" >&2
-fi
+}
 
-[ "$n" -gt 0 ] || { echo "$me: no cases under $here/tests" >&2; exit 2; }
-echo "$n cases"
-exit $failed
+for g in $groups; do
+    "group_$g"
+done
+
+[ "$n" -gt 0 ] || { echo "$me: no cases" >&2; exit 2; }
+if [ "$failed" -gt 0 ]; then
+    echo "$n cases: $failed failed"
+    exit 1
+fi
+echo "$n cases: all ok"

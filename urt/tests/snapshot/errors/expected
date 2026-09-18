@@ -101,10 +101,10 @@ the current directory otherwise.  A newly tracked artifact starts empty, and
 a run is offered to fill it in.  Named outright, the ARTIFACTs become the
 tracked set without asking, for scripts.
 
-The compiler is the one URWEB names, or else bin/urweb under the current
-directory or beside this program -- an in-tree build, which is run with
--boot -noEmacs -- or else urweb on the PATH.  URWEB_FLAGS, if set, replaces
-the flags it is given.
+The compiler is the one URWEB names, run with the flags in URWEB_FLAGS if
+that is set, or else the in-tree build, bin/urweb under the current
+directory or beside this program, run with -boot -noEmacs.  A Nix-packaged
+urt has URWEB set to the compiler it was built for.
 
 exit 0
 $ urt snapshot -- -l

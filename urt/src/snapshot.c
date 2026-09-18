@@ -4,7 +4,7 @@
  * snapshot --help` prints the layout and the usage; usage_text below is
  * that.
  *
- * Held to the transcripts under urt/tests/snapshot by urt/check.
+ * Held to the transcripts under urt/tests/snapshot by urt/check.sh.
  */
 
 /* POSIX 2008 with the XSI extensions, and on macOS the BSD ones too,
@@ -106,10 +106,10 @@ static const char usage_text[] =
     "a run is offered to fill it in.  Named outright, the ARTIFACTs become the\n"
     "tracked set without asking, for scripts.\n"
     "\n"
-    "The compiler is the one URWEB names, or else bin/urweb under the current\n"
-    "directory or beside this program -- an in-tree build, which is run with\n"
-    "-boot -noEmacs -- or else urweb on the PATH.  URWEB_FLAGS, if set, replaces\n"
-    "the flags it is given.\n"
+    "The compiler is the one URWEB names, run with the flags in URWEB_FLAGS if\n"
+    "that is set, or else the in-tree build, bin/urweb under the current\n"
+    "directory or beside this program, run with -boot -noEmacs.  A Nix-packaged\n"
+    "urt has URWEB set to the compiler it was built for.\n"
     "\n";
 
 /* -------------------------------------------------------- the artifacts */
@@ -203,15 +203,15 @@ static void bail_if_interrupted(void) {
 
 /* Which compiler, into urweb, absolute: the one named, or else bin/urweb
  * under the current directory or beside this program -- an in-tree
- * build, which needs -boot to find the library in the source tree -- or
- * else urweb on the PATH, which must not get -boot.  Made absolute
- * because the project is named relative to the current directory and
- * that is where the compiler runs.  Whether it is there at all is checked
- * when a run is about to happen. */
+ * build, which needs -boot to find the library in the source tree.
+ * Never one found on the PATH: a packaged urt names the compiler it was
+ * built for, in URWEB.  Made absolute because the project is named
+ * relative to the current directory and that is where the compiler
+ * runs.  Whether it is there at all is checked when a run is about to
+ * happen. */
 static void find_compiler(const char *named) {
-    char cwd[PATHLEN], here[PATHLEN], candidate[PATHLEN];
+    char cwd[PATHLEN], here[PATHLEN];
     const char *flags = getenv("URWEB_FLAGS");
-    int in_tree = 0;
     if (!getcwd(cwd, sizeof cwd)) {
         die("cannot tell the current directory", NULL);
     }
@@ -221,23 +221,16 @@ static void find_compiler(const char *named) {
         } else {
             pathf(urweb, "%s/%s", cwd, named);
         }
-    } else {
-        pathf(candidate, "%s/bin/urweb", cwd);
-        if (!can_exec(candidate) && program_dir(here)) {
-            pathf(candidate, "%s/../bin/urweb", here);
+        if (flags) {
+            split_words(flags, &urweb_flags);
         }
-        if (can_exec(candidate)) {
-            snprintf(urweb, sizeof urweb, "%s", candidate);
-            in_tree = 1;
-        } else if (!find_on_path("urweb", urweb)) {
-            snprintf(urweb, sizeof urweb, "%s", candidate);
-        }
+        return;
     }
-    if (flags) {
-        split_words(flags, &urweb_flags);
-    } else if (in_tree) {
-        split_words("-boot -noEmacs", &urweb_flags);
+    pathf(urweb, "%s/bin/urweb", cwd);
+    if (!can_exec(urweb) && program_dir(here)) {
+        pathf(urweb, "%s/../bin/urweb", here);
     }
+    split_words(flags ? flags : "-boot -noEmacs", &urweb_flags);
 }
 
 /* A case name is letters, digits, _ and -, and nothing else. */

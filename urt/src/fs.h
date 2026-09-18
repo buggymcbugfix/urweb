@@ -96,12 +96,10 @@ void fs_set_argv0(const char *argv0);
 extern volatile int fs_interrupted;
 void fs_catch_signals(void);
 
-/* The directory this program was run from, resolved, into dst; 0 if it
- * cannot be told (a bare name found on the PATH). */
+/* The directory this program was run from, resolved, into dst: where
+ * argv[0] points, or where the PATH has a program of that bare name; 0
+ * if neither tells. */
 int program_dir(char *dst);
-
-/* The first executable called name on the PATH, into dst; 0 if none. */
-int find_on_path(const char *name, char *dst);
 
 /* A fresh directory under $TMPDIR (or /tmp), its canonical path into dst. */
 int make_tmpdir(char *dst);

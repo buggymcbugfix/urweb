@@ -419,16 +419,8 @@ static const char *argv0 = "";
 
 void fs_set_argv0(const char *a) { argv0 = a; }
 
-int program_dir(char *dst) {
-    char dir[PATHLEN];
-    if (!strchr(argv0, '/')) {
-        return 0;
-    }
-    dirname_of(dir, argv0);
-    return realpath(dir, dst) != NULL;
-}
-
-int find_on_path(const char *name, char *dst) {
+/* The first executable called name on the PATH, into dst; 0 if none. */
+static int find_on_path(const char *name, char *dst) {
     const char *p = getenv("PATH"), *colon;
     if (!p) {
         return 0;
@@ -446,6 +438,20 @@ int find_on_path(const char *name, char *dst) {
         }
         p = colon + 1;
     }
+}
+
+int program_dir(char *dst) {
+    char found[PATHLEN], dir[PATHLEN];
+    const char *program = argv0;
+    if (!strchr(argv0, '/')) {
+        /* a bare name: the shell found it on the PATH, so can we */
+        if (!find_on_path(argv0, found)) {
+            return 0;
+        }
+        program = found;
+    }
+    dirname_of(dir, program);
+    return realpath(dir, dst) != NULL;
 }
 
 int make_tmpdir(char *dst) {
