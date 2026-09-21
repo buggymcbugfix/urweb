@@ -14,11 +14,15 @@ val foldr : a ::: Type -> b ::: Type -> (a -> b -> b) -> b -> t a -> b
 
 val length : a ::: Type -> t a -> int
 
+val snoc : a ::: Type -> t a -> a -> t a
+
 val rev : a ::: Type -> t a -> t a
 
 val revAppend : a ::: Type -> t a -> t a -> t a
 
 val append : a ::: Type -> t a -> t a -> t a
+
+val concat : a ::: Type -> t (t a) -> t a
 
 val mp : a ::: Type -> b ::: Type -> (a -> b) -> t a -> t b
 
@@ -77,6 +81,8 @@ val searchM : m ::: (Type -> Type) -> monad m -> a ::: Type -> b ::: Type -> (a 
 
 val all : a ::: Type -> (a -> bool) -> t a -> bool
 
+val any : a ::: Type -> (a -> bool) -> t a -> bool
+
 val allM : m ::: (Type -> Type) -> monad m -> a ::: Type -> (a -> m bool) -> t a -> m bool
 
 val app : m ::: (Type -> Type) -> monad m -> a ::: Type
@@ -110,15 +116,21 @@ val sort : a ::: Type -> (a -> a -> bool) (* > predicate *) -> t a -> t a
 
 val nth : a ::: Type -> list a -> int -> option a
 val replaceNth : a ::: Type -> list a -> int -> a -> list a
+val findIndex : a ::: Type -> (a -> bool) -> t a -> option int
 
 (** Association lists *)
 
-val assoc : a ::: Type -> b ::: Type -> eq a -> a -> t (a * b) -> option b
+val assoc : k ::: Type -> v ::: Type -> eq k -> k -> t (k * v) -> option v
 
-val assocAdd : a ::: Type -> b ::: Type -> eq a -> a -> b -> t (a * b) -> t (a * b)
+val assocAdd : k ::: Type -> v ::: Type -> eq k -> k -> v -> t (k * v) -> t (k * v)
 
-val assocAddSorted : a ::: Type -> b ::: Type -> eq a -> ord a -> a -> b -> t (a * b) -> t (a * b)
 (* Assume the list is already sorted in ascending order and maintain that ordering. *)
+val assocAddSorted : k ::: Type -> v ::: Type -> eq k -> ord k -> k -> v -> t (k * v) -> t (k * v)
+
+(* The function is applied to the value
+found; None drops the association altogether.  A missing key changes nothing. *)
+val assocUpdate : k ::: Type -> v ::: Type -> eq k
+                  -> k -> (v -> option v) -> t (k * v) -> t (k * v)
 
 (** Converting records to lists *)
 
@@ -134,3 +146,5 @@ val span : a ::: Type -> (a -> bool) -> t a -> t a * t a
 
 (** Group a list into maximal adjacent segments where all elements compare as equal, according to the provided predicate. *)
 val groupBy : a ::: Type -> (a -> a -> bool) -> t a -> t (t a)
+
+val intersperse : a ::: Type -> a -> t a -> t a

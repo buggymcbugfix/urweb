@@ -76,6 +76,8 @@ val length = fn [a] =>
                     length' 0
                 end
 
+fun snoc [a] (ls : t a) (x : a) : t a = rev (x :: rev ls)
+
 fun foldlMapAbort [a] [b] [c] f =
     let
         fun foldlMapAbort' ls' acc ls =
@@ -119,6 +121,21 @@ fun mapConcat [a] [b] f =
               | x :: ls => mapConcat' (revAppend (f x) acc) ls
     in
         mapConcat' []
+    end
+
+(**
+   forall [a ::: Type] (xss : list a). mapConcat (fn x => x) xss = concat xss
+*)
+(* NB: inside this module `mapConcat (fn x => x)` trips the elaborator's
+"Substitution in constructor is blocked by a too-deep unification variable". *)
+fun concat [a] (ls : t (t a)) : t a =
+    let
+        fun concat' acc ls =
+            case ls of
+                [] => rev acc
+              | x :: ls => concat' (revAppend x acc) ls
+    in
+        concat' [] ls
     end
 
 fun mapi [a] [b] f =
@@ -383,6 +400,16 @@ fun all [a] f =
         all'
     end
 
+fun any [a] f =
+    let
+        fun any' ls =
+            case ls of
+                [] => False
+              | x :: ls => f x || any' ls
+    in
+        any'
+    end
+
 fun allM [m] (_ : monad m) [a] f =
     let
         fun all' ls =
@@ -504,6 +531,16 @@ fun replaceNth [a] (ls : list a) (n : int) (v : a) : list a =
         repNth ls n []
     end
 
+fun findIndex [a] (f : a -> bool) : t a -> option int =
+    let
+        fun findIndex' i ls =
+            case ls of
+                [] => None
+              | x :: ls => if f x then Some i else findIndex' (i + 1) ls
+    in
+        findIndex' 0
+    end
+
 fun assoc [a] [b] (_ : eq a) (x : a) =
     let
         fun assoc' (ls : list (a * b)) =
@@ -537,6 +574,23 @@ fun assocAddSorted [a] [b] (_ : eq a) (_ : ord a) (x : a) (y : b) (ls : t (a * b
                     aas ls' ((x', y') :: acc)
     in
         aas ls []
+    end
+
+(* `mapPartial` would do this in one line, but not from in here; see `concat`. *)
+fun assocUpdate [a] [b] (_ : eq a) (x : a) (f : b -> option b) : t (a * b) -> t (a * b) =
+    let
+        fun update acc ls =
+            case ls of
+                [] => rev acc
+              | (k, v) :: ls =>
+                update (if k = x then
+                            case f v of
+                                None => acc
+                              | Some v' => (k, v') :: acc
+                        else
+                            (k, v) :: acc) ls
+    in
+        update []
     end
 
 fun recToList [a ::: Type] [r ::: {Unit}] (fl : folder r)
@@ -610,4 +664,15 @@ fun tabulateM [m] (_ : monad m) [a] (f : int -> m a) n =
                  tabulate' (n-1) (v :: acc))
     in
         tabulate' n []
+    end
+
+fun intersperse [a] (sep : a) (xs : t a) : t a =
+    let
+        fun go acc xs =
+            case xs of
+            | x1 :: x2 :: xs => go (sep :: x1 :: acc) (x2 :: xs)
+            | x :: [] => rev (x :: acc)
+            | [] => []
+    in
+        go [] xs
     end
