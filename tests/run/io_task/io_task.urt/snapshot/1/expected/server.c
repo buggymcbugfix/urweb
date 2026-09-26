@@ -28,10 +28,10 @@
   
   
   
-  enum __uwe_result_s_1757 { __uwc_Success_1758, __uwc_Failure_1759 };
+  enum __uwe_result_s_1 { __uwc_Success_2, __uwc_Failure_3 };
    
-   struct __uwd_result_s_1757 {
-   enum __uwe_result_s_1757
+   struct __uwd_result_s_1 {
+   enum __uwe_result_s_1
    tag;
    union {
     uw_Basis_int uw_Success;
@@ -52,7 +52,7 @@
   
   
   static uw_unit
-   __uwn_wrap_main_1756(uw_context ctx, uw_unit __uwr_x0_0, uw_unit __uwr___1)
+   __uwn_wrap_main_4(uw_context ctx, uw_unit __uwr_x0_0, uw_unit __uwr___1)
    {
    return(((uw_write(ctx, "<body"), 0),
            (uw_begin_region(ctx), (uw_write(ctx, uw_Basis_maybe_onload(ctx,
@@ -260,7 +260,7 @@
                                     "between transactions"));
             uw_end_region(ctx);
              ({
-              struct __uwd_result_s_1757* __uwr_f_6 =
+              struct __uwd_result_s_1* __uwr_f_6 =
               ({
                uw_Basis_int* disc =
                ({
@@ -345,10 +345,10 @@
                disc != NULL && 1 ?
                 ({uw_Basis_int __uwr_v_6 = (*disc);
                    ({
-                    struct __uwd_result_s_1757 *tmp =
-                    uw_malloc(ctx, sizeof(struct __uwd_result_s_1757));
+                    struct __uwd_result_s_1 *tmp =
+                    uw_malloc(ctx, sizeof(struct __uwd_result_s_1));
                     tmp->tag =
-                    __uwc_Success_1758;
+                    __uwc_Success_2;
                     tmp->data.uw_Success = __uwr_v_6;
                      tmp;
                     });
@@ -356,17 +356,17 @@
                  :
                 disc == NULL ?
                  ({
-                  struct __uwd_result_s_1757 *tmp =
-                  uw_malloc(ctx, sizeof(struct __uwd_result_s_1757));
+                  struct __uwd_result_s_1 *tmp =
+                  uw_malloc(ctx, sizeof(struct __uwd_result_s_1));
                   tmp->tag =
-                  __uwc_Failure_1759;
+                  __uwc_Failure_3;
                   tmp->data.uw_Failure =
                    uw_Basis_htmlifyString(ctx, uw_Basis_io_errorMessage(ctx));
                    tmp;
                   })
                   :
                  ({
-                  struct __uwd_result_s_1757*
+                  struct __uwd_result_s_1*
                   tmp;
                   uw_error(ctx, FATAL, "tests/run/io_task/io_task.ur:20:8-35:30: pattern match failure");
                   tmp;
@@ -375,10 +375,10 @@
               ({
                uw_unit __uwr___7 =
                (uw_begin_region(ctx), ({
-                                       struct __uwd_result_s_1757* disc =
+                                       struct __uwd_result_s_1* disc =
                                        __uwr_f_6;
                                        
-                                       disc->tag == __uwc_Failure_1759 && 1 ?
+                                       disc->tag == __uwc_Failure_3 && 1 ?
                                         ({uw_Basis_string __uwr_m_7 =
                                            disc->data.uw_Failure;
                                            uw_Basis_debug(ctx,
@@ -390,7 +390,7 @@
                                              }));
                                          })
                                          :
-                                        disc->tag == __uwc_Success_1758 && 1 ?
+                                        disc->tag == __uwc_Success_2 && 1 ?
                                          ({uw_Basis_int __uwr_v_7 =
                                             disc->data.uw_Success;
                                             uw_Basis_debug(ctx,
@@ -414,7 +414,7 @@
                                        }));
                uw_end_region(ctx);
                 ({
-                 struct __uwd_result_s_1757* __uwr_g_8 =
+                 struct __uwd_result_s_1* __uwr_g_8 =
                  ({
                   uw_Basis_int* disc =
                   ({
@@ -449,10 +449,10 @@
                   disc != NULL && 1 ?
                    ({uw_Basis_int __uwr_v_8 = (*disc);
                       ({
-                       struct __uwd_result_s_1757 *tmp =
-                       uw_malloc(ctx, sizeof(struct __uwd_result_s_1757));
+                       struct __uwd_result_s_1 *tmp =
+                       uw_malloc(ctx, sizeof(struct __uwd_result_s_1));
                        tmp->tag =
-                       __uwc_Success_1758;
+                       __uwc_Success_2;
                        tmp->data.uw_Success = __uwr_v_8;
                         tmp;
                        });
@@ -460,10 +460,10 @@
                     :
                    disc == NULL ?
                     ({
-                     struct __uwd_result_s_1757 *tmp =
-                     uw_malloc(ctx, sizeof(struct __uwd_result_s_1757));
+                     struct __uwd_result_s_1 *tmp =
+                     uw_malloc(ctx, sizeof(struct __uwd_result_s_1));
                      tmp->tag =
-                     __uwc_Failure_1759;
+                     __uwc_Failure_3;
                      tmp->data.uw_Failure =
                       uw_Basis_htmlifyString(ctx,
                        uw_Basis_io_errorMessage(ctx));
@@ -471,7 +471,7 @@
                      })
                      :
                     ({
-                     struct __uwd_result_s_1757*
+                     struct __uwd_result_s_1*
                      tmp;
                      uw_error(ctx, FATAL, "tests/run/io_task/io_task.ur:26:8-35:30: pattern match failure");
                      tmp;
@@ -480,11 +480,10 @@
                  ({
                   uw_unit __uwr___9 =
                   (uw_begin_region(ctx), ({
-                                          struct __uwd_result_s_1757* disc =
+                                          struct __uwd_result_s_1* disc =
                                           __uwr_g_8;
                                           
-                                          disc->tag == __uwc_Failure_1759 && 1
-                                           ?
+                                          disc->tag == __uwc_Failure_3 && 1 ?
                                            ({uw_Basis_string __uwr_m_9 =
                                               disc->data.uw_Failure;
                                               uw_Basis_debug(ctx,
@@ -499,8 +498,7 @@
                                                 }));
                                             })
                                             :
-                                           disc->tag == __uwc_Success_1758 && 1
-                                            ?
+                                           disc->tag == __uwc_Success_2 && 1 ?
                                             ({uw_Basis_int __uwr_v_9 =
                                                disc->data.uw_Success;
                                                uw_Basis_debug(ctx,
@@ -817,7 +815,7 @@
   uw_login(ctx);
   {
    uw_unit arg0 = uw_Basis_unurlifyUnit(ctx, &request);
-    __uwn_wrap_main_1756(ctx, arg0, 0);
+    __uwn_wrap_main_4(ctx, arg0, 0);
    uw_write(ctx, "</html>");
     return;
    }
