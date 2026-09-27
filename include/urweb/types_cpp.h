@@ -84,6 +84,15 @@ typedef struct {
   int failed;       // the transaction gave up: rolled back, error message kept
 } uw_io_transaction;
 
+// A file embedded by a `file` directive: served at its URI by uw_handle, and
+// read by Basis functions.  The bytes are a literal in the generated C.
+typedef struct {
+  const char *uri;
+  const char *type;   // its MIME type, or NULL when none is known
+  size_t size;
+  const char *data;
+} uw_served_file;
+
 typedef struct {
   int inputs_len, timeout;
   char *url_prefix;
@@ -117,6 +126,8 @@ typedef struct {
 
   int is_html5;
   char *file_cache;
+
+  uw_served_file *served_files; // ended by an entry whose uri is NULL
 } uw_app;
 
 typedef struct {
