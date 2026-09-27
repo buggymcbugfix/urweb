@@ -1,0 +1,8 @@
+# The page makes the client; the task sends on its channel within a second;
+# then the client's messages are fetched the way the browser would.
+page=$(curl -s "http://127.0.0.1:$port/Io_channel/main")
+id=$(printf '%s' "$page" | sed -n 's/.*client_id=\([0-9]*\);.*/\1/p')
+pass=$(printf '%s' "$page" | sed -n 's/.*client_pass=\(-\?[0-9]*\);.*/\1/p')
+sleep 3
+echo "--- messages"
+curl -s --max-time 2 -H "UrWeb-Client: $id" -H "UrWeb-Pass: $pass" "http://127.0.0.1:$port/.msgs"; echo
