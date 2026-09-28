@@ -1,0 +1,1 @@
+Application uses a database but has none configured with 'database' in .urp file.

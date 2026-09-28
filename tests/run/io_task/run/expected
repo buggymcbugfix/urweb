@@ -1,0 +1,20 @@
+<!DOCTYPE html><html><head></head><body>1 </body></html>
+--- log
+transaction open around io code: False
+transaction open inside runTransaction: True
+effect: between transactions
+tryRunTransaction: Failure io_task.ur:21:32-22:40: boom in a transaction
+Error triggers bounded retry in io transaction: flaky
+Error triggers bounded retry in io transaction: flaky
+Error triggers bounded retry in io transaction: flaky
+Error triggers bounded retry in io transaction: flaky
+Error triggers bounded retry in io transaction: flaky
+Fatal error in io transaction (out of retries): flaky
+bounded retries: Failure flaky
+rows committed: 1
+env: set
+Fatal error in io task: io_task.ur:34:23-34:74: boom outside, via runTransaction
+still running
+Accepted connection.
+Handling connection with thread #0.
+Serving URI /Io_task/main....

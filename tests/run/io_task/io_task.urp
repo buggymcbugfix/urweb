@@ -1,0 +1,10 @@
+ffi iocheck
+include iocheck.h
+link iocheck.o
+allow env IO_TASK_ENV
+allow url /Io_task/main
+safeGet Io_task/main
+minHeap 65536
+
+$/option
+io_task

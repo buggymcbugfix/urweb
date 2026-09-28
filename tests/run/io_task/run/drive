@@ -1,0 +1,3 @@
+# A few ticks, then the rows the transactions left.
+sleep 4
+curl -s "http://127.0.0.1:$port/Io_task/main"; echo
