@@ -431,7 +431,7 @@ fun oneRowE1 [tabs ::: {Unit}] [nm ::: Name] [t ::: Type] [tabs ~ [nm]] (q : sql
               | Some r => r.nm)
 
 fun nonempty [fs] [us] (t : sql_table fs us) =
-    oneRowE1 (SELECT COUNT( * ) > 0 AS B FROM t)
+    hasRows (SELECT (TRUE) FROM t LIMIT 1)
 
 fun eqNullable [tables ::: {{Type}}] [agg ::: {{Type}}] [exps ::: {Type}]
     [t ::: Type] (_ : sql_injectable (option t))
