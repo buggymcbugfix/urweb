@@ -283,6 +283,16 @@ fun queryL1 [t ::: Name] [fs ::: {Type}] (q : sql_query [] [] [t = fs] []) =
     ls <- query q (fn r ls => return (r.t :: ls)) [];
     return (rev ls)
 
+fun queryLE1
+    [tabs ::: {Unit}]
+    [nm ::: Name]
+    [t ::: Type]
+    [tabs ~ [nm]]
+    (q : sql_query [] [] (mapU [] tabs) [nm = t])
+=
+    ls <- query q (fn r ls => return (r.nm :: ls)) [];
+    return (rev ls)
+
 fun queryI [tables ::: {{Type}}] [exps ::: {Type}]
            [tables ~ exps] (q : sql_query [] [] tables exps)
            (f : $(exps ++ map (fn fields :: {Type} => $fields) tables)
