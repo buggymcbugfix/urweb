@@ -1,0 +1,10 @@
+# A retry asked for outside any transaction: nothing can honour it, so the
+# request fails at once, with the reason, and the function is not run again;
+# the next call is served as usual.
+rpc() { curl -s -X POST -H 'Content-type: text/plain' -w ' [%{http_code}]' "http://127.0.0.1:$port/Io_rpc/$1"; echo; }
+echo "--- flaky 1"
+rpc flaky/1
+echo "--- twice 2"
+rpc twice/2
+echo "--- rows"
+curl -s "http://127.0.0.1:$port/Io_rpc/rows"; echo

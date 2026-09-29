@@ -1,0 +1,22 @@
+--- boom 7
+<html><head><title>Fatal Error</title></head><body>Fatal error: io_rpc.ur:33:19-33:68: boom in the second transaction
+</body></html> [500]
+--- boom 8
+<html><head><title>Fatal Error</title></head><body>Fatal error: io_rpc.ur:33:19-33:68: boom in the second transaction
+</body></html> [500]
+--- rows
+<!DOCTYPE html><html><head></head><body>7 8 </body></html>
+--- log
+Accepted connection.
+Handling connection with thread #0.
+Serving URI /Io_rpc/boom/7....
+call 1: boom 7
+Fatal error: io_rpc.ur:33:19-33:68: boom in the second transaction
+Accepted connection.
+Handling connection with thread #0.
+Serving URI /Io_rpc/boom/8....
+call 2: boom 8
+Fatal error: io_rpc.ur:33:19-33:68: boom in the second transaction
+Accepted connection.
+Handling connection with thread #0.
+Serving URI /Io_rpc/rows....

@@ -1,0 +1,14 @@
+# The page makes the client and its channel; the RPC is then made the way
+# the browser makes one: a POST with the argument in the path and the client
+# in the headers.  The answer is the script line (empty) and the value; the
+# client's messages then hold what the second transaction sent.
+page=$(curl -s "http://127.0.0.1:$port/Io_rpc/main")
+id=$(printf '%s' "$page" | sed -n 's/.*client_id=\([0-9]*\);.*/\1/p')
+pass=$(printf '%s' "$page" | sed -n 's/.*client_pass=\(-\?[0-9]*\);.*/\1/p')
+rpc() { curl -s -X POST -H 'Content-type: text/plain' -H "UrWeb-Client: $id" -H "UrWeb-Pass: $pass" -w ' [%{http_code}]' "http://127.0.0.1:$port/Io_rpc/$1"; echo; }
+echo "--- twice 21"
+rpc twice/21
+echo "--- rows"
+curl -s "http://127.0.0.1:$port/Io_rpc/rows"; echo
+echo "--- messages"
+curl -s --max-time 2 -H "UrWeb-Client: $id" -H "UrWeb-Pass: $pass" "http://127.0.0.1:$port/.msgs"; echo

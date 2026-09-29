@@ -1,0 +1,28 @@
+--- twice 21
+
+42 [200]
+--- rows
+<!DOCTYPE html><html><head></head><body>21 </body></html>
+--- messages
+0
+sent+from+the+second+transaction
+
+--- log
+Accepted connection.
+Handling connection with thread #0.
+Serving URI /Io_rpc/main....
+Accepted connection.
+Handling connection with thread #0.
+Serving URI /Io_rpc/twice/21....
+call 1: twice 21
+transaction open around the body: False
+transaction open inside runTransaction: True
+effect: between transactions
+Accepted connection.
+Handling connection with thread #0.
+Serving URI /Io_rpc/rows....
+Accepted connection.
+Handling connection with thread #0.
+Serving URI /.msgs....
+Processed request for messages by client 0
+

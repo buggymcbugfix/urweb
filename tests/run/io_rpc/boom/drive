@@ -1,0 +1,11 @@
+# A fatal error in the function's second transaction: the request fails, the
+# first transaction stays committed, and the function is not run again (the
+# call numbers in the log are consecutive).  Two calls, to show the second is
+# served as usual.
+rpc() { curl -s -X POST -H 'Content-type: text/plain' -w ' [%{http_code}]' "http://127.0.0.1:$port/Io_rpc/$1"; echo; }
+echo "--- boom 7"
+rpc boom/7
+echo "--- boom 8"
+rpc boom/8
+echo "--- rows"
+curl -s "http://127.0.0.1:$port/Io_rpc/rows"; echo

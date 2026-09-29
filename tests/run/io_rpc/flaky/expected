@@ -1,0 +1,24 @@
+--- flaky 1
+<html><head><title>Fatal Error</title></head><body>Fatal error: flaky, outside any transaction (retry requested outside any transaction in io code)
+</body></html> [500]
+--- twice 2
+
+4 [200]
+--- rows
+<!DOCTYPE html><html><head></head><body>2 </body></html>
+--- log
+Accepted connection.
+Handling connection with thread #0.
+Serving URI /Io_rpc/flaky/1....
+call 1: flaky 1
+Fatal error: flaky, outside any transaction (retry requested outside any transaction in io code)
+Accepted connection.
+Handling connection with thread #0.
+Serving URI /Io_rpc/twice/2....
+call 2: twice 2
+transaction open around the body: False
+transaction open inside runTransaction: True
+effect: between transactions
+Accepted connection.
+Handling connection with thread #0.
+Serving URI /Io_rpc/rows....
