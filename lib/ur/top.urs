@@ -192,6 +192,14 @@ val queryL1 : t ::: Name -> fs ::: {Type}
               -> sql_query [] [] [t = fs] []
               -> transaction (list $fs)
 
+val queryLE1 :
+	tabs ::: {Unit} ->
+	nm ::: Name ->
+	t ::: Type ->
+	[tabs ~ [nm]] =>
+	sql_query [] [] (mapU [] tabs) [nm = t] ->
+	transaction (list t)
+
 val query1 : t ::: Name -> fs ::: {Type} -> state ::: Type
              -> sql_query [] [] [t = fs] []
              -> ($fs -> state -> transaction state)
