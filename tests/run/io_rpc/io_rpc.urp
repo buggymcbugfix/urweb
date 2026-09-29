@@ -1,0 +1,10 @@
+ffi iocheck
+include iocheck.h
+link iocheck.o
+allow url /Io_rpc/main
+allow url /Io_rpc/rows
+safeGet Io_rpc/main
+minHeap 65536
+
+$/option
+io_rpc
