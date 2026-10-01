@@ -193,3 +193,8 @@ check-ipv6: bin/urweb
 	curl -g -6 -s "http://[::1]:$$port/Demo/Hello/main" | diff tests/hello.html - || { echo "Test 'Hello' failed" >&2; exit 1; }; \
 	curl -g -6 -s "http://[::1]:$$port/Demo/Crud1/create?A=1&B=2&C=3&D=4" | diff tests/crud1.html - || { echo "Test 'Crud1' failed" >&2; exit 1; }; \
 	echo "Tests succeeded."
+
+.PHONY: resnapshot
+resnapshot:
+	@test -n "$(REV)" || { echo "usage: make resnapshot REV=<rev>" >&2; exit 1; }
+	git rebase $(REV) --exec '$(MAKE) all && urt snapshot && git add -A && git commit --amend --no-edit'
